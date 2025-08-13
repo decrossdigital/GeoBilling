@@ -1,8 +1,6 @@
 "use client"
 
-import { useSession } from "next-auth/react"
 import Link from "next/link"
-import UserMenu from "@/components/user-menu"
 import {
   DollarSign,
   FileText,
@@ -12,15 +10,10 @@ import {
   BarChart3,
   Plus,
   ArrowUpRight,
-  Star,
-  Home,
-  User,
-  Settings
+  Home
 } from "lucide-react"
 
-export default function Dashboard() {
-  const { data: session } = useSession()
-
+export default function Dashboard2() {
   return (
     <div style={{minHeight: '100vh', background: 'linear-gradient(to bottom right, #0f172a, #581c87, #0f172a)', color: 'white'}}>
       <div style={{maxWidth: '1200px', margin: '0 auto', padding: '2rem 1.5rem'}}>
@@ -41,7 +34,7 @@ export default function Dashboard() {
         <div style={{backgroundColor: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.75rem', padding: '1rem', marginBottom: '2rem'}}>
           <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
             <div style={{display: 'flex', gap: '0.5rem'}}>
-              <Link href="/" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', background: 'linear-gradient(to right, #9333ea, #3b82f6)', color: 'white', textDecoration: 'none', fontWeight: '500', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'}}>
+              <Link href="/page2" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', background: 'linear-gradient(to right, #9333ea, #3b82f6)', color: 'white', textDecoration: 'none', fontWeight: '500', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'}}>
                 <Home style={{height: '1rem', width: '1rem'}} />
                 <span>Dashboard</span>
               </Link>
@@ -57,21 +50,16 @@ export default function Dashboard() {
                 <DollarSign style={{height: '1rem', width: '1rem'}} />
                 <span>Invoices</span>
               </Link>
-              <Link href="/contractors" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', color: '#cbd5e1', textDecoration: 'none', fontWeight: '500'}}>
-                <User style={{height: '1rem', width: '1rem'}} />
-                <span>Contractors</span>
-              </Link>
-              <Link href="/reports" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', color: '#cbd5e1', textDecoration: 'none', fontWeight: '500'}}>
-                <BarChart3 style={{height: '1rem', width: '1rem'}} />
-                <span>Reports</span>
-              </Link>
-              <Link href="/settings" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', color: '#cbd5e1', textDecoration: 'none', fontWeight: '500'}}>
-                <Settings style={{height: '1rem', width: '1rem'}} />
-                <span>Settings</span>
-              </Link>
             </div>
             <div style={{display: 'flex', alignItems: 'center', gap: '1rem'}}>
-              <UserMenu />
+              <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
+                <img 
+                  src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=32&h=32&fit=crop&crop=face"
+                  alt="User" 
+                  style={{width: '2rem', height: '2rem', borderRadius: '50%'}} 
+                />
+                <span style={{fontSize: '0.875rem', fontWeight: '500'}}>John Doe</span>
+              </div>
             </div>
           </div>
         </div>
@@ -190,136 +178,6 @@ export default function Dashboard() {
               <h3 style={{fontSize: '1.125rem', fontWeight: '500', color: 'white', marginBottom: '0.5rem'}}>Analytics</h3>
               <p style={{fontSize: '0.875rem', color: '#cbd5e1'}}>View business insights and metrics</p>
             </Link>
-          </div>
-        </div>
-
-        {/* Recent Activity & Quick Stats */}
-        <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '2rem'}}>
-          {/* Recent Activity */}
-          <div style={{gridColumn: 'span 2'}}>
-            <div style={{backgroundColor: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.75rem', padding: '1.5rem'}}>
-              <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem'}}>
-                <h2 style={{fontSize: '1.25rem', fontWeight: 'bold', color: 'white'}}>Recent Activity</h2>
-                <button style={{fontSize: '0.875rem', padding: '0.5rem 1rem', backgroundColor: 'rgba(255, 255, 255, 0.1)', color: '#cbd5e1', border: 'none', borderRadius: '0.5rem', cursor: 'pointer'}}>View All</button>
-              </div>
-              
-              <div style={{display: 'flex', flexDirection: 'column', gap: '1rem'}}>
-                <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem', backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: '0.75rem', border: '1px solid rgba(255, 255, 255, 0.1)'}}>
-                  <div style={{display: 'flex', alignItems: 'center', gap: '1rem'}}>
-                    <div style={{padding: '0.5rem', borderRadius: '0.5rem', backgroundColor: 'rgba(59, 130, 246, 0.2)'}}>
-                      <DollarSign style={{height: '1rem', width: '1rem', color: '#60a5fa'}} />
-                    </div>
-                    <div>
-                      <p style={{fontWeight: '500', color: 'white'}}>Studio Session - John Smith</p>
-                      <p style={{fontSize: '0.875rem', color: '#cbd5e1'}}>2 hours ago</p>
-                    </div>
-                  </div>
-                  <div style={{textAlign: 'right'}}>
-                    <p style={{fontWeight: '500', color: 'white'}}>$850</p>
-                    <span style={{fontSize: '0.75rem', padding: '0.25rem 0.5rem', borderRadius: '9999px', backgroundColor: 'rgba(34, 197, 94, 0.2)', color: '#34d399'}}>paid</span>
-                  </div>
-                </div>
-
-                <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem', backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: '0.75rem', border: '1px solid rgba(255, 255, 255, 0.1)'}}>
-                  <div style={{display: 'flex', alignItems: 'center', gap: '1rem'}}>
-                    <div style={{padding: '0.5rem', borderRadius: '0.5rem', backgroundColor: 'rgba(147, 51, 234, 0.2)'}}>
-                      <FileText style={{height: '1rem', width: '1rem', color: '#a78bfa'}} />
-                    </div>
-                    <div>
-                      <p style={{fontWeight: '500', color: 'white'}}>Album Mixing - Sarah Johnson</p>
-                      <p style={{fontSize: '0.875rem', color: '#cbd5e1'}}>1 day ago</p>
-                    </div>
-                  </div>
-                  <div style={{textAlign: 'right'}}>
-                    <p style={{fontWeight: '500', color: 'white'}}>$2,400</p>
-                    <span style={{fontSize: '0.75rem', padding: '0.25rem 0.5rem', borderRadius: '9999px', backgroundColor: 'rgba(251, 146, 60, 0.2)', color: '#fb923c'}}>pending</span>
-                  </div>
-                </div>
-
-                <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem', backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: '0.75rem', border: '1px solid rgba(255, 255, 255, 0.1)'}}>
-                  <div style={{display: 'flex', alignItems: 'center', gap: '1rem'}}>
-                    <div style={{padding: '0.5rem', borderRadius: '0.5rem', backgroundColor: 'rgba(34, 197, 94, 0.2)'}}>
-                      <TrendingUp style={{height: '1rem', width: '1rem', color: '#34d399'}} />
-                    </div>
-                    <div>
-                      <p style={{fontWeight: '500', color: 'white'}}>Mastering Services - Mike Davis</p>
-                      <p style={{fontSize: '0.875rem', color: '#cbd5e1'}}>2 days ago</p>
-                    </div>
-                  </div>
-                  <div style={{textAlign: 'right'}}>
-                    <p style={{fontWeight: '500', color: 'white'}}>$650</p>
-                    <span style={{fontSize: '0.75rem', padding: '0.25rem 0.5rem', borderRadius: '9999px', backgroundColor: 'rgba(59, 130, 246, 0.2)', color: '#60a5fa'}}>completed</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          {/* Quick Stats */}
-          <div>
-            <div style={{backgroundColor: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.75rem', padding: '1.5rem'}}>
-              <h2 style={{fontSize: '1.25rem', fontWeight: 'bold', color: 'white', marginBottom: '1.5rem'}}>This Month</h2>
-              
-              <div style={{display: 'flex', flexDirection: 'column', gap: '1.5rem'}}>
-                <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
-                  <div style={{display: 'flex', alignItems: 'center', gap: '0.75rem'}}>
-                    <div style={{padding: '0.5rem', backgroundColor: 'rgba(34, 197, 94, 0.2)', borderRadius: '0.5rem'}}>
-                      <DollarSign style={{height: '1rem', width: '1rem', color: '#34d399'}} />
-                    </div>
-                    <div>
-                      <p style={{fontSize: '0.875rem', color: '#cbd5e1'}}>Revenue</p>
-                      <p style={{fontWeight: '500', color: 'white'}}>$12,450</p>
-                    </div>
-                  </div>
-                  <div style={{textAlign: 'right'}}>
-                    <p style={{color: '#34d399', fontSize: '0.875rem'}}>+18%</p>
-                  </div>
-                </div>
-
-                <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
-                  <div style={{display: 'flex', alignItems: 'center', gap: '0.75rem'}}>
-                    <div style={{padding: '0.5rem', backgroundColor: 'rgba(59, 130, 246, 0.2)', borderRadius: '0.5rem'}}>
-                      <FileText style={{height: '1rem', width: '1rem', color: '#60a5fa'}} />
-                    </div>
-                    <div>
-                      <p style={{fontSize: '0.875rem', color: '#cbd5e1'}}>Quotes</p>
-                      <p style={{fontWeight: '500', color: 'white'}}>15</p>
-                    </div>
-                  </div>
-                  <div style={{textAlign: 'right'}}>
-                    <p style={{color: '#60a5fa', fontSize: '0.875rem'}}>+3</p>
-                  </div>
-                </div>
-
-                <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
-                  <div style={{display: 'flex', alignItems: 'center', gap: '0.75rem'}}>
-                    <div style={{padding: '0.5rem', backgroundColor: 'rgba(147, 51, 234, 0.2)', borderRadius: '0.5rem'}}>
-                      <Users style={{height: '1rem', width: '1rem', color: '#a78bfa'}} />
-                    </div>
-                    <div>
-                      <p style={{fontSize: '0.875rem', color: '#cbd5e1'}}>New Clients</p>
-                      <p style={{fontWeight: '500', color: 'white'}}>8</p>
-                    </div>
-                  </div>
-                  <div style={{textAlign: 'right'}}>
-                    <p style={{color: '#a78bfa', fontSize: '0.875rem'}}>+2</p>
-                  </div>
-                </div>
-
-                <div style={{paddingTop: '1rem', borderTop: '1px solid rgba(255, 255, 255, 0.1)'}}>
-                  <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem'}}>
-                    <p style={{fontSize: '0.875rem', color: '#cbd5e1'}}>Client Satisfaction</p>
-                    <div style={{display: 'flex', alignItems: 'center', gap: '0.25rem'}}>
-                      <Star style={{height: '1rem', width: '1rem', color: '#fbbf24'}} />
-                      <span style={{fontWeight: '500', color: 'white'}}>4.9</span>
-                    </div>
-                  </div>
-                  <div style={{width: '100%', backgroundColor: 'rgba(255, 255, 255, 0.1)', borderRadius: '9999px', height: '0.5rem'}}>
-                    <div style={{background: 'linear-gradient(to right, #fbbf24, #f59e0b)', height: '0.5rem', borderRadius: '9999px', width: '98%'}}></div>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </div>
