@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useSession, signOut } from "next-auth/react"
-import { ChevronDown, LogOut, User, Settings, Bell } from "lucide-react"
+import { ChevronDown, LogOut } from "lucide-react"
 
 export default function UserMenu() {
   const { data: session } = useSession()
@@ -59,64 +59,6 @@ export default function UserMenu() {
           </div>
           
           <div style={{padding: '0.25rem'}}>
-            <button
-              onClick={() => {/* Navigate to profile */}}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                width: '100%',
-                padding: '0.5rem 0.75rem',
-                borderRadius: '0.375rem',
-                backgroundColor: 'transparent',
-                border: 'none',
-                color: '#cbd5e1',
-                cursor: 'pointer',
-                fontSize: '0.875rem',
-                transition: 'all 0.2s'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)'
-                e.currentTarget.style.color = 'white'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent'
-                e.currentTarget.style.color = '#cbd5e1'
-              }}
-            >
-              <User style={{height: '1rem', width: '1rem'}} />
-              Profile
-            </button>
-            
-            <button
-              onClick={() => {/* Navigate to settings */}}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                width: '100%',
-                padding: '0.5rem 0.75rem',
-                borderRadius: '0.375rem',
-                backgroundColor: 'transparent',
-                border: 'none',
-                color: '#cbd5e1',
-                cursor: 'pointer',
-                fontSize: '0.875rem',
-                transition: 'all 0.2s'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)'
-                e.currentTarget.style.color = 'white'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent'
-                e.currentTarget.style.color = '#cbd5e1'
-              }}
-            >
-              <Settings style={{height: '1rem', width: '1rem'}} />
-              Settings
-            </button>
-            
             <button
               onClick={handleSignOut}
               style={{
