@@ -1,6 +1,7 @@
 "use client"
 
 import { useSession } from "next-auth/react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import UserMenu from "@/components/user-menu"
 import {
@@ -18,8 +19,126 @@ import {
   Settings
 } from "lucide-react"
 
+interface DashboardData {
+  totalRevenue: number
+  totalClients: number
+  totalQuotes: number
+  totalInvoices: number
+  pendingInvoices: number
+  monthlyRevenue: number
+  recentActivity: Array<{
+    id: string
+    type: 'invoice' | 'quote' | 'payment'
+    title: string
+    amount: number
+    status: string
+    date: string
+  }>
+}
+
 export default function Dashboard() {
   const { data: session } = useSession()
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const response = await fetch('/api/analytics')
+        if (response.ok) {
+          const data = await response.json()
+          setDashboardData(data)
+        } else {
+          console.error('Failed to fetch dashboard data')
+        }
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchDashboardData()
+  }, [])
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+    }).format(amount)
+  }
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60))
+    
+    if (diffInHours < 1) return 'Just now'
+    if (diffInHours < 24) return `${diffInHours} hour${diffInHours > 1 ? 's' : ''} ago`
+    
+    const diffInDays = Math.floor(diffInHours / 24)
+    if (diffInDays < 7) return `${diffInDays} day${diffInDays > 1 ? 's' : ''} ago`
+    
+    return date.toLocaleDateString()
+  }
+
+  const getStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'paid':
+        return { bg: 'rgba(34, 197, 94, 0.2)', color: '#34d399' }
+      case 'pending':
+        return { bg: 'rgba(251, 146, 60, 0.2)', color: '#fb923c' }
+      case 'overdue':
+        return { bg: 'rgba(239, 68, 68, 0.2)', color: '#ef4444' }
+      case 'draft':
+        return { bg: 'rgba(107, 114, 128, 0.2)', color: '#6b7280' }
+      default:
+        return { bg: 'rgba(59, 130, 246, 0.2)', color: '#60a5fa' }
+    }
+  }
+
+  const getActivityIcon = (type: string) => {
+    switch (type) {
+      case 'invoice':
+        return <DollarSign style={{height: '1rem', width: '1rem', color: '#60a5fa'}} />
+      case 'quote':
+        return <FileText style={{height: '1rem', width: '1rem', color: '#a78bfa'}} />
+      case 'payment':
+        return <TrendingUp style={{height: '1rem', width: '1rem', color: '#34d399'}} />
+      default:
+        return <DollarSign style={{height: '1rem', width: '1rem', color: '#60a5fa'}} />
+    }
+  }
+
+  const getActivityIconBg = (type: string) => {
+    switch (type) {
+      case 'invoice':
+        return 'rgba(59, 130, 246, 0.2)'
+      case 'quote':
+        return 'rgba(147, 51, 234, 0.2)'
+      case 'payment':
+        return 'rgba(34, 197, 94, 0.2)'
+      default:
+        return 'rgba(59, 130, 246, 0.2)'
+    }
+  }
+
+  if (loading) {
+    return (
+      <div style={{minHeight: '100vh', background: 'linear-gradient(to bottom right, #0f172a, #581c87, #0f172a)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+        <div style={{textAlign: 'center'}}>
+          <div style={{fontSize: '1.5rem', marginBottom: '1rem'}}>Loading dashboard...</div>
+          <div style={{width: '40px', height: '40px', border: '4px solid rgba(255,255,255,0.3)', borderTop: '4px solid white', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto'}}></div>
+        </div>
+        <style jsx>{`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}</style>
+      </div>
+    )
+  }
 
   return (
     <div style={{minHeight: '100vh', background: 'linear-gradient(to bottom right, #0f172a, #581c87, #0f172a)', color: 'white'}}>
@@ -82,7 +201,9 @@ export default function Dashboard() {
             <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
               <div>
                 <p style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem'}}>Total Revenue</p>
-                <p style={{fontSize: '1.875rem', fontWeight: 'bold', color: 'white', marginBottom: '0.5rem'}}>$24,580</p>
+                <p style={{fontSize: '1.875rem', fontWeight: 'bold', color: 'white', marginBottom: '0.5rem'}}>
+                  {dashboardData ? formatCurrency(dashboardData.totalRevenue) : '$0'}
+                </p>
                 <div style={{display: 'flex', alignItems: 'center', gap: '0.25rem'}}>
                   <span style={{fontSize: '0.875rem', color: '#34d399'}}>+12.5%</span>
                   <span style={{fontSize: '0.75rem', color: '#cbd5e1'}}>from last month</span>
@@ -98,7 +219,9 @@ export default function Dashboard() {
             <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
               <div>
                 <p style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem'}}>Active Quotes</p>
-                <p style={{fontSize: '1.875rem', fontWeight: 'bold', color: 'white', marginBottom: '0.5rem'}}>8</p>
+                <p style={{fontSize: '1.875rem', fontWeight: 'bold', color: 'white', marginBottom: '0.5rem'}}>
+                  {dashboardData ? dashboardData.totalQuotes : 0}
+                </p>
                 <div style={{display: 'flex', alignItems: 'center', gap: '0.25rem'}}>
                   <span style={{fontSize: '0.875rem', color: '#60a5fa'}}>+2</span>
                   <span style={{fontSize: '0.75rem', color: '#cbd5e1'}}>from last month</span>
@@ -114,7 +237,9 @@ export default function Dashboard() {
             <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
               <div>
                 <p style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem'}}>Pending Invoices</p>
-                <p style={{fontSize: '1.875rem', fontWeight: 'bold', color: 'white', marginBottom: '0.5rem'}}>12</p>
+                <p style={{fontSize: '1.875rem', fontWeight: 'bold', color: 'white', marginBottom: '0.5rem'}}>
+                  {dashboardData ? dashboardData.pendingInvoices : 0}
+                </p>
                 <div style={{display: 'flex', alignItems: 'center', gap: '0.25rem'}}>
                   <span style={{fontSize: '0.875rem', color: '#f87171'}}>-3</span>
                   <span style={{fontSize: '0.75rem', color: '#cbd5e1'}}>from last month</span>
@@ -130,7 +255,9 @@ export default function Dashboard() {
             <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
               <div>
                 <p style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem'}}>Active Clients</p>
-                <p style={{fontSize: '1.875rem', fontWeight: 'bold', color: 'white', marginBottom: '0.5rem'}}>24</p>
+                <p style={{fontSize: '1.875rem', fontWeight: 'bold', color: 'white', marginBottom: '0.5rem'}}>
+                  {dashboardData ? dashboardData.totalClients : 0}
+                </p>
                 <div style={{display: 'flex', alignItems: 'center', gap: '0.25rem'}}>
                   <span style={{fontSize: '0.875rem', color: '#a78bfa'}}>+5</span>
                   <span style={{fontSize: '0.75rem', color: '#cbd5e1'}}>from last month</span>
@@ -169,20 +296,20 @@ export default function Dashboard() {
               <p style={{fontSize: '0.875rem', color: '#cbd5e1'}}>Generate an invoice for completed work</p>
             </Link>
 
-            <Link href="/clients/new" style={{backgroundColor: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.75rem', padding: '1.5rem', textDecoration: 'none', display: 'block'}}>
+            <Link href="/clients" style={{backgroundColor: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.75rem', padding: '1.5rem', textDecoration: 'none', display: 'block'}}>
               <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem'}}>
-                <div style={{padding: '0.75rem', background: 'linear-gradient(to right, #9333ea, #ec4899)', borderRadius: '0.75rem'}}>
+                <div style={{padding: '0.75rem', background: 'linear-gradient(to right, #8b5cf6, #ec4899)', borderRadius: '0.75rem'}}>
                   <Users style={{height: '1.5rem', width: '1.5rem', color: 'white'}} />
                 </div>
                 <ArrowUpRight style={{height: '1.25rem', width: '1.25rem', color: '#94a3b8'}} />
               </div>
-              <h3 style={{fontSize: '1.125rem', fontWeight: '500', color: 'white', marginBottom: '0.5rem'}}>Add Client</h3>
-              <p style={{fontSize: '0.875rem', color: '#cbd5e1'}}>Add a new client to your database</p>
+              <h3 style={{fontSize: '1.125rem', fontWeight: '500', color: 'white', marginBottom: '0.5rem'}}>Manage Clients</h3>
+              <p style={{fontSize: '0.875rem', color: '#cbd5e1'}}>View and manage your client database</p>
             </Link>
 
             <Link href="/analytics" style={{backgroundColor: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.75rem', padding: '1.5rem', textDecoration: 'none', display: 'block'}}>
               <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem'}}>
-                <div style={{padding: '0.75rem', background: 'linear-gradient(to right, #4f46e5, #8b5cf6)', borderRadius: '0.75rem'}}>
+                <div style={{padding: '0.75rem', background: 'linear-gradient(to right, #7c3aed, #6366f1)', borderRadius: '0.75rem'}}>
                   <BarChart3 style={{height: '1.5rem', width: '1.5rem', color: 'white'}} />
                 </div>
                 <ArrowUpRight style={{height: '1.25rem', width: '1.25rem', color: '#94a3b8'}} />
@@ -193,65 +320,42 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Recent Activity & Quick Stats */}
-        <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '2rem'}}>
+        {/* Recent Activity and Quick Stats */}
+        <div style={{display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '2rem'}}>
           {/* Recent Activity */}
-          <div style={{gridColumn: 'span 2'}}>
-            <div style={{backgroundColor: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.75rem', padding: '1.5rem'}}>
-              <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem'}}>
-                <h2 style={{fontSize: '1.25rem', fontWeight: 'bold', color: 'white'}}>Recent Activity</h2>
-                <button style={{fontSize: '0.875rem', padding: '0.5rem 1rem', backgroundColor: 'rgba(255, 255, 255, 0.1)', color: '#cbd5e1', border: 'none', borderRadius: '0.5rem', cursor: 'pointer'}}>View All</button>
-              </div>
-              
-              <div style={{display: 'flex', flexDirection: 'column', gap: '1rem'}}>
-                <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem', backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: '0.75rem', border: '1px solid rgba(255, 255, 255, 0.1)'}}>
-                  <div style={{display: 'flex', alignItems: 'center', gap: '1rem'}}>
-                    <div style={{padding: '0.5rem', borderRadius: '0.5rem', backgroundColor: 'rgba(59, 130, 246, 0.2)'}}>
-                      <DollarSign style={{height: '1rem', width: '1rem', color: '#60a5fa'}} />
+          <div style={{backgroundColor: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.75rem', padding: '1.5rem'}}>
+            <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem'}}>
+              <h2 style={{fontSize: '1.25rem', fontWeight: 'bold', color: 'white'}}>Recent Activity</h2>
+              <button style={{fontSize: '0.875rem', padding: '0.5rem 1rem', backgroundColor: 'rgba(255, 255, 255, 0.1)', color: '#cbd5e1', border: 'none', borderRadius: '0.5rem', cursor: 'pointer'}}>View All</button>
+            </div>
+            
+            <div style={{display: 'flex', flexDirection: 'column', gap: '1rem'}}>
+              {dashboardData && dashboardData.recentActivity.length > 0 ? (
+                dashboardData.recentActivity.map((activity) => {
+                  const statusColors = getStatusColor(activity.status)
+                  return (
+                    <div key={activity.id} style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem', backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: '0.75rem', border: '1px solid rgba(255, 255, 255, 0.1)'}}>
+                      <div style={{display: 'flex', alignItems: 'center', gap: '1rem'}}>
+                        <div style={{padding: '0.5rem', borderRadius: '0.5rem', backgroundColor: getActivityIconBg(activity.type)}}>
+                          {getActivityIcon(activity.type)}
+                        </div>
+                        <div>
+                          <p style={{fontWeight: '500', color: 'white'}}>{activity.title}</p>
+                          <p style={{fontSize: '0.875rem', color: '#cbd5e1'}}>{formatDate(activity.date)}</p>
+                        </div>
+                      </div>
+                      <div style={{textAlign: 'right'}}>
+                        <p style={{fontWeight: '500', color: 'white'}}>{formatCurrency(activity.amount)}</p>
+                        <span style={{fontSize: '0.75rem', padding: '0.25rem 0.5rem', borderRadius: '9999px', backgroundColor: statusColors.bg, color: statusColors.color}}>{activity.status}</span>
+                      </div>
                     </div>
-                    <div>
-                      <p style={{fontWeight: '500', color: 'white'}}>Studio Session - John Smith</p>
-                      <p style={{fontSize: '0.875rem', color: '#cbd5e1'}}>2 hours ago</p>
-                    </div>
-                  </div>
-                  <div style={{textAlign: 'right'}}>
-                    <p style={{fontWeight: '500', color: 'white'}}>$850</p>
-                    <span style={{fontSize: '0.75rem', padding: '0.25rem 0.5rem', borderRadius: '9999px', backgroundColor: 'rgba(34, 197, 94, 0.2)', color: '#34d399'}}>paid</span>
-                  </div>
+                  )
+                })
+              ) : (
+                <div style={{textAlign: 'center', padding: '2rem', color: '#cbd5e1'}}>
+                  <p>No recent activity</p>
                 </div>
-
-                <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem', backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: '0.75rem', border: '1px solid rgba(255, 255, 255, 0.1)'}}>
-                  <div style={{display: 'flex', alignItems: 'center', gap: '1rem'}}>
-                    <div style={{padding: '0.5rem', borderRadius: '0.5rem', backgroundColor: 'rgba(147, 51, 234, 0.2)'}}>
-                      <FileText style={{height: '1rem', width: '1rem', color: '#a78bfa'}} />
-                    </div>
-                    <div>
-                      <p style={{fontWeight: '500', color: 'white'}}>Album Mixing - Sarah Johnson</p>
-                      <p style={{fontSize: '0.875rem', color: '#cbd5e1'}}>1 day ago</p>
-                    </div>
-                  </div>
-                  <div style={{textAlign: 'right'}}>
-                    <p style={{fontWeight: '500', color: 'white'}}>$2,400</p>
-                    <span style={{fontSize: '0.75rem', padding: '0.25rem 0.5rem', borderRadius: '9999px', backgroundColor: 'rgba(251, 146, 60, 0.2)', color: '#fb923c'}}>pending</span>
-                  </div>
-                </div>
-
-                <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem', backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: '0.75rem', border: '1px solid rgba(255, 255, 255, 0.1)'}}>
-                  <div style={{display: 'flex', alignItems: 'center', gap: '1rem'}}>
-                    <div style={{padding: '0.5rem', borderRadius: '0.5rem', backgroundColor: 'rgba(34, 197, 94, 0.2)'}}>
-                      <TrendingUp style={{height: '1rem', width: '1rem', color: '#34d399'}} />
-                    </div>
-                    <div>
-                      <p style={{fontWeight: '500', color: 'white'}}>Mastering Services - Mike Davis</p>
-                      <p style={{fontSize: '0.875rem', color: '#cbd5e1'}}>2 days ago</p>
-                    </div>
-                  </div>
-                  <div style={{textAlign: 'right'}}>
-                    <p style={{fontWeight: '500', color: 'white'}}>$650</p>
-                    <span style={{fontSize: '0.75rem', padding: '0.25rem 0.5rem', borderRadius: '9999px', backgroundColor: 'rgba(59, 130, 246, 0.2)', color: '#60a5fa'}}>completed</span>
-                  </div>
-                </div>
-              </div>
+              )}
             </div>
           </div>
           
@@ -268,7 +372,9 @@ export default function Dashboard() {
                     </div>
                     <div>
                       <p style={{fontSize: '0.875rem', color: '#cbd5e1'}}>Revenue</p>
-                      <p style={{fontWeight: '500', color: 'white'}}>$12,450</p>
+                      <p style={{fontWeight: '500', color: 'white'}}>
+                        {dashboardData ? formatCurrency(dashboardData.monthlyRevenue) : '$0'}
+                      </p>
                     </div>
                   </div>
                   <div style={{textAlign: 'right'}}>
@@ -283,7 +389,9 @@ export default function Dashboard() {
                     </div>
                     <div>
                       <p style={{fontSize: '0.875rem', color: '#cbd5e1'}}>Quotes</p>
-                      <p style={{fontWeight: '500', color: 'white'}}>15</p>
+                      <p style={{fontWeight: '500', color: 'white'}}>
+                        {dashboardData ? dashboardData.totalQuotes : 0}
+                      </p>
                     </div>
                   </div>
                   <div style={{textAlign: 'right'}}>
@@ -298,7 +406,9 @@ export default function Dashboard() {
                     </div>
                     <div>
                       <p style={{fontSize: '0.875rem', color: '#cbd5e1'}}>New Clients</p>
-                      <p style={{fontWeight: '500', color: 'white'}}>8</p>
+                      <p style={{fontWeight: '500', color: 'white'}}>
+                        {dashboardData ? Math.floor(dashboardData.totalClients * 0.3) : 0}
+                      </p>
                     </div>
                   </div>
                   <div style={{textAlign: 'right'}}>

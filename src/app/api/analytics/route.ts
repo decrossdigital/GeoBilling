@@ -39,16 +39,30 @@ export async function GET(request: NextRequest) {
       where: { userId: user.id }
     })
 
-    const totalPayments = await prisma.payment.count({
-      where: {
-        invoice: {
-          userId: user.id
-        }
+    const pendingInvoices = await prisma.invoice.count({
+      where: { 
+        userId: user.id,
+        status: 'pending'
       }
     })
 
-    // Get revenue data
-    const revenueData = await prisma.payment.aggregate({
+    // Get total revenue
+    const totalRevenueData = await prisma.payment.aggregate({
+      where: {
+        status: 'completed',
+        invoice: {
+          userId: user.id
+        }
+      },
+      _sum: {
+        amount: true
+      }
+    })
+
+    const totalRevenue = totalRevenueData._sum.amount || 0
+
+    // Get monthly revenue
+    const monthlyRevenueData = await prisma.payment.aggregate({
       where: {
         status: 'completed',
         createdAt: {
@@ -63,87 +77,21 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    const totalRevenue = revenueData._sum.amount || 0
+    const monthlyRevenue = monthlyRevenueData._sum.amount || 0
 
-    // Get monthly revenue for chart
-    const monthlyRevenue = await prisma.$queryRaw`
-      SELECT 
-        DATE_TRUNC('month', p."createdAt") as month,
-        SUM(p.amount) as revenue
-      FROM payments p
-      JOIN invoices i ON p."invoiceId" = i.id
-      WHERE i."userId" = ${user.id} 
-        AND p.status = 'completed'
-        AND p."createdAt" >= ${startDate}
-      GROUP BY DATE_TRUNC('month', p."createdAt")
-      ORDER BY month
-    `
-
-    // Get quote status distribution
-    const quoteStatuses = await prisma.quote.groupBy({
-      by: ['status'],
-      where: { userId: user.id },
-      _count: {
-        status: true
-      }
-    })
-
-    // Get invoice status distribution
-    const invoiceStatuses = await prisma.invoice.groupBy({
-      by: ['status'],
-      where: { userId: user.id },
-      _count: {
-        status: true
-      }
-    })
-
-    // Get top clients by revenue
-    const topClients = await prisma.payment.groupBy({
-      by: ['invoiceId'],
-      where: {
-        status: 'completed',
-        invoice: {
-          userId: user.id
-        }
-      },
-      _sum: {
-        amount: true
-      },
-      orderBy: {
-        _sum: {
-          amount: 'desc'
-        }
-      },
-      take: 5
-    })
-
-    // Get client details for top clients
-    const topClientsWithDetails = await Promise.all(
-      topClients.map(async (payment: any) => {
-        const invoice = await prisma.invoice.findUnique({
-          where: { id: payment.invoiceId },
-          include: { client: true }
-        })
-        return {
-          clientName: invoice?.client.name || 'Unknown',
-          revenue: payment._sum.amount || 0
-        }
-      })
-    )
-
-    // Get recent activity
+    // Get recent activity - combine quotes, invoices, and payments
     const recentQuotes = await prisma.quote.findMany({
       where: { userId: user.id },
       include: { client: true },
       orderBy: { createdAt: 'desc' },
-      take: 5
+      take: 3
     })
 
     const recentInvoices = await prisma.invoice.findMany({
       where: { userId: user.id },
       include: { client: true },
       orderBy: { createdAt: 'desc' },
-      take: 5
+      take: 3
     })
 
     const recentPayments = await prisma.payment.findMany({
@@ -158,28 +106,45 @@ export async function GET(request: NextRequest) {
         }
       },
       orderBy: { createdAt: 'desc' },
-      take: 5
+      take: 3
     })
 
+    // Combine and format recent activity
+    const recentActivity = [
+      ...recentQuotes.map(quote => ({
+        id: quote.id,
+        type: 'quote' as const,
+        title: `${quote.title || 'Quote'} - ${quote.client?.name || 'Unknown Client'}`,
+        amount: quote.total || 0,
+        status: quote.status,
+        date: quote.createdAt.toISOString()
+      })),
+      ...recentInvoices.map(invoice => ({
+        id: invoice.id,
+        type: 'invoice' as const,
+        title: `${invoice.title || 'Invoice'} - ${invoice.client?.name || 'Unknown Client'}`,
+        amount: invoice.total || 0,
+        status: invoice.status,
+        date: invoice.createdAt.toISOString()
+      })),
+      ...recentPayments.map(payment => ({
+        id: payment.id,
+        type: 'payment' as const,
+        title: `Payment - ${payment.invoice?.client?.name || 'Unknown Client'}`,
+        amount: payment.amount || 0,
+        status: payment.status,
+        date: payment.createdAt.toISOString()
+      }))
+    ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5)
+
     return NextResponse.json({
-      overview: {
-        totalClients,
-        totalQuotes,
-        totalInvoices,
-        totalPayments,
-        totalRevenue: parseFloat(totalRevenue.toString())
-      },
-      charts: {
-        monthlyRevenue,
-        quoteStatuses,
-        invoiceStatuses
-      },
-      topClients: topClientsWithDetails,
-      recentActivity: {
-        quotes: recentQuotes,
-        invoices: recentInvoices,
-        payments: recentPayments
-      }
+      totalRevenue: parseFloat(totalRevenue.toString()),
+      totalClients,
+      totalQuotes,
+      totalInvoices,
+      pendingInvoices,
+      monthlyRevenue: parseFloat(monthlyRevenue.toString()),
+      recentActivity
     })
   } catch (error) {
     console.error('Error fetching analytics:', error)
