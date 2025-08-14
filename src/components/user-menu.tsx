@@ -1,20 +1,35 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useSession, signOut } from "next-auth/react"
 import { ChevronDown, LogOut } from "lucide-react"
 
 export default function UserMenu() {
   const { data: session } = useSession()
   const [isOpen, setIsOpen] = useState(false)
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, right: 0 })
 
   const handleSignOut = () => {
     signOut({ callbackUrl: "/auth/signin" })
   }
 
+  useEffect(() => {
+    if (isOpen) {
+      const button = document.querySelector('[data-user-menu-button]') as HTMLElement
+      if (button) {
+        const rect = button.getBoundingClientRect()
+        setDropdownPosition({
+          top: rect.bottom + 8,
+          right: window.innerWidth - rect.right
+        })
+      }
+    }
+  }, [isOpen])
+
   return (
     <div style={{position: 'relative', zIndex: 10000, overflow: 'visible'}}>
       <button
+        data-user-menu-button
         onClick={() => setIsOpen(!isOpen)}
         style={{
           display: 'flex',
@@ -40,17 +55,16 @@ export default function UserMenu() {
 
       {isOpen && (
         <div style={{
-          position: 'absolute',
-          top: '100%',
-          right: '0',
-          marginTop: '0.5rem',
+          position: 'fixed',
+          top: `${dropdownPosition.top}px`,
+          right: `${dropdownPosition.right}px`,
           backgroundColor: 'rgba(15, 23, 42, 0.95)',
           backdropFilter: 'blur(8px)',
           border: '1px solid rgba(255, 255, 255, 0.2)',
           borderRadius: '0.75rem',
           padding: '0.5rem',
           minWidth: '200px',
-          zIndex: 99999,
+          zIndex: 999999,
           boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.3)',
           transform: 'translateZ(0)'
         }}>
