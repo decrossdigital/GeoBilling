@@ -13,7 +13,7 @@ export default function UserMenu() {
   }
 
   return (
-    <div style={{position: 'relative', zIndex: 10000}}>
+    <div style={{position: 'relative', zIndex: 10000, overflow: 'visible'}}>
       <button
         onClick={() => setIsOpen(!isOpen)}
         style={{
@@ -50,8 +50,9 @@ export default function UserMenu() {
           borderRadius: '0.75rem',
           padding: '0.5rem',
           minWidth: '200px',
-          zIndex: 9999,
-          boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.3)'
+          zIndex: 99999,
+          boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.3)',
+          transform: 'translateZ(0)'
         }}>
           <div style={{padding: '0.75rem', borderBottom: '1px solid rgba(255, 255, 255, 0.1)'}}>
             <div style={{fontSize: '0.875rem', fontWeight: '500', color: 'white'}}>{session?.user?.name || "John Doe"}</div>
