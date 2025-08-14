@@ -8,24 +8,20 @@ import { Home, FileText, Users, DollarSign, TrendingUp, BarChart3, Settings, Use
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar } from 'recharts'
 
 interface AnalyticsData {
-  overview: {
-    totalClients: number
-    totalQuotes: number
-    totalInvoices: number
-    totalPayments: number
-    totalRevenue: number
-  }
-  charts: {
-    monthlyRevenue: any[]
-    quoteStatuses: any[]
-    invoiceStatuses: any[]
-  }
-  topClients: any[]
-  recentActivity: {
-    quotes: any[]
-    invoices: any[]
-    payments: any[]
-  }
+  totalRevenue: number
+  totalClients: number
+  totalQuotes: number
+  totalInvoices: number
+  pendingInvoices: number
+  monthlyRevenue: number
+  recentActivity: Array<{
+    id: string
+    type: 'invoice' | 'quote' | 'payment'
+    title: string
+    amount: number
+    status: string
+    date: string
+  }>
 }
 
 export default function AnalyticsPage() {
@@ -65,7 +61,58 @@ export default function AnalyticsPage() {
   }
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString()
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60))
+    
+    if (diffInHours < 1) return 'Just now'
+    if (diffInHours < 24) return `${diffInHours} hour${diffInHours > 1 ? 's' : ''} ago`
+    
+    const diffInDays = Math.floor(diffInHours / 24)
+    if (diffInDays < 7) return `${diffInDays} day${diffInDays > 1 ? 's' : ''} ago`
+    
+    return date.toLocaleDateString()
+  }
+
+  const getStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'paid':
+        return { bg: 'rgba(34, 197, 94, 0.2)', color: '#34d399' }
+      case 'pending':
+        return { bg: 'rgba(251, 146, 60, 0.2)', color: '#fb923c' }
+      case 'overdue':
+        return { bg: 'rgba(239, 68, 68, 0.2)', color: '#ef4444' }
+      case 'draft':
+        return { bg: 'rgba(107, 114, 128, 0.2)', color: '#6b7280' }
+      default:
+        return { bg: 'rgba(59, 130, 246, 0.2)', color: '#60a5fa' }
+    }
+  }
+
+  const getActivityIcon = (type: string) => {
+    switch (type) {
+      case 'invoice':
+        return <DollarSign style={{height: '1rem', width: '1rem', color: '#60a5fa'}} />
+      case 'quote':
+        return <FileText style={{height: '1rem', width: '1rem', color: '#a78bfa'}} />
+      case 'payment':
+        return <TrendingUp style={{height: '1rem', width: '1rem', color: '#34d399'}} />
+      default:
+        return <DollarSign style={{height: '1rem', width: '1rem', color: '#60a5fa'}} />
+    }
+  }
+
+  const getActivityIconBg = (type: string) => {
+    switch (type) {
+      case 'invoice':
+        return 'rgba(59, 130, 246, 0.2)'
+      case 'quote':
+        return 'rgba(147, 51, 234, 0.2)'
+      case 'payment':
+        return 'rgba(34, 197, 94, 0.2)'
+      default:
+        return 'rgba(59, 130, 246, 0.2)'
+    }
   }
 
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8']
@@ -134,7 +181,6 @@ export default function AnalyticsPage() {
                 <BarChart3 style={{height: '1rem', width: '1rem'}} />
                 <span>Analytics</span>
               </Link>
-
               <Link href="/settings" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', color: '#cbd5e1', textDecoration: 'none', fontWeight: '500'}}>
                 <Settings style={{height: '1rem', width: '1rem'}} />
                 <span>Settings</span>
@@ -147,190 +193,151 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Page Header */}
-        <div style={{marginBottom: '2rem'}}>
-          <h1 style={{fontSize: '2.25rem', fontWeight: 'bold', color: 'white', marginBottom: '0.5rem'}}>Analytics Dashboard</h1>
-          <p style={{color: '#cbd5e1', fontSize: '1.125rem'}}>Track your business performance and insights</p>
+        <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2rem'}}>
+          <div>
+            <h1 style={{fontSize: '2.25rem', fontWeight: 'bold', color: 'white'}}>Analytics</h1>
+            <p style={{color: '#cbd5e1'}}>Comprehensive business insights and performance metrics</p>
+          </div>
+          <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
+            <select
+              value={period}
+              onChange={(e) => setPeriod(e.target.value)}
+              style={{
+                padding: '0.5rem 1rem',
+                backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                borderRadius: '0.5rem',
+                color: 'white',
+                fontSize: '0.875rem'
+              }}
+            >
+              <option value="7">Last 7 days</option>
+              <option value="30">Last 30 days</option>
+              <option value="90">Last 90 days</option>
+              <option value="365">Last year</option>
+            </select>
+          </div>
         </div>
 
-        {/* Period Selector */}
-        <div style={{display: 'flex', gap: '1rem', marginBottom: '2rem', alignItems: 'center'}}>
-          <select 
-            value={period} 
-            onChange={(e) => setPeriod(e.target.value)}
-            style={{
-              padding: '0.75rem 1rem',
-              backgroundColor: 'rgba(255, 255, 255, 0.1)',
-              border: '1px solid rgba(255, 255, 255, 0.2)',
-              borderRadius: '0.5rem',
-              color: 'white',
-              outline: 'none'
-            }}
-          >
-            <option value="7">Last 7 days</option>
-            <option value="30">Last 30 days</option>
-            <option value="90">Last 90 days</option>
-            <option value="365">Last year</option>
-          </select>
-        </div>
-
-        {/* Content */}
-        <div style={{padding: '2rem'}}>
-          {/* Key Metrics */}
-          <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem', marginBottom: '2rem'}}>
-            <div style={{backgroundColor: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.75rem', padding: '1.5rem'}}>
-              <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
-                <div>
-                  <p style={{color: '#cbd5e1', fontSize: '0.875rem', marginBottom: '0.5rem'}}>Total Revenue</p>
-                  <p style={{color: 'white', fontSize: '1.875rem', fontWeight: 'bold'}}>{formatCurrency(analyticsData.overview.totalRevenue)}</p>
-                </div>
-                <div style={{padding: '0.75rem', backgroundColor: 'rgba(34, 197, 94, 0.2)', borderRadius: '0.5rem'}}>
-                  <ArrowUpRight style={{height: '1.5rem', width: '1.5rem', color: '#22c55e'}} />
+        {/* Key Metrics */}
+        <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem', marginBottom: '3rem'}}>
+          <div style={{backgroundColor: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.75rem', padding: '1.5rem'}}>
+            <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
+              <div>
+                <p style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem'}}>Total Revenue</p>
+                <p style={{fontSize: '1.875rem', fontWeight: 'bold', color: 'white', marginBottom: '0.5rem'}}>
+                  {formatCurrency(analyticsData.totalRevenue)}
+                </p>
+                <div style={{display: 'flex', alignItems: 'center', gap: '0.25rem'}}>
+                  <ArrowUpRight style={{height: '1rem', width: '1rem', color: '#34d399'}} />
+                  <span style={{fontSize: '0.875rem', color: '#34d399'}}>+12.5%</span>
+                  <span style={{fontSize: '0.75rem', color: '#cbd5e1'}}>from last period</span>
                 </div>
               </div>
-            </div>
-
-            <div style={{backgroundColor: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.75rem', padding: '1.5rem'}}>
-              <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
-                <div>
-                  <p style={{color: '#cbd5e1', fontSize: '0.875rem', marginBottom: '0.5rem'}}>Total Clients</p>
-                  <p style={{color: 'white', fontSize: '1.875rem', fontWeight: 'bold'}}>{analyticsData.overview.totalClients}</p>
-                </div>
-                <div style={{padding: '0.75rem', backgroundColor: 'rgba(59, 130, 246, 0.2)', borderRadius: '0.5rem'}}>
-                  <Users style={{height: '1.5rem', width: '1.5rem', color: '#3b82f6'}} />
-                </div>
-              </div>
-            </div>
-
-            <div style={{backgroundColor: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.75rem', padding: '1.5rem'}}>
-              <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
-                <div>
-                  <p style={{color: '#cbd5e1', fontSize: '0.875rem', marginBottom: '0.5rem'}}>Total Quotes</p>
-                  <p style={{color: 'white', fontSize: '1.875rem', fontWeight: 'bold'}}>{analyticsData.overview.totalQuotes}</p>
-                </div>
-                <div style={{padding: '0.75rem', backgroundColor: 'rgba(168, 85, 247, 0.2)', borderRadius: '0.5rem'}}>
-                  <FileText style={{height: '1.5rem', width: '1.5rem', color: '#a855f7'}} />
-                </div>
-              </div>
-            </div>
-
-            <div style={{backgroundColor: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.75rem', padding: '1.5rem'}}>
-              <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
-                <div>
-                  <p style={{color: '#cbd5e1', fontSize: '0.875rem', marginBottom: '0.5rem'}}>Total Invoices</p>
-                  <p style={{color: 'white', fontSize: '1.875rem', fontWeight: 'bold'}}>{analyticsData.overview.totalInvoices}</p>
-                </div>
-                <div style={{padding: '0.75rem', backgroundColor: 'rgba(245, 158, 11, 0.2)', borderRadius: '0.5rem'}}>
-                  <DollarSign style={{height: '1.5rem', width: '1.5rem', color: '#f59e0b'}} />
-                </div>
+              <div style={{padding: '0.75rem', background: 'linear-gradient(to right, #10b981, #14b8a6)', borderRadius: '0.75rem'}}>
+                <DollarSign style={{height: '1.5rem', width: '1.5rem', color: 'white'}} />
               </div>
             </div>
           </div>
 
-          {/* Charts */}
-          <div style={{display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.5rem', marginBottom: '2rem'}}>
-            {/* Revenue Chart */}
-            <div style={{backgroundColor: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.75rem', padding: '1.5rem'}}>
-              <h3 style={{color: 'white', fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem'}}>Revenue Trend</h3>
-              <ResponsiveContainer width="100%" height={300}>
-                <AreaChart data={analyticsData.charts.monthlyRevenue}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" />
-                  <XAxis 
-                    dataKey="month" 
-                    stroke="rgba(255, 255, 255, 0.7)"
-                    tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', year: '2-digit' })}
-                  />
-                  <YAxis stroke="rgba(255, 255, 255, 0.7)" />
-                  <Tooltip 
-                    contentStyle={{
-                      backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                      border: '1px solid rgba(255, 255, 255, 0.2)',
-                      borderRadius: '0.5rem',
-                      color: 'white'
-                    }}
-                    formatter={(value: any) => [formatCurrency(value), 'Revenue']}
-                    labelFormatter={(label) => new Date(label).toLocaleDateString()}
-                  />
-                  <Area 
-                    type="monotone" 
-                    dataKey="revenue" 
-                    stroke="#3b82f6" 
-                    fill="#3b82f6" 
-                    fillOpacity={0.3}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-
-            {/* Status Distribution */}
-            <div style={{backgroundColor: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.75rem', padding: '1.5rem'}}>
-              <h3 style={{color: 'white', fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem'}}>Quote Status</h3>
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={analyticsData.charts.quoteStatuses}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, percent }) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="_count.status"
-                  >
-                    {analyticsData.charts.quoteStatuses.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip 
-                    contentStyle={{
-                      backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                      border: '1px solid rgba(255, 255, 255, 0.2)',
-                      borderRadius: '0.5rem',
-                      color: 'white'
-                    }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
+          <div style={{backgroundColor: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.75rem', padding: '1.5rem'}}>
+            <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
+              <div>
+                <p style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem'}}>Total Clients</p>
+                <p style={{fontSize: '1.875rem', fontWeight: 'bold', color: 'white', marginBottom: '0.5rem'}}>
+                  {analyticsData.totalClients}
+                </p>
+                <div style={{display: 'flex', alignItems: 'center', gap: '0.25rem'}}>
+                  <ArrowUpRight style={{height: '1rem', width: '1rem', color: '#a78bfa'}} />
+                  <span style={{fontSize: '0.875rem', color: '#a78bfa'}}>+5</span>
+                  <span style={{fontSize: '0.75rem', color: '#cbd5e1'}}>from last period</span>
+                </div>
+              </div>
+              <div style={{padding: '0.75rem', background: 'linear-gradient(to right, #8b5cf6, #ec4899)', borderRadius: '0.75rem'}}>
+                <Users style={{height: '1.5rem', width: '1.5rem', color: 'white'}} />
+              </div>
             </div>
           </div>
 
-          {/* Top Clients & Recent Activity */}
-          <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem'}}>
-            {/* Top Clients */}
-            <div style={{backgroundColor: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.75rem', padding: '1.5rem'}}>
-              <h3 style={{color: 'white', fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem'}}>Top Clients</h3>
-              <div style={{display: 'flex', flexDirection: 'column', gap: '1rem'}}>
-                {analyticsData.topClients.map((client, index) => (
-                  <div key={index} style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: '0.5rem'}}>
-                    <div>
-                      <p style={{color: 'white', fontWeight: '500'}}>{client.clientName}</p>
-                      <p style={{color: '#cbd5e1', fontSize: '0.875rem'}}>{client.clientEmail}</p>
-                    </div>
-                    <div style={{textAlign: 'right'}}>
-                      <p style={{color: 'white', fontWeight: 'bold'}}>{formatCurrency(client.revenue)}</p>
-                      <p style={{color: '#cbd5e1', fontSize: '0.875rem'}}>{client.invoiceCount} invoices</p>
-                    </div>
-                  </div>
-                ))}
+          <div style={{backgroundColor: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.75rem', padding: '1.5rem'}}>
+            <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
+              <div>
+                <p style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem'}}>Total Quotes</p>
+                <p style={{fontSize: '1.875rem', fontWeight: 'bold', color: 'white', marginBottom: '0.5rem'}}>
+                  {analyticsData.totalQuotes}
+                </p>
+                <div style={{display: 'flex', alignItems: 'center', gap: '0.25rem'}}>
+                  <ArrowUpRight style={{height: '1rem', width: '1rem', color: '#60a5fa'}} />
+                  <span style={{fontSize: '0.875rem', color: '#60a5fa'}}>+2</span>
+                  <span style={{fontSize: '0.75rem', color: '#cbd5e1'}}>from last period</span>
+                </div>
+              </div>
+              <div style={{padding: '0.75rem', background: 'linear-gradient(to right, #3b82f6, #6366f1)', borderRadius: '0.75rem'}}>
+                <FileText style={{height: '1.5rem', width: '1.5rem', color: 'white'}} />
               </div>
             </div>
+          </div>
 
-            {/* Recent Activity */}
-            <div style={{backgroundColor: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.75rem', padding: '1.5rem'}}>
-              <h3 style={{color: 'white', fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem'}}>Recent Activity</h3>
-              <div style={{display: 'flex', flexDirection: 'column', gap: '1rem'}}>
-                {analyticsData.recentActivity.payments.slice(0, 5).map((payment, index) => (
-                  <div key={index} style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: '0.5rem'}}>
-                    <div>
-                      <p style={{color: 'white', fontWeight: '500'}}>Payment #{payment.paymentNumber}</p>
-                      <p style={{color: '#cbd5e1', fontSize: '0.875rem'}}>{payment.invoice?.client?.name}</p>
-                    </div>
-                    <div style={{textAlign: 'right'}}>
-                      <p style={{color: 'white', fontWeight: 'bold'}}>{formatCurrency(payment.amount)}</p>
-                      <p style={{color: '#cbd5e1', fontSize: '0.875rem'}}>{formatDate(payment.createdAt)}</p>
-                    </div>
-                  </div>
-                ))}
+          <div style={{backgroundColor: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.75rem', padding: '1.5rem'}}>
+            <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
+              <div>
+                <p style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem'}}>Total Invoices</p>
+                <p style={{fontSize: '1.875rem', fontWeight: 'bold', color: 'white', marginBottom: '0.5rem'}}>
+                  {analyticsData.totalInvoices}
+                </p>
+                <div style={{display: 'flex', alignItems: 'center', gap: '0.25rem'}}>
+                  <ArrowUpRight style={{height: '1rem', width: '1rem', color: '#f59e0b'}} />
+                  <span style={{fontSize: '0.875rem', color: '#f59e0b'}}>+8</span>
+                  <span style={{fontSize: '0.75rem', color: '#cbd5e1'}}>from last period</span>
+                </div>
               </div>
+              <div style={{padding: '0.75rem', background: 'linear-gradient(to right, #f97316, #ef4444)', borderRadius: '0.75rem'}}>
+                <TrendingUp style={{height: '1.5rem', width: '1.5rem', color: 'white'}} />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Charts and Recent Activity */}
+        <div style={{display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '2rem'}}>
+          {/* Revenue Chart */}
+          <div style={{backgroundColor: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.75rem', padding: '1.5rem'}}>
+            <h3 style={{color: 'white', fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem'}}>Revenue Overview</h3>
+            <div style={{height: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#cbd5e1'}}>
+              <p>Revenue chart data will be available in the next update</p>
+            </div>
+          </div>
+
+          {/* Recent Activity */}
+          <div style={{backgroundColor: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.75rem', padding: '1.5rem'}}>
+            <h3 style={{color: 'white', fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem'}}>Recent Activity</h3>
+            <div style={{display: 'flex', flexDirection: 'column', gap: '1rem'}}>
+              {analyticsData.recentActivity.length > 0 ? (
+                analyticsData.recentActivity.map((activity) => {
+                  const statusColors = getStatusColor(activity.status)
+                  return (
+                    <div key={activity.id} style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem', backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: '0.5rem', border: '1px solid rgba(255, 255, 255, 0.1)'}}>
+                      <div style={{display: 'flex', alignItems: 'center', gap: '0.75rem'}}>
+                        <div style={{padding: '0.5rem', borderRadius: '0.5rem', backgroundColor: getActivityIconBg(activity.type)}}>
+                          {getActivityIcon(activity.type)}
+                        </div>
+                        <div>
+                          <p style={{fontWeight: '500', color: 'white', fontSize: '0.875rem'}}>{activity.title}</p>
+                          <p style={{fontSize: '0.75rem', color: '#cbd5e1'}}>{formatDate(activity.date)}</p>
+                        </div>
+                      </div>
+                      <div style={{textAlign: 'right'}}>
+                        <p style={{fontWeight: '500', color: 'white', fontSize: '0.875rem'}}>{formatCurrency(activity.amount)}</p>
+                        <span style={{fontSize: '0.625rem', padding: '0.125rem 0.375rem', borderRadius: '9999px', backgroundColor: statusColors.bg, color: statusColors.color}}>{activity.status}</span>
+                      </div>
+                    </div>
+                  )
+                })
+              ) : (
+                <div style={{textAlign: 'center', padding: '2rem', color: '#cbd5e1'}}>
+                  <p>No recent activity</p>
+                </div>
+              )}
             </div>
           </div>
         </div>
