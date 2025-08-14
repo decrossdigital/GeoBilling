@@ -13,7 +13,7 @@ export default function UserMenu() {
   }
 
   return (
-    <div style={{position: 'relative'}}>
+    <div style={{position: 'relative', zIndex: 10000}}>
       <button
         onClick={() => setIsOpen(!isOpen)}
         style={{
