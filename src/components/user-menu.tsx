@@ -50,7 +50,7 @@ export default function UserMenu() {
           borderRadius: '0.75rem',
           padding: '0.5rem',
           minWidth: '200px',
-          zIndex: 1000,
+          zIndex: 9999,
           boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.3)'
         }}>
           <div style={{padding: '0.75rem', borderBottom: '1px solid rgba(255, 255, 255, 0.1)'}}>
