@@ -18,6 +18,7 @@ import {
   User,
   Settings
 } from "lucide-react"
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area } from 'recharts'
 
 interface DashboardData {
   totalRevenue: number
@@ -36,10 +37,17 @@ interface DashboardData {
   }>
 }
 
+interface ReportData {
+  type: string
+  data: any
+}
+
 export default function Dashboard() {
   const { data: session } = useSession()
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null)
+  const [reportData, setReportData] = useState<ReportData | null>(null)
   const [loading, setLoading] = useState(true)
+  const [reportType, setReportType] = useState('overview')
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -58,8 +66,22 @@ export default function Dashboard() {
       }
     }
 
+    const fetchReportData = async () => {
+      try {
+        const params = new URLSearchParams({ type: reportType })
+        const response = await fetch(`/api/reports?${params}`)
+        if (response.ok) {
+          const data = await response.json()
+          setReportData(data)
+        }
+      } catch (error) {
+        console.error('Error fetching report data:', error)
+      }
+    }
+
     fetchDashboardData()
-  }, [])
+    fetchReportData()
+  }, [reportType])
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -123,6 +145,8 @@ export default function Dashboard() {
     }
   }
 
+  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8']
+
   if (loading) {
     return (
       <div style={{minHeight: '100vh', background: 'linear-gradient(to bottom right, #0f172a, #581c87, #0f172a)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
@@ -180,9 +204,9 @@ export default function Dashboard() {
                 <User style={{height: '1rem', width: '1rem'}} />
                 <span>Contractors</span>
               </Link>
-              <Link href="/reports" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', color: '#cbd5e1', textDecoration: 'none', fontWeight: '500'}}>
+              <Link href="/analytics" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', color: '#cbd5e1', textDecoration: 'none', fontWeight: '500'}}>
                 <BarChart3 style={{height: '1rem', width: '1rem'}} />
-                <span>Reports</span>
+                <span>Analytics</span>
               </Link>
               <Link href="/settings" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', color: '#cbd5e1', textDecoration: 'none', fontWeight: '500'}}>
                 <Settings style={{height: '1rem', width: '1rem'}} />
@@ -321,7 +345,7 @@ export default function Dashboard() {
         </div>
 
         {/* Recent Activity and Quick Stats */}
-        <div style={{display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '2rem'}}>
+        <div style={{display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '2rem', marginBottom: '3rem'}}>
           {/* Recent Activity */}
           <div style={{backgroundColor: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.75rem', padding: '1.5rem'}}>
             <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem'}}>
@@ -431,6 +455,155 @@ export default function Dashboard() {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Reports Section */}
+        <div style={{marginBottom: '2rem'}}>
+          <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem'}}>
+            <h2 style={{fontSize: '1.5rem', fontWeight: 'bold', color: 'white'}}>Business Reports</h2>
+            <div style={{display: 'flex', gap: '0.5rem'}}>
+              <button
+                onClick={() => setReportType('overview')}
+                style={{
+                  padding: '0.5rem 1rem',
+                  backgroundColor: reportType === 'overview' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 255, 255, 0.1)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '0.5rem',
+                  cursor: 'pointer',
+                  fontSize: '0.875rem'
+                }}
+              >
+                Overview
+              </button>
+              <button
+                onClick={() => setReportType('revenue')}
+                style={{
+                  padding: '0.5rem 1rem',
+                  backgroundColor: reportType === 'revenue' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 255, 255, 0.1)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '0.5rem',
+                  cursor: 'pointer',
+                  fontSize: '0.875rem'
+                }}
+              >
+                Revenue
+              </button>
+              <button
+                onClick={() => setReportType('invoices')}
+                style={{
+                  padding: '0.5rem 1rem',
+                  backgroundColor: reportType === 'invoices' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 255, 255, 0.1)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '0.5rem',
+                  cursor: 'pointer',
+                  fontSize: '0.875rem'
+                }}
+              >
+                Invoices
+              </button>
+            </div>
+          </div>
+
+          {reportData && (
+            <div style={{backgroundColor: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.75rem', padding: '1.5rem'}}>
+              {reportType === 'overview' && (
+                <div>
+                  <h3 style={{color: 'white', fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem'}}>Business Overview</h3>
+                  <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem'}}>
+                    <div style={{padding: '1rem', backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: '0.5rem'}}>
+                      <p style={{color: '#cbd5e1', fontSize: '0.875rem'}}>Total Revenue</p>
+                      <p style={{color: 'white', fontSize: '1.5rem', fontWeight: 'bold'}}>{formatCurrency(reportData.data.totalRevenue)}</p>
+                    </div>
+                    <div style={{padding: '1rem', backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: '0.5rem'}}>
+                      <p style={{color: '#cbd5e1', fontSize: '0.875rem'}}>Total Quotes</p>
+                      <p style={{color: 'white', fontSize: '1.5rem', fontWeight: 'bold'}}>{reportData.data.totalQuotes}</p>
+                    </div>
+                    <div style={{padding: '1rem', backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: '0.5rem'}}>
+                      <p style={{color: '#cbd5e1', fontSize: '0.875rem'}}>Total Invoices</p>
+                      <p style={{color: 'white', fontSize: '1.5rem', fontWeight: 'bold'}}>{reportData.data.totalInvoices}</p>
+                    </div>
+                    <div style={{padding: '1rem', backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: '0.5rem'}}>
+                      <p style={{color: '#cbd5e1', fontSize: '0.875rem'}}>Total Clients</p>
+                      <p style={{color: 'white', fontSize: '1.5rem', fontWeight: 'bold'}}>{reportData.data.totalClients}</p>
+                    </div>
+                    <div style={{padding: '1rem', backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: '0.5rem'}}>
+                      <p style={{color: '#cbd5e1', fontSize: '0.875rem'}}>Conversion Rate</p>
+                      <p style={{color: 'white', fontSize: '1.5rem', fontWeight: 'bold'}}>{reportData.data.conversionRate}%</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {reportType === 'revenue' && reportData.data.monthlyRevenue && (
+                <div>
+                  <h3 style={{color: 'white', fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem'}}>Monthly Revenue</h3>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <AreaChart data={reportData.data.monthlyRevenue}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" />
+                      <XAxis 
+                        dataKey="month" 
+                        stroke="rgba(255, 255, 255, 0.7)"
+                        tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', year: '2-digit' })}
+                      />
+                      <YAxis stroke="rgba(255, 255, 255, 0.7)" />
+                      <Tooltip 
+                        contentStyle={{
+                          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                          border: '1px solid rgba(255, 255, 255, 0.2)',
+                          borderRadius: '0.5rem',
+                          color: 'white'
+                        }}
+                        formatter={(value: any) => [formatCurrency(value), 'Revenue']}
+                        labelFormatter={(label) => new Date(label).toLocaleDateString()}
+                      />
+                      <Area 
+                        type="monotone" 
+                        dataKey="revenue" 
+                        stroke="#3b82f6" 
+                        fill="#3b82f6" 
+                        fillOpacity={0.3}
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+
+              {reportType === 'invoices' && reportData.data.statuses && (
+                <div>
+                  <h3 style={{color: 'white', fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem'}}>Invoice Status Distribution</h3>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <PieChart>
+                      <Pie
+                        data={reportData.data.statuses}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        label={({ status, percent }) => `${status} ${((percent || 0) * 100).toFixed(0)}%`}
+                        outerRadius={80}
+                        fill="#8884d8"
+                        dataKey="_count.status"
+                      >
+                        {reportData.data.statuses.map((entry: any, index: number) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip 
+                        contentStyle={{
+                          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                          border: '1px solid rgba(255, 255, 255, 0.2)',
+                          borderRadius: '0.5rem',
+                          color: 'white'
+                        }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

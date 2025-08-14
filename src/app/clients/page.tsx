@@ -166,10 +166,7 @@ export default function ClientsPage() {
                 <User style={{height: '1rem', width: '1rem'}} />
                 <span>Contractors</span>
               </Link>
-              <Link href="/reports" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', color: '#cbd5e1', textDecoration: 'none', fontWeight: '500'}}>
-                <BarChart3 style={{height: '1rem', width: '1rem'}} />
-                <span>Reports</span>
-              </Link>
+
               <Link href="/settings" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', color: '#cbd5e1', textDecoration: 'none', fontWeight: '500'}}>
                 <Settings style={{height: '1rem', width: '1rem'}} />
                 <span>Settings</span>

@@ -99,10 +99,7 @@ export default function SettingsPage() {
                 <BarChart3 style={{height: '1rem', width: '1rem'}} />
                 <span>Analytics</span>
               </Link>
-              <Link href="/reports" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', color: '#cbd5e1', textDecoration: 'none', fontWeight: '500'}}>
-                <BarChart3 style={{height: '1rem', width: '1rem'}} />
-                <span>Reports</span>
-              </Link>
+
               <Link href="/settings" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', background: 'linear-gradient(to right, #9333ea, #3b82f6)', color: 'white', textDecoration: 'none', fontWeight: '500', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'}}>
                 <Settings style={{height: '1rem', width: '1rem'}} />
                 <span>Settings</span>
