@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
 import Link from "next/link"
 import UserMenu from "@/components/user-menu"
-import { Plus, Search, Edit, Trash2, Mail, Phone, Users, FileText, DollarSign, TrendingUp, Music, Home, X, Save, User, BarChart3, Settings } from "lucide-react"
+import { Plus, Search, Edit, Trash2, Mail, Phone, Users, FileText, DollarSign, TrendingUp, Music, Home, X, Save, User, BarChart3, Settings, ExternalLink } from "lucide-react"
 
 interface Client {
   id: string
@@ -306,7 +306,7 @@ export default function ClientsPage() {
                   <th style={{padding: '1rem', textAlign: 'left', fontSize: '0.875rem', fontWeight: '500', color: '#cbd5e1'}}>Revenue</th>
                   <th style={{padding: '1rem', textAlign: 'left', fontSize: '0.875rem', fontWeight: '500', color: '#cbd5e1'}}>Last Contact</th>
                   
-                  <th style={{padding: '1rem', textAlign: 'left', fontSize: '0.875rem', fontWeight: '500', color: '#cbd5e1'}}>Actions</th>
+                                        <th style={{padding: '1rem', textAlign: 'left', fontSize: '0.875rem', fontWeight: '500', color: '#cbd5e1'}}>Details</th>
                 </tr>
               </thead>
               <tbody>
@@ -364,64 +364,26 @@ export default function ClientsPage() {
                          </div>
                        </td>
                       <td style={{padding: '1rem'}}>
-                        <div style={{display: 'flex', gap: '0.5rem'}}>
-                          <button
-                            onClick={() => handleEmail(client.email)}
-                            style={{
-                              padding: '0.5rem',
-                              backgroundColor: 'rgba(59, 130, 246, 0.2)',
-                              border: '1px solid rgba(59, 130, 246, 0.3)',
-                              borderRadius: '0.25rem',
-                              color: '#60a5fa',
-                              cursor: 'pointer'
-                            }}
-                            title="Send Email"
-                          >
-                            <Mail style={{height: '1rem', width: '1rem'}} />
-                          </button>
-                          <button
-                            onClick={() => handlePhone(client.phone)}
-                            style={{
-                              padding: '0.5rem',
-                              backgroundColor: 'rgba(16, 185, 129, 0.2)',
-                              border: '1px solid rgba(16, 185, 129, 0.3)',
-                              borderRadius: '0.25rem',
-                              color: '#34d399',
-                              cursor: 'pointer'
-                            }}
-                            title="Call Phone"
-                          >
-                            <Phone style={{height: '1rem', width: '1rem'}} />
-                          </button>
-                          <button
-                            onClick={() => setEditingClient(client)}
-                            style={{
-                              padding: '0.5rem',
-                              backgroundColor: 'rgba(251, 191, 36, 0.2)',
-                              border: '1px solid rgba(251, 191, 36, 0.3)',
-                              borderRadius: '0.25rem',
-                              color: '#fbbf24',
-                              cursor: 'pointer'
-                            }}
-                            title="Edit Client"
-                          >
-                            <Edit style={{height: '1rem', width: '1rem'}} />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteClient(client.id)}
-                            style={{
-                              padding: '0.5rem',
-                              backgroundColor: 'rgba(239, 68, 68, 0.2)',
-                              border: '1px solid rgba(239, 68, 68, 0.3)',
-                              borderRadius: '0.25rem',
-                              color: '#f87171',
-                              cursor: 'pointer'
-                            }}
-                            title="Delete Client"
-                          >
-                            <Trash2 style={{height: '1rem', width: '1rem'}} />
-                          </button>
-                        </div>
+                        <Link
+                          href={`/clients/${client.id}`}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.5rem',
+                            padding: '0.5rem 1rem',
+                            backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                            border: '1px solid rgba(59, 130, 246, 0.3)',
+                            borderRadius: '0.25rem',
+                            color: '#60a5fa',
+                            cursor: 'pointer',
+                            textDecoration: 'none',
+                            fontWeight: '500',
+                            fontSize: '0.875rem'
+                          }}
+                        >
+                          <ExternalLink style={{height: '1rem', width: '1rem'}} />
+                          View Details
+                        </Link>
                       </td>
                     </tr>
                   ))
