@@ -4,7 +4,7 @@ import { useState } from "react"
 import { useSession } from "next-auth/react"
 import { 
   Settings, Building, Save, Music, Home, FileText, DollarSign, Users,
-  Mail, Phone, Globe, MapPin, CheckCircle, AlertCircle, Info
+  Mail, Phone, Globe, MapPin, CheckCircle, AlertCircle, User, BarChart3
 } from "lucide-react"
 import Link from "next/link"
 import UserMenu from "@/components/user-menu"
@@ -56,433 +56,202 @@ export default function SettingsPage() {
   }
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-      color: 'white'
-    }}>
-      {/* Header */}
-      <div style={{
-        background: 'rgba(255, 255, 255, 0.1)',
-        backdropFilter: 'blur(10px)',
-        borderBottom: '1px solid rgba(255, 255, 255, 0.2)',
-        padding: '1rem 0'
-      }}>
-        <div style={{
-          maxWidth: '1200px',
-          margin: '0 auto',
-          padding: '0 1.5rem',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <div style={{
-              padding: '0.75rem',
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              borderRadius: '12px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}>
-              <Music style={{ width: '24px', height: '24px', color: 'white' }} />
+    <div style={{minHeight: '100vh', background: 'linear-gradient(to bottom right, #0f172a, #581c87, #0f172a)', color: 'white'}}>
+      <div style={{maxWidth: '1200px', margin: '0 auto', padding: '2rem 1.5rem'}}>
+        {/* Header */}
+        <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2rem'}}>
+          <div style={{display: 'flex', alignItems: 'center', gap: '0.75rem'}}>
+            <div style={{padding: '0.75rem', background: 'linear-gradient(to right, #9333ea, #ec4899)', borderRadius: '1rem'}}>
+              <Music style={{height: '2rem', width: '2rem', color: 'white'}} />
             </div>
             <div>
-              <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', margin: 0 }}>GeoBilling</h1>
-              <p style={{ fontSize: '0.875rem', opacity: 0.8, margin: 0 }}>Uniquitous Music - Professional Billing System</p>
+              <h1 style={{fontSize: '1.875rem', fontWeight: 'bold', color: 'white'}}>GeoBilling</h1>
+              <p style={{fontSize: '0.875rem', color: '#cbd5e1'}}>Uniquitous Music - Professional Billing System</p>
             </div>
-          </div>
-          <UserMenu />
-        </div>
-      </div>
-
-      {/* Navigation */}
-      <div style={{
-        background: 'rgba(255, 255, 255, 0.1)',
-        backdropFilter: 'blur(10px)',
-        borderBottom: '1px solid rgba(255, 255, 255, 0.2)',
-        padding: '0.5rem 0'
-      }}>
-        <div style={{
-          maxWidth: '1200px',
-          margin: '0 auto',
-          padding: '0 1.5rem'
-        }}>
-          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-            <Link href="/" style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              padding: '0.75rem 1rem',
-              borderRadius: '12px',
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              color: 'white',
-              textDecoration: 'none',
-              fontSize: '0.875rem',
-              fontWeight: '500'
-            }}>
-              <Home style={{ width: '16px', height: '16px' }} />
-              Dashboard
-            </Link>
-            <Link href="/clients" style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              padding: '0.75rem 1rem',
-              borderRadius: '12px',
-              color: 'rgba(255, 255, 255, 0.7)',
-              textDecoration: 'none',
-              fontSize: '0.875rem',
-              fontWeight: '500',
-              transition: 'all 0.2s'
-            }}>
-              <Users style={{ width: '16px', height: '16px' }} />
-              Clients
-            </Link>
-            <Link href="/quotes" style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              padding: '0.75rem 1rem',
-              borderRadius: '12px',
-              color: 'rgba(255, 255, 255, 0.7)',
-              textDecoration: 'none',
-              fontSize: '0.875rem',
-              fontWeight: '500',
-              transition: 'all 0.2s'
-            }}>
-              <FileText style={{ width: '16px', height: '16px' }} />
-              Quotes
-            </Link>
-            <Link href="/invoices" style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              padding: '0.75rem 1rem',
-              borderRadius: '12px',
-              color: 'rgba(255, 255, 255, 0.7)',
-              textDecoration: 'none',
-              fontSize: '0.875rem',
-              fontWeight: '500',
-              transition: 'all 0.2s'
-            }}>
-              <DollarSign style={{ width: '16px', height: '16px' }} />
-              Invoices
-            </Link>
-            <Link href="/analytics" style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              padding: '0.75rem 1rem',
-              borderRadius: '12px',
-              color: 'rgba(255, 255, 255, 0.7)',
-              textDecoration: 'none',
-              fontSize: '0.875rem',
-              fontWeight: '500',
-              transition: 'all 0.2s'
-            }}>
-              <FileText style={{ width: '16px', height: '16px' }} />
-              Analytics
-            </Link>
-            <Link href="/reports" style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              padding: '0.75rem 1rem',
-              borderRadius: '12px',
-              color: 'rgba(255, 255, 255, 0.7)',
-              textDecoration: 'none',
-              fontSize: '0.875rem',
-              fontWeight: '500',
-              transition: 'all 0.2s'
-            }}>
-              <FileText style={{ width: '16px', height: '16px' }} />
-              Reports
-            </Link>
-            <Link href="/settings" style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              padding: '0.75rem 1rem',
-              borderRadius: '12px',
-              background: 'rgba(255, 255, 255, 0.2)',
-              color: 'white',
-              textDecoration: 'none',
-              fontSize: '0.875rem',
-              fontWeight: '500'
-            }}>
-              <Settings style={{ width: '16px', height: '16px' }} />
-              Settings
-            </Link>
           </div>
         </div>
-      </div>
 
-      {/* Main Content */}
-      <div style={{
-        maxWidth: '1200px',
-        margin: '0 auto',
-        padding: '2rem 1.5rem'
-      }}>
-        <div style={{
-          background: 'rgba(255, 255, 255, 0.1)',
-          backdropFilter: 'blur(10px)',
-          borderRadius: '16px',
-          border: '1px solid rgba(255, 255, 255, 0.2)',
-          padding: '2rem'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem' }}>
-            <div style={{
-              padding: '0.75rem',
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              borderRadius: '12px'
-            }}>
-              <Building style={{ width: '24px', height: '24px', color: 'white' }} />
+        {/* Navigation */}
+        <div style={{backgroundColor: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.75rem', padding: '1rem', marginBottom: '2rem'}}>
+          <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
+            <div style={{display: 'flex', gap: '0.5rem'}}>
+              <Link href="/" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', color: '#cbd5e1', textDecoration: 'none', fontWeight: '500'}}>
+                <Home style={{height: '1rem', width: '1rem'}} />
+                <span>Dashboard</span>
+              </Link>
+              <Link href="/clients" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', color: '#cbd5e1', textDecoration: 'none', fontWeight: '500'}}>
+                <Users style={{height: '1rem', width: '1rem'}} />
+                <span>Clients</span>
+              </Link>
+              <Link href="/quotes" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', color: '#cbd5e1', textDecoration: 'none', fontWeight: '500'}}>
+                <FileText style={{height: '1rem', width: '1rem'}} />
+                <span>Quotes</span>
+              </Link>
+              <Link href="/invoices" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', color: '#cbd5e1', textDecoration: 'none', fontWeight: '500'}}>
+                <DollarSign style={{height: '1rem', width: '1rem'}} />
+                <span>Invoices</span>
+              </Link>
+              <Link href="/contractors" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', color: '#cbd5e1', textDecoration: 'none', fontWeight: '500'}}>
+                <User style={{height: '1rem', width: '1rem'}} />
+                <span>Contractors</span>
+              </Link>
+              <Link href="/analytics" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', color: '#cbd5e1', textDecoration: 'none', fontWeight: '500'}}>
+                <BarChart3 style={{height: '1rem', width: '1rem'}} />
+                <span>Analytics</span>
+              </Link>
+              <Link href="/reports" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', color: '#cbd5e1', textDecoration: 'none', fontWeight: '500'}}>
+                <BarChart3 style={{height: '1rem', width: '1rem'}} />
+                <span>Reports</span>
+              </Link>
+              <Link href="/settings" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', background: 'linear-gradient(to right, #9333ea, #3b82f6)', color: 'white', textDecoration: 'none', fontWeight: '500', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'}}>
+                <Settings style={{height: '1rem', width: '1rem'}} />
+                <span>Settings</span>
+              </Link>
             </div>
-            <div>
-              <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', margin: 0 }}>Company Settings</h2>
-              <p style={{ fontSize: '0.875rem', opacity: 0.8, margin: '0.25rem 0 0 0' }}>
-                Manage your company information and business details
-              </p>
+            <div style={{display: 'flex', alignItems: 'center', gap: '1rem'}}>
+              <UserMenu />
             </div>
           </div>
+        </div>
 
-          {/* Company Information Form */}
-          <div style={{ display: 'grid', gap: '1.5rem' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1rem' }}>
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500' }}>
-                  Company Name
-                </label>
-                <input
-                  type="text"
-                  value={settings.name}
-                  onChange={(e) => updateField('name', e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    borderRadius: '8px',
-                    border: '1px solid rgba(255, 255, 255, 0.2)',
-                    background: 'rgba(255, 255, 255, 0.1)',
-                    color: 'white',
-                    fontSize: '0.875rem'
-                  }}
-                  placeholder="Enter company name"
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500' }}>
-                  Email Address
-                </label>
-                <input
-                  type="email"
-                  value={settings.email}
-                  onChange={(e) => updateField('email', e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    borderRadius: '8px',
-                    border: '1px solid rgba(255, 255, 255, 0.2)',
-                    background: 'rgba(255, 255, 255, 0.1)',
-                    color: 'white',
-                    fontSize: '0.875rem'
-                  }}
-                  placeholder="Enter email address"
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500' }}>
-                  Phone Number
-                </label>
-                <input
-                  type="tel"
-                  value={settings.phone}
-                  onChange={(e) => updateField('phone', e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    borderRadius: '8px',
-                    border: '1px solid rgba(255, 255, 255, 0.2)',
-                    background: 'rgba(255, 255, 255, 0.1)',
-                    color: 'white',
-                    fontSize: '0.875rem'
-                  }}
-                  placeholder="Enter phone number"
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500' }}>
-                  Website
-                </label>
-                <input
-                  type="url"
-                  value={settings.website}
-                  onChange={(e) => updateField('website', e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    borderRadius: '8px',
-                    border: '1px solid rgba(255, 255, 255, 0.2)',
-                    background: 'rgba(255, 255, 255, 0.1)',
-                    color: 'white',
-                    fontSize: '0.875rem'
-                  }}
-                  placeholder="Enter website URL"
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500' }}>
-                  Industry
-                </label>
-                <input
-                  type="text"
-                  value={settings.industry}
-                  onChange={(e) => updateField('industry', e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    borderRadius: '8px',
-                    border: '1px solid rgba(255, 255, 255, 0.2)',
-                    background: 'rgba(255, 255, 255, 0.1)',
-                    color: 'white',
-                    fontSize: '0.875rem'
-                  }}
-                  placeholder="Enter industry"
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500' }}>
-                  Tax ID
-                </label>
-                <input
-                  type="text"
-                  value={settings.taxId}
-                  onChange={(e) => updateField('taxId', e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    borderRadius: '8px',
-                    border: '1px solid rgba(255, 255, 255, 0.2)',
-                    background: 'rgba(255, 255, 255, 0.1)',
-                    color: 'white',
-                    fontSize: '0.875rem'
-                  }}
-                  placeholder="Enter tax ID"
-                />
-              </div>
-            </div>
-
+        {/* Page Header */}
+        <div style={{marginBottom: '2rem'}}>
+          <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem'}}>
             <div>
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500' }}>
-                Address
-              </label>
-              <textarea
-                value={settings.address}
-                onChange={(e) => updateField('address', e.target.value)}
-                rows={3}
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  borderRadius: '8px',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
-                  background: 'rgba(255, 255, 255, 0.1)',
-                  color: 'white',
-                  fontSize: '0.875rem',
-                  resize: 'vertical'
-                }}
-                placeholder="Enter company address"
+              <h1 style={{fontSize: '2.25rem', fontWeight: 'bold', color: 'white'}}>Settings</h1>
+              <p style={{color: '#cbd5e1'}}>Manage your company information and business details</p>
+            </div>
+            <button
+              onClick={handleSave}
+              disabled={savedStatus === "saving"}
+              style={{
+                padding: '0.75rem 1.5rem',
+                background: savedStatus === "success" ? 'linear-gradient(to right, #059669, #0d9488)' : 'linear-gradient(to right, #2563eb, #4f46e5)',
+                color: 'white',
+                borderRadius: '0.5rem',
+                border: 'none',
+                cursor: savedStatus === "saving" ? 'not-allowed' : 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                opacity: savedStatus === "saving" ? 0.7 : 1
+              }}
+            >
+              {savedStatus === "saving" ? (
+                <>Saving...</>
+              ) : savedStatus === "success" ? (
+                <>
+                  <CheckCircle style={{height: '1rem', width: '1rem'}} />
+                  Saved
+                </>
+              ) : (
+                <>
+                  <Save style={{height: '1rem', width: '1rem'}} />
+                  Save Settings
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Settings Form */}
+        <div style={{backgroundColor: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.75rem', padding: '1.5rem'}}>
+          <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem'}}>
+            <Building style={{height: '1.5rem', width: '1.5rem', color: '#a78bfa'}} />
+            <h2 style={{fontSize: '1.25rem', fontWeight: 'bold', color: 'white'}}>Company Information</h2>
+          </div>
+
+          <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1rem'}}>
+            <div>
+              <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>Company Name</label>
+              <input
+                type="text"
+                value={settings.name}
+                onChange={(e) => updateField('name', e.target.value)}
+                style={{width: '100%', padding: '0.5rem', backgroundColor: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.25rem', color: 'white', outline: 'none'}}
+                placeholder="Enter company name"
               />
             </div>
 
             <div>
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500' }}>
-                Company Description
-              </label>
-              <textarea
-                value={settings.description}
-                onChange={(e) => updateField('description', e.target.value)}
-                rows={3}
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  borderRadius: '8px',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
-                  background: 'rgba(255, 255, 255, 0.1)',
-                  color: 'white',
-                  fontSize: '0.875rem',
-                  resize: 'vertical'
-                }}
-                placeholder="Enter company description"
+              <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>Email Address</label>
+              <input
+                type="email"
+                value={settings.email}
+                onChange={(e) => updateField('email', e.target.value)}
+                style={{width: '100%', padding: '0.5rem', backgroundColor: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.25rem', color: 'white', outline: 'none'}}
+                placeholder="Enter email address"
               />
             </div>
 
-            {/* Save Button */}
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1rem' }}>
-              <button
-                onClick={handleSave}
-                disabled={savedStatus === "saving"}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  padding: '0.75rem 1.5rem',
-                  borderRadius: '8px',
-                  background: savedStatus === "success" 
-                    ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
-                    : savedStatus === "error"
-                    ? 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)'
-                    : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                  color: 'white',
-                  border: 'none',
-                  fontSize: '0.875rem',
-                  fontWeight: '500',
-                  cursor: savedStatus === "saving" ? 'not-allowed' : 'pointer',
-                  opacity: savedStatus === "saving" ? 0.7 : 1,
-                  transition: 'all 0.2s'
-                }}
-              >
-                {savedStatus === "saving" && <div style={{ width: '16px', height: '16px', border: '2px solid transparent', borderTop: '2px solid white', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />}
-                {savedStatus === "success" && <CheckCircle style={{ width: '16px', height: '16px' }} />}
-                {savedStatus === "error" && <AlertCircle style={{ width: '16px', height: '16px' }} />}
-                {savedStatus === "idle" && <Save style={{ width: '16px', height: '16px' }} />}
-                {savedStatus === "saving" ? "Saving..." : 
-                 savedStatus === "success" ? "Saved!" : 
-                 savedStatus === "error" ? "Error" : "Save Changes"}
-              </button>
+            <div>
+              <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>Phone Number</label>
+              <input
+                type="tel"
+                value={settings.phone}
+                onChange={(e) => updateField('phone', e.target.value)}
+                style={{width: '100%', padding: '0.5rem', backgroundColor: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.25rem', color: 'white', outline: 'none'}}
+                placeholder="Enter phone number"
+              />
+            </div>
+
+            <div>
+              <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>Website</label>
+              <input
+                type="url"
+                value={settings.website}
+                onChange={(e) => updateField('website', e.target.value)}
+                style={{width: '100%', padding: '0.5rem', backgroundColor: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.25rem', color: 'white', outline: 'none'}}
+                placeholder="Enter website URL"
+              />
+            </div>
+
+            <div>
+              <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>Industry</label>
+              <input
+                type="text"
+                value={settings.industry}
+                onChange={(e) => updateField('industry', e.target.value)}
+                style={{width: '100%', padding: '0.5rem', backgroundColor: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.25rem', color: 'white', outline: 'none'}}
+                placeholder="Enter industry"
+              />
+            </div>
+
+            <div>
+              <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>Tax ID</label>
+              <input
+                type="text"
+                value={settings.taxId}
+                onChange={(e) => updateField('taxId', e.target.value)}
+                style={{width: '100%', padding: '0.5rem', backgroundColor: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.25rem', color: 'white', outline: 'none'}}
+                placeholder="Enter tax ID"
+              />
             </div>
           </div>
 
-          {/* Configuration Notice */}
-          <div style={{
-            marginTop: '2rem',
-            padding: '1rem',
-            background: 'rgba(255, 255, 255, 0.1)',
-            borderRadius: '8px',
-            border: '1px solid rgba(255, 255, 255, 0.2)'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-              <Info style={{ width: '16px', height: '16px', color: '#fbbf24' }} />
-              <span style={{ fontSize: '0.875rem', fontWeight: '500' }}>Configuration Notice</span>
-            </div>
-            <p style={{ fontSize: '0.875rem', opacity: 0.8, margin: 0 }}>
-              OAuth credentials, API keys, and other sensitive configuration are managed through environment variables 
-              in your hosting platform (Render.com). These settings are not editable through this interface for security reasons.
-            </p>
+          <div style={{marginTop: '1rem'}}>
+            <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>Address</label>
+            <textarea
+              value={settings.address}
+              onChange={(e) => updateField('address', e.target.value)}
+              rows={3}
+              style={{width: '100%', padding: '0.5rem', backgroundColor: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.25rem', color: 'white', outline: 'none', resize: 'vertical'}}
+              placeholder="Enter company address"
+            />
+          </div>
+
+          <div style={{marginTop: '1rem'}}>
+            <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>Company Description</label>
+            <textarea
+              value={settings.description}
+              onChange={(e) => updateField('description', e.target.value)}
+              rows={3}
+              style={{width: '100%', padding: '0.5rem', backgroundColor: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.25rem', color: 'white', outline: 'none', resize: 'vertical'}}
+              placeholder="Enter company description"
+            />
           </div>
         </div>
       </div>
-
-      <style jsx>{`
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-      `}</style>
     </div>
   )
 }
