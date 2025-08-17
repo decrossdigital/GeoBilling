@@ -34,7 +34,22 @@ export async function GET() {
       orderBy: { createdAt: 'desc' }
     })
 
-    return NextResponse.json(quotes)
+    // Convert Decimal values to numbers for frontend compatibility
+    const quotesWithNumbers = quotes.map(quote => ({
+      ...quote,
+      subtotal: Number(quote.subtotal),
+      taxRate: Number(quote.taxRate),
+      taxAmount: Number(quote.taxAmount),
+      total: Number(quote.total),
+      items: quote.items.map(item => ({
+        ...item,
+        quantity: Number(item.quantity),
+        unitPrice: Number(item.unitPrice),
+        total: Number(item.total)
+      }))
+    }))
+
+    return NextResponse.json(quotesWithNumbers)
   } catch (error) {
     console.error('Error fetching quotes:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

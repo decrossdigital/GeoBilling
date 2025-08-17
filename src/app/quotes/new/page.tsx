@@ -19,7 +19,9 @@ interface ServiceTemplate {
   id: string
   name: string
   description: string
-  basePrice: number
+  category: string
+  pricingType: 'hourly' | 'flat'
+  rate: number
   icon?: any
 }
 
@@ -30,6 +32,7 @@ interface QuoteItem {
   quantity: number
   unitPrice: number
   total: number
+  pricingType?: 'hourly' | 'flat'
 }
 
 interface Contractor {
@@ -37,7 +40,8 @@ interface Contractor {
   name: string
   email: string
   specialty: string
-  hourlyRate: number
+  pricingType: "hourly" | "flat"
+  rate: number
 }
 
 interface QuoteContractor {
@@ -133,16 +137,30 @@ export default function NewQuotePage() {
     setSelectedClient(client)
   }
 
-  const addQuoteItem = () => {
-    const newItem: QuoteItem = {
-      id: Date.now().toString(),
-      serviceName: "",
-      description: "",
-      quantity: 1,
-      unitPrice: 0,
-      total: 0
+  const addQuoteItem = (service?: ServiceTemplate) => {
+    if (service) {
+      const newItem: QuoteItem = {
+        id: Date.now().toString(),
+        serviceName: service.name,
+        description: service.description || "",
+        quantity: 1,
+        unitPrice: service.rate,
+        total: service.rate,
+        pricingType: service.pricingType
+      }
+      setQuoteItems([...quoteItems, newItem])
+    } else {
+      const newItem: QuoteItem = {
+        id: Date.now().toString(),
+        serviceName: "",
+        description: "",
+        quantity: 1,
+        unitPrice: 0,
+        total: 0,
+        pricingType: 'flat'
+      }
+      setQuoteItems([...quoteItems, newItem])
     }
-    setQuoteItems([...quoteItems, newItem])
   }
 
   const removeQuoteItem = (id: string) => {
@@ -212,6 +230,15 @@ export default function NewQuotePage() {
       // Set default validUntil date if not provided (30 days from now)
       const defaultValidUntil = validUntil || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
       
+      // Filter out pricingType from items as it's not in the database schema
+      const itemsForDatabase = quoteItems.map(item => ({
+        serviceName: item.serviceName,
+        description: item.description,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        total: item.total
+      }))
+      
       const quoteData = {
         title: `Quote for ${selectedClient.name}`,
         description: "Professional music production services",
@@ -228,7 +255,7 @@ export default function NewQuotePage() {
         clientEmail: selectedClient.email,
         clientPhone: selectedClient.phone || "",
         clientAddress: selectedClient.address || "",
-        items: quoteItems
+        items: itemsForDatabase
       }
 
       console.log('Sending quote data:', quoteData)
@@ -272,6 +299,15 @@ export default function NewQuotePage() {
       // Set default validUntil date if not provided (30 days from now)
       const defaultValidUntil = validUntil || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
       
+      // Filter out pricingType from items as it's not in the database schema
+      const itemsForDatabase = quoteItems.map(item => ({
+        serviceName: item.serviceName,
+        description: item.description,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        total: item.total
+      }))
+      
       const quoteData = {
         title: `Quote for ${selectedClient.name}`,
         description: "Professional music production services",
@@ -288,7 +324,7 @@ export default function NewQuotePage() {
         clientEmail: selectedClient.email,
         clientPhone: selectedClient.phone || "",
         clientAddress: selectedClient.address || "",
-        items: quoteItems
+        items: itemsForDatabase
       }
 
       const response = await fetch('/api/quotes', {
@@ -470,6 +506,30 @@ export default function NewQuotePage() {
             <div>
               <h2 style={{fontSize: '1.25rem', fontWeight: 'bold', color: 'white', marginBottom: '1.5rem'}}>Add Services</h2>
               
+              {/* Custom Service Option */}
+              <div style={{marginBottom: '1.5rem'}}>
+                <h3 style={{fontSize: '1.125rem', fontWeight: '500', color: 'white', marginBottom: '1rem'}}>Add Custom Service</h3>
+                <div style={{padding: '1rem', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.5rem', backgroundColor: 'rgba(255, 255, 255, 0.05)'}}>
+                  <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
+                    <div style={{display: 'flex', alignItems: 'center', gap: '0.75rem'}}>
+                      <div style={{padding: '0.5rem', backgroundColor: 'rgba(59, 130, 246, 0.2)', borderRadius: '0.5rem'}}>
+                        <Plus style={{height: '1.25rem', width: '1.25rem', color: '#60a5fa'}} />
+                      </div>
+                      <div>
+                        <div style={{fontWeight: '500', color: 'white'}}>Custom Service</div>
+                        <div style={{fontSize: '0.875rem', color: '#cbd5e1'}}>Add a one-time service not in your templates</div>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => addQuoteItem()}
+                      style={{padding: '0.5rem', backgroundColor: '#2563eb', borderRadius: '0.5rem', border: 'none', cursor: 'pointer'}}
+                    >
+                      <Plus style={{height: '1rem', width: '1rem', color: 'white'}} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
               {/* Service Templates */}
               <div style={{marginBottom: '1.5rem'}}>
                 <h3 style={{fontSize: '1.125rem', fontWeight: '500', color: 'white', marginBottom: '1rem'}}>Available Services</h3>
@@ -501,11 +561,11 @@ export default function NewQuotePage() {
                             <div>
                               <div style={{fontWeight: '500', color: 'white'}}>{service.name}</div>
                               <div style={{fontSize: '0.875rem', color: '#cbd5e1'}}>{service.description}</div>
-                              <div style={{fontSize: '0.875rem', color: '#94a3b8'}}>${service.basePrice}</div>
+                              <div style={{fontSize: '0.875rem', color: '#94a3b8'}}>${service.rate}{service.pricingType === 'hourly' ? '/hour' : ''}</div>
                             </div>
                           </div>
                           <button
-                            onClick={addQuoteItem}
+                            onClick={() => addQuoteItem(service)}
                             style={{padding: '0.5rem', backgroundColor: '#2563eb', borderRadius: '0.5rem', border: 'none', cursor: 'pointer'}}
                           >
                             <Plus style={{height: '1rem', width: '1rem', color: 'white'}} />
@@ -525,10 +585,22 @@ export default function NewQuotePage() {
                     {quoteItems.map((item) => (
                       <div key={item.id} style={{padding: '1rem', backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: '0.5rem', border: '1px solid rgba(255, 255, 255, 0.1)'}}>
                         <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem'}}>
-                          <div>
-                            <div style={{fontWeight: '500', color: 'white'}}>{item.serviceName}</div>
-                            <div style={{fontSize: '0.875rem', color: '#cbd5e1'}}>{item.description}</div>
-                          </div>
+                                                  <div style={{flex: 1, marginRight: '1rem'}}>
+                          <input
+                            type="text"
+                            placeholder="Enter service name"
+                            value={item.serviceName}
+                            onChange={(e) => updateQuoteItem(item.id, 'serviceName', e.target.value)}
+                            style={{width: '100%', padding: '0.5rem', backgroundColor: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.25rem', color: 'white', outline: 'none', marginBottom: '0.5rem'}}
+                          />
+                          <textarea
+                            placeholder="Enter service description"
+                            value={item.description}
+                            onChange={(e) => updateQuoteItem(item.id, 'description', e.target.value)}
+                            rows={2}
+                            style={{width: '100%', padding: '0.5rem', backgroundColor: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.25rem', color: 'white', outline: 'none', resize: 'vertical', fontFamily: 'inherit'}}
+                          />
+                        </div>
                           <button
                             onClick={() => removeQuoteItem(item.id)}
                             style={{color: '#f87171', cursor: 'pointer', border: 'none', background: 'none'}}
@@ -536,32 +608,47 @@ export default function NewQuotePage() {
                             <Trash2 style={{height: '1rem', width: '1rem'}} />
                           </button>
                         </div>
-                        <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem'}}>
-                          <div>
-                            <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>Quantity</label>
-                            <input
-                              type="number"
-                              value={item.quantity}
-                              onChange={(e) => updateQuoteItem(item.id, 'quantity', parseInt(e.target.value) || 1)}
-                              style={{width: '100%', padding: '0.5rem', backgroundColor: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.25rem', color: 'white', outline: 'none'}}
-                            />
-                          </div>
-                          <div>
-                            <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>Rate ($)</label>
-                            <input
-                              type="number"
-                              value={item.unitPrice}
-                              onChange={(e) => updateQuoteItem(item.id, 'unitPrice', parseFloat(e.target.value) || 0)}
-                              style={{width: '100%', padding: '0.5rem', backgroundColor: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.25rem', color: 'white', outline: 'none'}}
-                            />
-                          </div>
-                          <div>
-                            <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>Amount</label>
-                            <div style={{padding: '0.5rem', backgroundColor: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.25rem', color: 'white', fontWeight: '500'}}>
-                              ${item.total.toLocaleString()}
-                            </div>
+                                              <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '1rem'}}>
+                        <div>
+                          <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>Pricing Type</label>
+                          <select
+                            value={item.pricingType || 'flat'}
+                            onChange={(e) => updateQuoteItem(item.id, 'pricingType', e.target.value as 'hourly' | 'flat')}
+                            style={{width: '100%', padding: '0.5rem', backgroundColor: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.25rem', color: 'white', outline: 'none'}}
+                          >
+                            <option value="flat">Flat Rate</option>
+                            <option value="hourly">Per Hour</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>
+                            {(item.pricingType || 'flat') === 'hourly' ? 'Hours' : 'Quantity'}
+                          </label>
+                          <input
+                            type="number"
+                            value={item.quantity}
+                            onChange={(e) => updateQuoteItem(item.id, 'quantity', parseInt(e.target.value) || 1)}
+                            style={{width: '100%', padding: '0.5rem', backgroundColor: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.25rem', color: 'white', outline: 'none'}}
+                          />
+                        </div>
+                        <div>
+                          <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>
+                            {(item.pricingType || 'flat') === 'hourly' ? 'Rate ($/hr)' : 'Rate ($)'}
+                          </label>
+                          <input
+                            type="number"
+                            value={item.unitPrice}
+                            onChange={(e) => updateQuoteItem(item.id, 'unitPrice', parseFloat(e.target.value) || 0)}
+                            style={{width: '100%', padding: '0.5rem', backgroundColor: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.25rem', color: 'white', outline: 'none'}}
+                          />
+                        </div>
+                        <div>
+                          <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>Amount</label>
+                          <div style={{padding: '0.5rem', backgroundColor: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.25rem', color: 'white', fontWeight: '500'}}>
+                            ${item.total.toLocaleString()}
                           </div>
                         </div>
+                      </div>
                       </div>
                     ))}
                   </div>
@@ -597,9 +684,9 @@ export default function NewQuotePage() {
                           <User style={{height: '1.25rem', width: '1.25rem', color: '#a78bfa'}} />
                         </div>
                         <div>
-                          <div style={{fontWeight: '500', color: 'white'}}>{contractor.name}</div>
-                          <div style={{fontSize: '0.875rem', color: '#cbd5e1'}}>{contractor.specialty}</div>
-                          <div style={{fontSize: '0.875rem', color: '#94a3b8'}}>${contractor.hourlyRate}/hr</div>
+                                                <div style={{fontWeight: '500', color: 'white'}}>{contractor.name}</div>
+                      <div style={{fontSize: '0.875rem', color: '#cbd5e1'}}>{contractor.specialty}</div>
+                      <div style={{fontSize: '0.875rem', color: '#94a3b8'}}>${contractor.rate}{contractor.pricingType === 'hourly' ? '/hr' : ''}</div>
                         </div>
                       </div>
                     </div>

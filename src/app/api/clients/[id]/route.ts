@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
-import { prisma } from '@/lib/prisma'
 import { authOptions } from '@/lib/auth'
+import { prisma } from '@/lib/prisma'
 
 // GET /api/clients/[id] - Get a specific client
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -23,9 +23,11 @@ export async function GET(
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
+    const resolvedParams = await params
+
     const client = await prisma.client.findFirst({
       where: {
-        id: params.id,
+        id: resolvedParams.id,
         userId: user.id
       }
     })
@@ -44,7 +46,7 @@ export async function GET(
 // PUT /api/clients/[id] - Update a client
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -68,9 +70,11 @@ export async function PUT(
       return NextResponse.json({ error: 'Name and email are required' }, { status: 400 })
     }
 
+    const resolvedParams = await params
+
     const client = await prisma.client.findFirst({
       where: {
-        id: params.id,
+        id: resolvedParams.id,
         userId: user.id
       }
     })
@@ -80,7 +84,7 @@ export async function PUT(
     }
 
     const updatedClient = await prisma.client.update({
-      where: { id: params.id },
+      where: { id: resolvedParams.id },
       data: {
         name,
         email,
@@ -100,7 +104,7 @@ export async function PUT(
 // DELETE /api/clients/[id] - Delete a client
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -117,9 +121,11 @@ export async function DELETE(
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
+    const resolvedParams = await params
+
     const client = await prisma.client.findFirst({
       where: {
-        id: params.id,
+        id: resolvedParams.id,
         userId: user.id
       }
     })
@@ -129,7 +135,7 @@ export async function DELETE(
     }
 
     await prisma.client.delete({
-      where: { id: params.id }
+      where: { id: resolvedParams.id }
     })
 
     return NextResponse.json({ message: 'Client deleted successfully' })

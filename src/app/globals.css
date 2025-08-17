@@ -45,3 +45,32 @@ a {
     --background-end-rgb: 0, 0, 0;
   }
 }
+
+/* Responsive utilities */
+@media (max-width: 768px) {
+  .md-hidden {
+    display: none !important;
+  }
+  
+  .md-flex {
+    display: flex !important;
+  }
+  
+  .hidden {
+    display: none !important;
+  }
+}
+
+@media (min-width: 769px) {
+  .md-hidden {
+    display: none !important;
+  }
+  
+  .md-flex {
+    display: flex !important;
+  }
+  
+  .hidden {
+    display: flex !important;
+  }
+}

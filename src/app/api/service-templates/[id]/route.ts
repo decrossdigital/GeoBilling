@@ -65,10 +65,10 @@ export async function PUT(
     }
 
     const body = await request.json()
-    const { name, description, category, basePrice, currency, isActive } = body
+    const { name, description, category, pricingType, rate, currency, isActive } = body
 
-    if (!name || !category || !basePrice) {
-      return NextResponse.json({ error: 'Name, category, and base price are required' }, { status: 400 })
+    if (!name || !category || !rate) {
+      return NextResponse.json({ error: 'Name, category, and rate are required' }, { status: 400 })
     }
 
     const serviceTemplate = await prisma.serviceTemplate.findFirst({
@@ -88,7 +88,8 @@ export async function PUT(
         name,
         description: description || '',
         category,
-        basePrice: parseFloat(basePrice),
+        pricingType: pricingType || 'flat',
+        rate: parseFloat(rate),
         currency: currency || 'USD',
         isActive: isActive !== undefined ? isActive : true
       }

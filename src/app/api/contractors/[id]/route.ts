@@ -6,8 +6,9 @@ import { authOptions } from '@/lib/auth'
 // GET /api/contractors/[id] - Get a specific contractor
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
   try {
     const session = await getServerSession(authOptions)
     
@@ -44,8 +45,9 @@ export async function GET(
 // PUT /api/contractors/[id] - Update a contractor
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
   try {
     const session = await getServerSession(authOptions)
     
@@ -62,7 +64,7 @@ export async function PUT(
     }
 
     const body = await request.json()
-    const { name, email, phone, address, skills, rate, currency, notes, status } = body
+    const { name, email, phone, address, skills, pricingType, rate, currency, notes, status } = body
 
     if (!name || !email) {
       return NextResponse.json({ error: 'Name and email are required' }, { status: 400 })
@@ -70,7 +72,7 @@ export async function PUT(
 
     const contractor = await prisma.contractor.findFirst({
       where: {
-        id: params.id,
+        id: id,
         userId: user.id
       }
     })
@@ -80,13 +82,14 @@ export async function PUT(
     }
 
     const updatedContractor = await prisma.contractor.update({
-      where: { id: params.id },
+      where: { id: id },
       data: {
         name,
         email,
         phone: phone || '',
         address: address || '',
         skills: skills || [],
+        pricingType: pricingType || 'hourly',
         rate: parseFloat(rate) || 0,
         currency: currency || 'USD',
         notes: notes || '',
@@ -104,8 +107,9 @@ export async function PUT(
 // DELETE /api/contractors/[id] - Delete a contractor
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
   try {
     const session = await getServerSession(authOptions)
     
@@ -123,7 +127,7 @@ export async function DELETE(
 
     const contractor = await prisma.contractor.findFirst({
       where: {
-        id: params.id,
+        id: id,
         userId: user.id
       }
     })
@@ -133,7 +137,7 @@ export async function DELETE(
     }
 
     await prisma.contractor.delete({
-      where: { id: params.id }
+      where: { id: id }
     })
 
     return NextResponse.json({ message: 'Contractor deleted successfully' })

@@ -34,7 +34,21 @@ export async function GET() {
       orderBy: { createdAt: 'desc' }
     })
 
-    return NextResponse.json(invoices)
+    // Convert Decimal values to numbers for frontend compatibility
+    const invoicesWithNumbers = invoices.map(invoice => ({
+      ...invoice,
+      subtotal: Number(invoice.subtotal),
+      taxAmount: Number(invoice.taxAmount),
+      total: Number(invoice.total),
+      items: invoice.items.map(item => ({
+        ...item,
+        quantity: Number(item.quantity),
+        unitPrice: Number(item.unitPrice),
+        total: Number(item.total)
+      }))
+    }))
+
+    return NextResponse.json(invoicesWithNumbers)
   } catch (error) {
     console.error('Error fetching invoices:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
@@ -115,8 +129,8 @@ export async function POST(request: NextRequest) {
         userId: user.id,
         userName: user.name || '',
         userEmail: user.email,
-        userPhone: user.phone || '',
-        userAddress: user.address || ''
+        userPhone: '',
+        userAddress: ''
       }
     })
 

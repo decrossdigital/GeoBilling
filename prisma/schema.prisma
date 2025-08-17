@@ -130,7 +130,8 @@ model Contractor {
   phone       String?
   address     String?
   skills      String[] // Array of skills (e.g., ["mixing", "mastering", "recording"])
-  rate        Decimal  @db.Decimal(10, 2) // Hourly rate
+  pricingType String   @default("hourly") // "hourly" or "flat"
+  rate        Decimal  @db.Decimal(10, 2) // Rate (hourly or flat)
   currency    String   @default("USD")
   status      String   @default("active") // "active", "inactive", "archived"
   notes       String?  @db.Text
@@ -155,7 +156,8 @@ model ServiceTemplate {
   name        String
   description String?  @db.Text
   category    String   // "recording", "mixing", "mastering", "production", "other"
-  basePrice   Decimal  @db.Decimal(10, 2)
+  pricingType String   @default("flat") // "hourly" or "flat"
+  rate        Decimal  @db.Decimal(10, 2)
   currency    String   @default("USD")
   isActive    Boolean  @default(true)
   userId      String?

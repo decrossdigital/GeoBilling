@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { name, email, phone, address, skills, rate, currency, notes } = body
+    const { name, email, phone, address, skills, pricingType, rate, currency, notes } = body
 
     if (!name || !email) {
       return NextResponse.json({ error: 'Name and email are required' }, { status: 400 })
@@ -63,6 +63,7 @@ export async function POST(request: NextRequest) {
         phone: phone || '',
         address: address || '',
         skills: skills || [],
+        pricingType: pricingType || 'hourly',
         rate: parseFloat(rate) || 0,
         currency: currency || 'USD',
         notes: notes || '',

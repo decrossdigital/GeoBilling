@@ -4,7 +4,8 @@ import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
 import Link from "next/link"
 import UserMenu from "@/components/user-menu"
-import { Plus, Search, Eye, Edit, Download, Clock, CheckCircle, XCircle, Users, FileText, DollarSign, TrendingUp, Music, Home, BarChart3, Settings, User } from "lucide-react"
+import { Plus, Search, Eye, Edit, Download, Clock, CheckCircle, XCircle, Users, TrendingUp, Music, ExternalLink, FileText, DollarSign } from "lucide-react"
+import Navigation from "@/components/navigation"
 
 interface Quote {
   id: string
@@ -151,43 +152,11 @@ export default function QuotesPage() {
               <p style={{fontSize: '0.875rem', color: '#cbd5e1'}}>Uniquitous Music - Professional Billing System</p>
             </div>
           </div>
+          <UserMenu />
         </div>
 
         {/* Navigation */}
-        <div style={{backgroundColor: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.75rem', padding: '1rem', marginBottom: '2rem'}}>
-          <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
-            <div style={{display: 'flex', gap: '0.5rem'}}>
-              <Link href="/" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', color: '#cbd5e1', textDecoration: 'none', fontWeight: '500'}}>
-                <Home style={{height: '1rem', width: '1rem'}} />
-                <span>Dashboard</span>
-              </Link>
-              <Link href="/clients" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', color: '#cbd5e1', textDecoration: 'none', fontWeight: '500'}}>
-                <Users style={{height: '1rem', width: '1rem'}} />
-                <span>Clients</span>
-              </Link>
-              <Link href="/quotes" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', background: 'linear-gradient(to right, #9333ea, #3b82f6)', color: 'white', textDecoration: 'none', fontWeight: '500', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'}}>
-                <FileText style={{height: '1rem', width: '1rem'}} />
-                <span>Quotes</span>
-              </Link>
-              <Link href="/invoices" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', color: '#cbd5e1', textDecoration: 'none', fontWeight: '500'}}>
-                <DollarSign style={{height: '1rem', width: '1rem'}} />
-                <span>Invoices</span>
-              </Link>
-              <Link href="/contractors" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', color: '#cbd5e1', textDecoration: 'none', fontWeight: '500'}}>
-                <User style={{height: '1rem', width: '1rem'}} />
-                <span>Contractors</span>
-              </Link>
-
-              <Link href="/settings" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', color: '#cbd5e1', textDecoration: 'none', fontWeight: '500'}}>
-                <Settings style={{height: '1rem', width: '1rem'}} />
-                <span>Settings</span>
-              </Link>
-            </div>
-            <div style={{display: 'flex', alignItems: 'center', gap: '1rem'}}>
-              <UserMenu />
-            </div>
-          </div>
-        </div>
+        <Navigation />
 
         {/* Page Header */}
         <div style={{marginBottom: '2rem'}}>
@@ -315,7 +284,7 @@ export default function QuotesPage() {
                   <th style={{padding: '1rem', textAlign: 'left', fontSize: '0.875rem', fontWeight: '500', color: '#cbd5e1'}}>Amount</th>
                   <th style={{padding: '1rem', textAlign: 'left', fontSize: '0.875rem', fontWeight: '500', color: '#cbd5e1'}}>Status</th>
                   <th style={{padding: '1rem', textAlign: 'left', fontSize: '0.875rem', fontWeight: '500', color: '#cbd5e1'}}>Valid Until</th>
-                  <th style={{padding: '1rem', textAlign: 'left', fontSize: '0.875rem', fontWeight: '500', color: '#cbd5e1'}}>Actions</th>
+                  <th style={{padding: '1rem', textAlign: 'left', fontSize: '0.875rem', fontWeight: '500', color: '#cbd5e1'}}>Details</th>
                 </tr>
               </thead>
               <tbody>
@@ -364,50 +333,25 @@ export default function QuotesPage() {
                         <div style={{fontSize: '0.875rem', color: '#cbd5e1'}}>{new Date(quote.validUntil).toLocaleDateString()}</div>
                       </td>
                       <td style={{padding: '1rem'}}>
-                        <div style={{display: 'flex', gap: '0.5rem'}}>
-                          <button
-                            onClick={() => handleViewQuote(quote)}
-                            style={{
-                              padding: '0.5rem',
-                              backgroundColor: 'rgba(59, 130, 246, 0.2)',
-                              border: '1px solid rgba(59, 130, 246, 0.3)',
-                              borderRadius: '0.25rem',
-                              color: '#60a5fa',
-                              cursor: 'pointer'
-                            }}
-                            title="View Quote"
-                          >
-                            <Eye style={{height: '1rem', width: '1rem'}} />
-                          </button>
-                          <button
-                            onClick={() => handleEditQuote(quote)}
-                            style={{
-                              padding: '0.5rem',
-                              backgroundColor: 'rgba(251, 191, 36, 0.2)',
-                              border: '1px solid rgba(251, 191, 36, 0.3)',
-                              borderRadius: '0.25rem',
-                              color: '#fbbf24',
-                              cursor: 'pointer'
-                            }}
-                            title="Edit Quote"
-                          >
-                            <Edit style={{height: '1rem', width: '1rem'}} />
-                          </button>
-                          <button
-                            onClick={() => handleDownloadQuote(quote)}
-                            style={{
-                              padding: '0.5rem',
-                              backgroundColor: 'rgba(16, 185, 129, 0.2)',
-                              border: '1px solid rgba(16, 185, 129, 0.3)',
-                              borderRadius: '0.25rem',
-                              color: '#34d399',
-                              cursor: 'pointer'
-                            }}
-                            title="Download Quote"
-                          >
-                            <Download style={{height: '1rem', width: '1rem'}} />
-                          </button>
-                        </div>
+                        <Link
+                          href={`/quotes/${quote.id}`}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.25rem',
+                            padding: '0.5rem 0.75rem',
+                            backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                            border: '1px solid rgba(59, 130, 246, 0.3)',
+                            borderRadius: '0.25rem',
+                            color: '#60a5fa',
+                            textDecoration: 'none',
+                            fontSize: '0.875rem',
+                            fontWeight: '500'
+                          }}
+                        >
+                          <ExternalLink style={{height: '1rem', width: '1rem'}} />
+                          View Details
+                        </Link>
                       </td>
                     </tr>
                   ))

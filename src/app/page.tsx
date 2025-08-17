@@ -4,7 +4,7 @@ import { useSession } from "next-auth/react"
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import UserMenu from "@/components/user-menu"
-import {
+import { 
   DollarSign,
   FileText,
   Users,
@@ -16,8 +16,10 @@ import {
   Star,
   Home,
   User,
-  Settings
+  Settings,
+  Tag
 } from "lucide-react"
+import Navigation from "@/components/navigation"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area } from 'recharts'
 
 interface DashboardData {
@@ -178,46 +180,11 @@ export default function Dashboard() {
               <p style={{fontSize: '0.875rem', color: '#cbd5e1'}}>Uniquitous Music - Professional Billing System</p>
             </div>
           </div>
+          <UserMenu />
         </div>
 
         {/* Navigation */}
-        <div style={{backgroundColor: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.75rem', padding: '1rem', marginBottom: '2rem', position: 'relative', zIndex: 1000}}>
-          <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
-            <div style={{display: 'flex', gap: '0.5rem'}}>
-              <Link href="/" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', background: 'linear-gradient(to right, #9333ea, #3b82f6)', color: 'white', textDecoration: 'none', fontWeight: '500', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'}}>
-                <Home style={{height: '1rem', width: '1rem'}} />
-                <span>Dashboard</span>
-              </Link>
-              <Link href="/clients" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', color: '#cbd5e1', textDecoration: 'none', fontWeight: '500'}}>
-                <Users style={{height: '1rem', width: '1rem'}} />
-                <span>Clients</span>
-              </Link>
-              <Link href="/quotes" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', color: '#cbd5e1', textDecoration: 'none', fontWeight: '500'}}>
-                <FileText style={{height: '1rem', width: '1rem'}} />
-                <span>Quotes</span>
-              </Link>
-              <Link href="/invoices" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', color: '#cbd5e1', textDecoration: 'none', fontWeight: '500'}}>
-                <DollarSign style={{height: '1rem', width: '1rem'}} />
-                <span>Invoices</span>
-              </Link>
-              <Link href="/contractors" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', color: '#cbd5e1', textDecoration: 'none', fontWeight: '500'}}>
-                <User style={{height: '1rem', width: '1rem'}} />
-                <span>Contractors</span>
-              </Link>
-              <Link href="/analytics" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', color: '#cbd5e1', textDecoration: 'none', fontWeight: '500'}}>
-                <BarChart3 style={{height: '1rem', width: '1rem'}} />
-                <span>Analytics</span>
-              </Link>
-              <Link href="/settings" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', color: '#cbd5e1', textDecoration: 'none', fontWeight: '500'}}>
-                <Settings style={{height: '1rem', width: '1rem'}} />
-                <span>Settings</span>
-              </Link>
-            </div>
-            <div style={{display: 'flex', alignItems: 'center', gap: '1rem'}}>
-              <UserMenu />
-            </div>
-          </div>
-        </div>
+        <Navigation />
 
         {/* Stats Grid */}
         <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem', marginBottom: '3rem'}}>

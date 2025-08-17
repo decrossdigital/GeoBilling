@@ -1,0 +1,1264 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import { useSession } from 'next-auth/react'
+import { useParams, useRouter } from 'next/navigation'
+import { ArrowLeft, Edit, Send, FileText, Trash2, Plus, User, Phone, Mail, Calendar, DollarSign, Users, Music, Home, Settings } from 'lucide-react'
+
+interface Client {
+  id: string
+  name: string
+  email: string
+  phone: string
+  address: string
+}
+
+interface Contractor {
+  id: string
+  name: string
+  email: string
+  phone: string
+  hourlyRate: number
+  flatRate: number
+}
+
+interface QuoteItem {
+  id: string
+  serviceName: string
+  description: string
+  quantity: number
+  unitPrice: number
+  total: number
+  contractorId: string | null
+  contractor?: Contractor
+  serviceTemplateId: string | null
+  sortOrder: number
+}
+
+interface Quote {
+  id: string
+  quoteNumber: string
+  title: string
+  description: string
+  status: string
+  subtotal: number
+  taxRate: number
+  taxAmount: number
+  total: number
+  validUntil: string
+  terms: string
+  notes: string
+  depositAmount: number
+  createdAt: string
+  updatedAt: string
+  client: Client
+  items: QuoteItem[]
+}
+
+export default function QuoteDetailPage() {
+  const { data: session } = useSession()
+  const params = useParams()
+  const router = useRouter()
+  const quoteId = params.id as string
+
+  const [quote, setQuote] = useState<Quote | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [contractors, setContractors] = useState<Contractor[]>([])
+  const [selectedContractor, setSelectedContractor] = useState('')
+  const [showEmailModal, setShowEmailModal] = useState(false)
+  const [sendingEmail, setSendingEmail] = useState(false)
+  const [converting, setConverting] = useState(false)
+  const [showAddServiceModal, setShowAddServiceModal] = useState(false)
+  const [showAddContractorModal, setShowAddContractorModal] = useState(false)
+  const [editForm, setEditForm] = useState({
+    title: '',
+    description: '',
+    validUntil: '',
+    terms: '',
+    notes: '',
+    depositAmount: 0
+  })
+  const [emailData, setEmailData] = useState({
+    to: '',
+    subject: '',
+    message: ''
+  })
+
+  useEffect(() => {
+    const fetchQuote = async () => {
+      try {
+        const response = await fetch(`/api/quotes/${quoteId}`)
+        if (response.ok) {
+          const data = await response.json()
+          setQuote(data)
+          setEditForm({
+            title: data.title,
+            description: data.description,
+            validUntil: data.validUntil,
+            terms: data.terms,
+            notes: data.notes,
+            depositAmount: data.depositAmount || 0
+          })
+          setEmailData({
+            to: data.client.email,
+            subject: `Quote #${data.quoteNumber} - ${data.title}`,
+            message: `Dear ${data.client.name},\n\nPlease find attached our quote #${data.quoteNumber} for ${data.title}.\n\nTotal Amount: $${data.total.toFixed(2)}\nValid Until: ${new Date(data.validUntil).toLocaleDateString()}\n\nPlease let us know if you have any questions.\n\nBest regards,\nGeoBilling Team`
+          })
+        } else {
+          console.error('Failed to fetch quote')
+          alert('Failed to fetch quote details')
+        }
+      } catch (error) {
+        console.error('Error fetching quote:', error)
+        alert('Error fetching quote details')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    const fetchContractors = async () => {
+      try {
+        const response = await fetch('/api/contractors')
+        if (response.ok) {
+          const data = await response.json()
+          setContractors(data)
+        }
+      } catch (error) {
+        console.error('Error fetching contractors:', error)
+      }
+    }
+
+    if (session && quoteId) {
+      fetchQuote()
+      fetchContractors()
+    }
+  }, [session, quoteId])
+
+  const handleSendEmail = async () => {
+    setSendingEmail(true)
+    try {
+      const response = await fetch('/api/quotes/send-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          quoteId: quoteId,
+          to: emailData.to,
+          subject: emailData.subject,
+          message: emailData.message
+        })
+      })
+
+      if (response.ok) {
+        alert('Quote sent successfully!')
+        setShowEmailModal(false)
+        // Update quote status to 'sent'
+        setQuote(prev => prev ? { ...prev, status: 'sent' } : null)
+      } else {
+        alert('Failed to send quote')
+      }
+    } catch (error) {
+      console.error('Error sending quote:', error)
+      alert('Error sending quote')
+    } finally {
+      setSendingEmail(false)
+    }
+  }
+
+  const handleConvertToInvoice = async () => {
+    setConverting(true)
+    try {
+      const response = await fetch('/api/invoices', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          quoteId: quoteId,
+          clientId: quote?.client.id,
+          clientName: quote?.client.name,
+          clientEmail: quote?.client.email,
+          clientPhone: quote?.client.phone,
+          clientAddress: quote?.client.address,
+          title: quote?.title,
+          description: quote?.description,
+          items: quote?.items,
+          subtotal: quote?.subtotal,
+          taxRate: quote?.taxRate,
+          taxAmount: quote?.taxAmount,
+          total: quote?.total,
+          dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+          status: 'unpaid'
+        })
+      })
+
+      if (response.ok) {
+        const newInvoice = await response.json()
+        
+        // Update the original quote status to 'converted'
+        await fetch(`/api/quotes/${quoteId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            ...quote,
+            status: 'converted'
+          })
+        })
+
+        alert('Quote converted to invoice successfully!')
+        router.push(`/invoices/${newInvoice.id}`)
+      } else {
+        alert('Failed to convert quote to invoice')
+      }
+    } catch (error) {
+      console.error('Error converting quote:', error)
+      alert('Error converting quote to invoice')
+    } finally {
+      setConverting(false)
+    }
+  }
+
+  const handleDeleteService = async (itemId: string) => {
+    if (!confirm('Are you sure you want to delete this service?')) return
+
+    try {
+      const response = await fetch(`/api/quotes/${quoteId}/items/${itemId}`, {
+        method: 'DELETE'
+      })
+
+      if (response.ok) {
+        // Refresh quote data to update totals
+        const quoteResponse = await fetch(`/api/quotes/${quoteId}`)
+        if (quoteResponse.ok) {
+          const updatedQuote = await quoteResponse.json()
+          setQuote(updatedQuote)
+        }
+        alert('Service deleted successfully!')
+      } else {
+        alert('Failed to delete service')
+      }
+    } catch (error) {
+      console.error('Error deleting service:', error)
+      alert('Error deleting service')
+    }
+  }
+
+  const handleAssignContractor = async () => {
+    if (!selectedContractor) {
+      alert('Please select a contractor')
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/quotes/${quoteId}/items`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          serviceName: "Contractor Assignment",
+          description: "Contractor assigned to this quote",
+          quantity: 1,
+          unitPrice: 0,
+          total: 0,
+          contractorId: selectedContractor
+        })
+      })
+
+      if (response.ok) {
+        // Refresh quote data
+        const quoteResponse = await fetch(`/api/quotes/${quoteId}`)
+        if (quoteResponse.ok) {
+          const updatedQuote = await quoteResponse.json()
+          setQuote(updatedQuote)
+        }
+        alert('Contractor assigned successfully!')
+        setShowAddContractorModal(false)
+        setSelectedContractor('')
+      } else {
+        alert('Failed to assign contractor')
+      }
+    } catch (error) {
+      console.error('Error assigning contractor:', error)
+      alert('Error assigning contractor')
+    }
+  }
+
+  const handleRemoveContractor = async (itemId: string) => {
+    if (!confirm('Are you sure you want to remove this contractor?')) return
+
+    try {
+      const response = await fetch(`/api/quotes/${quoteId}/items/${itemId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contractorId: null
+        })
+      })
+
+      if (response.ok) {
+        // Refresh quote data
+        const quoteResponse = await fetch(`/api/quotes/${quoteId}`)
+        if (quoteResponse.ok) {
+          const updatedQuote = await quoteResponse.json()
+          setQuote(updatedQuote)
+        }
+        alert('Contractor removed successfully!')
+      } else {
+        alert('Failed to remove contractor')
+      }
+    } catch (error) {
+      console.error('Error removing contractor:', error)
+      alert('Error removing contractor')
+    }
+  }
+
+  if (loading) {
+    return (
+      <div style={{ padding: '20px', textAlign: 'center' }}>
+        <div style={{ fontSize: '18px', color: '#666' }}>Loading quote details...</div>
+      </div>
+    )
+  }
+
+  if (!quote) {
+    return (
+      <div style={{ padding: '20px', textAlign: 'center' }}>
+        <div style={{ fontSize: '18px', color: '#666' }}>Quote not found</div>
+      </div>
+    )
+  }
+
+  const assignedContractors = quote.items.filter(item => item.contractorId)
+  const regularServices = quote.items.filter(item => !item.contractorId || item.serviceName !== "Contractor Assignment")
+
+  return (
+    <div style={{minHeight: '100vh', background: 'linear-gradient(to bottom right, #0f172a, #581c87, #0f172a)', color: 'white'}}>
+      <div style={{maxWidth: '1200px', margin: '0 auto', padding: '2rem 1.5rem'}}>
+        {/* Header */}
+        <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2rem'}}>
+          <div style={{display: 'flex', alignItems: 'center', gap: '0.75rem'}}>
+            <div style={{padding: '0.75rem', background: 'linear-gradient(to right, #9333ea, #ec4899)', borderRadius: '1rem'}}>
+              <Music style={{height: '2rem', width: '2rem', color: 'white'}} />
+            </div>
+            <div>
+              <h1 style={{fontSize: '1.875rem', fontWeight: 'bold', color: 'white'}}>GeoBilling</h1>
+              <p style={{fontSize: '0.875rem', color: '#cbd5e1'}}>Uniquitous Music - Professional Billing System</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Navigation */}
+        <div style={{backgroundColor: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.75rem', padding: '1rem', marginBottom: '2rem'}}>
+          <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
+            <div style={{display: 'flex', gap: '0.5rem'}}>
+              <button
+                onClick={() => router.push('/')}
+                style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', color: '#cbd5e1', textDecoration: 'none', fontWeight: '500', background: 'none', border: 'none', cursor: 'pointer'}}
+              >
+                <Home style={{height: '1rem', width: '1rem'}} />
+                <span>Dashboard</span>
+              </button>
+              <button
+                onClick={() => router.push('/clients')}
+                style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', color: '#cbd5e1', textDecoration: 'none', fontWeight: '500', background: 'none', border: 'none', cursor: 'pointer'}}
+              >
+                <Users style={{height: '1rem', width: '1rem'}} />
+                <span>Clients</span>
+              </button>
+              <button
+                onClick={() => router.push('/quotes')}
+                style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', background: 'linear-gradient(to right, #9333ea, #3b82f6)', color: 'white', textDecoration: 'none', fontWeight: '500', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)', border: 'none', cursor: 'pointer'}}
+              >
+                <FileText style={{height: '1rem', width: '1rem'}} />
+                <span>Quotes</span>
+              </button>
+              <button
+                onClick={() => router.push('/invoices')}
+                style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', color: '#cbd5e1', textDecoration: 'none', fontWeight: '500', background: 'none', border: 'none', cursor: 'pointer'}}
+              >
+                <DollarSign style={{height: '1rem', width: '1rem'}} />
+                <span>Invoices</span>
+              </button>
+              <button
+                onClick={() => router.push('/contractors')}
+                style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', color: '#cbd5e1', textDecoration: 'none', fontWeight: '500', background: 'none', border: 'none', cursor: 'pointer'}}
+              >
+                <User style={{height: '1rem', width: '1rem'}} />
+                <span>Contractors</span>
+              </button>
+              <button
+                onClick={() => router.push('/settings')}
+                style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', color: '#cbd5e1', textDecoration: 'none', fontWeight: '500', background: 'none', border: 'none', cursor: 'pointer'}}
+              >
+                <Settings style={{height: '1rem', width: '1rem'}} />
+                <span>Settings</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Page Header */}
+        <div style={{marginBottom: '2rem'}}>
+          <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem'}}>
+            <div>
+              <h1 style={{fontSize: '2.25rem', fontWeight: 'bold', color: 'white'}}>Quote Details</h1>
+              <p style={{color: '#cbd5e1'}}>Quote #{quote.quoteNumber} - {quote.title}</p>
+            </div>
+            <button
+              onClick={() => router.back()}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                color: '#60a5fa',
+                textDecoration: 'none',
+                fontSize: '0.875rem',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer'
+              }}
+            >
+              <ArrowLeft style={{height: '1rem', width: '1rem'}} />
+              Back to Quotes
+            </button>
+          </div>
+        </div>
+
+        {/* Quote Header */}
+        <div style={{
+          background: 'rgba(255, 255, 255, 0.1)',
+          backdropFilter: 'blur(8px)',
+          border: '1px solid rgba(255, 255, 255, 0.2)',
+          borderRadius: '0.75rem',
+          padding: '2rem',
+          marginBottom: '2rem'
+        }}>
+          <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem'}}>
+            <div>
+              <h1 style={{fontSize: '2rem', fontWeight: 'bold', color: 'white', margin: 0}}>{quote.title}</h1>
+              <p style={{fontSize: '1.125rem', color: '#cbd5e1', margin: 0}}>Quote #{quote.quoteNumber}</p>
+            </div>
+            <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.25rem',
+                padding: '0.25rem 0.75rem',
+                borderRadius: '0.25rem',
+                fontSize: '0.875rem',
+                fontWeight: '500',
+                backgroundColor: quote.status === 'draft' ? 'rgba(148, 163, 184, 0.2)' : 
+                                quote.status === 'sent' ? 'rgba(59, 130, 246, 0.2)' :
+                                quote.status === 'converted' ? 'rgba(52, 211, 153, 0.2)' :
+                                'rgba(245, 158, 11, 0.2)',
+                color: quote.status === 'draft' ? '#94a3b8' : 
+                       quote.status === 'sent' ? '#3b82f6' :
+                       quote.status === 'converted' ? '#34d399' :
+                       '#f59e0b'
+              }}>
+                {quote.status}
+              </div>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div style={{display: 'flex', gap: '0.75rem', flexWrap: 'wrap'}}>
+            <button
+              onClick={() => setShowEmailModal(true)}
+              disabled={quote.status === 'converted'}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                padding: '0.75rem 1.5rem',
+                background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+                border: 'none',
+                borderRadius: '0.5rem',
+                color: 'white',
+                cursor: 'pointer',
+                fontSize: '0.875rem',
+                fontWeight: '500',
+                opacity: quote.status === 'converted' ? 0.5 : 1
+              }}
+            >
+              <Send style={{height: '1rem', width: '1rem'}} />
+              Send via Email
+            </button>
+            <button
+              onClick={handleConvertToInvoice}
+              disabled={quote.status === 'converted' || converting}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                padding: '0.75rem 1.5rem',
+                background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                border: 'none',
+                borderRadius: '0.5rem',
+                color: 'white',
+                cursor: 'pointer',
+                fontSize: '0.875rem',
+                fontWeight: '500',
+                opacity: (quote.status === 'converted' || converting) ? 0.5 : 1
+              }}
+            >
+              <DollarSign style={{height: '1rem', width: '1rem'}} />
+              {converting ? 'Converting...' : 'Convert to Invoice'}
+            </button>
+          </div>
+        </div>
+
+        {/* Two Column Layout */}
+        <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem'}}>
+          {/* Left Column */}
+          <div>
+            {/* Client Information */}
+            <div style={{
+              background: 'rgba(255, 255, 255, 0.1)',
+              backdropFilter: 'blur(8px)',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
+              borderRadius: '0.75rem',
+              padding: '1.5rem',
+              marginBottom: '2rem'
+            }}>
+              <h2 style={{fontSize: '1.25rem', fontWeight: 'bold', color: 'white', marginBottom: '1rem'}}>Client Information</h2>
+              <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem'}}>
+                <User style={{height: '1rem', width: '1rem', color: '#cbd5e1'}} />
+                <span style={{color: 'white', fontWeight: '500'}}>{quote.client.name}</span>
+              </div>
+              <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem'}}>
+                <Mail style={{height: '1rem', width: '1rem', color: '#cbd5e1'}} />
+                <span style={{color: '#cbd5e1'}}>{quote.client.email}</span>
+              </div>
+              <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem'}}>
+                <Phone style={{height: '1rem', width: '1rem', color: '#cbd5e1'}} />
+                <span style={{color: '#cbd5e1'}}>{quote.client.phone}</span>
+              </div>
+              <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
+                <Calendar style={{height: '1rem', width: '1rem', color: '#cbd5e1'}} />
+                <span style={{color: '#cbd5e1'}}>{quote.client.address}</span>
+              </div>
+            </div>
+
+            {/* Quote Details */}
+            <div style={{
+              background: 'rgba(255, 255, 255, 0.1)',
+              backdropFilter: 'blur(8px)',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
+              borderRadius: '0.75rem',
+              padding: '1.5rem',
+              marginBottom: '2rem'
+            }}>
+              <h2 style={{fontSize: '1.25rem', fontWeight: 'bold', color: 'white', marginBottom: '1rem'}}>Quote Details</h2>
+              <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem'}}>
+                <div>
+                  <p style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem'}}>Created</p>
+                  <p style={{fontSize: '1rem', color: 'white', fontWeight: '500'}}>{new Date(quote.createdAt).toLocaleDateString()}</p>
+                </div>
+                <div>
+                  <p style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem'}}>Valid Until</p>
+                  <p style={{fontSize: '1rem', color: 'white', fontWeight: '500'}}>{new Date(quote.validUntil).toLocaleDateString()}</p>
+                </div>
+                <div>
+                  <p style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem'}}>Subtotal</p>
+                  <p style={{fontSize: '1rem', color: 'white', fontWeight: '500'}}>${quote.subtotal.toFixed(2)}</p>
+                </div>
+                <div>
+                  <p style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem'}}>Tax ({quote.taxRate}%)</p>
+                  <p style={{fontSize: '1rem', color: 'white', fontWeight: '500'}}>${quote.taxAmount.toFixed(2)}</p>
+                </div>
+                <div>
+                  <p style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem'}}>Deposit Required</p>
+                  <p style={{fontSize: '1rem', color: 'white', fontWeight: '500'}}>${(quote.depositAmount || 0).toFixed(2)}</p>
+                </div>
+                <div>
+                  <p style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem'}}>Total</p>
+                  <p style={{fontSize: '1.25rem', color: 'white', fontWeight: 'bold'}}>${quote.total.toFixed(2)}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        {/* Services */}
+        <div style={{ 
+          backgroundColor: 'white', 
+          borderRadius: '12px', 
+          padding: '25px',
+          marginTop: '20px',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+            <h3 style={{ fontSize: '20px', fontWeight: 'bold', color: '#1e293b', margin: 0 }}>
+              Services
+            </h3>
+            <button
+              onClick={() => setShowAddServiceModal(true)}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: '#3b82f6',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                fontSize: '14px',
+                fontWeight: '500'
+              }}
+            >
+              <Plus size={16} />
+              Add Service
+            </button>
+          </div>
+          
+          {regularServices.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
+              No services added yet
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+              {regularServices.map((item) => (
+                <div key={item.id} style={{ 
+                  border: '1px solid #e2e8f0', 
+                  borderRadius: '8px', 
+                  padding: '20px',
+                  position: 'relative'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div style={{ flex: 1 }}>
+                      <h4 style={{ fontSize: '16px', fontWeight: '600', color: '#1e293b', margin: '0 0 8px 0' }}>
+                        {item.serviceName}
+                      </h4>
+                      <p style={{ color: '#64748b', margin: '0 0 10px 0', fontSize: '14px' }}>
+                        {item.description}
+                      </p>
+                      <div style={{ display: 'flex', gap: '20px', fontSize: '14px', color: '#64748b' }}>
+                        <span>Qty: {item.quantity}</span>
+                        <span>Rate: ${item.unitPrice.toFixed(2)}</span>
+                        <span style={{ fontWeight: '600', color: '#1e293b' }}>
+                          Total: ${item.total.toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => handleDeleteService(item.id)}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: '#ef4444',
+                        cursor: 'pointer',
+                        padding: '4px',
+                        borderRadius: '4px'
+                      }}
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Contractors */}
+        <div style={{ 
+          backgroundColor: 'white', 
+          borderRadius: '12px', 
+          padding: '25px',
+          marginTop: '20px',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+            <h3 style={{ fontSize: '20px', fontWeight: 'bold', color: '#1e293b', margin: 0 }}>
+              Contractors
+            </h3>
+            <button
+              onClick={() => setShowAddContractorModal(true)}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: '#3b82f6',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                fontSize: '14px',
+                fontWeight: '500'
+              }}
+            >
+              <Plus size={16} />
+              Add Contractor
+            </button>
+          </div>
+          
+          {assignedContractors.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
+              No contractors assigned yet
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+              {assignedContractors.map((item) => (
+                <div key={item.id} style={{ 
+                  border: '1px solid #e2e8f0', 
+                  borderRadius: '8px', 
+                  padding: '20px',
+                  position: 'relative'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                      <Users size={20} style={{ color: '#64748b' }} />
+                      <div>
+                        <h4 style={{ fontSize: '16px', fontWeight: '600', color: '#1e293b', margin: '0 0 5px 0' }}>
+                          {item.contractor?.name}
+                        </h4>
+                        <div style={{ fontSize: '14px', color: '#64748b' }}>
+                          {item.contractor?.email} • {item.contractor?.phone}
+                        </div>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => handleRemoveContractor(item.id)}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: '#ef4444',
+                        cursor: 'pointer',
+                        padding: '4px',
+                        borderRadius: '4px'
+                      }}
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Terms and Notes */}
+        {(quote.terms || quote.notes) && (
+          <div style={{ 
+            backgroundColor: 'white', 
+            borderRadius: '12px', 
+            padding: '25px',
+            marginTop: '20px',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+          }}>
+            {quote.terms && (
+              <div style={{ marginBottom: quote.notes ? '20px' : 0 }}>
+                <h3 style={{ fontSize: '18px', fontWeight: 'bold', color: '#1e293b', margin: '0 0 15px 0' }}>
+                  Terms & Conditions
+                </h3>
+                <p style={{ color: '#374151', lineHeight: '1.6', margin: 0 }}>
+                  {quote.terms}
+                </p>
+              </div>
+            )}
+            {quote.notes && (
+              <div>
+                <h3 style={{ fontSize: '18px', fontWeight: 'bold', color: '#1e293b', margin: '0 0 15px 0' }}>
+                  Notes
+                </h3>
+                <p style={{ color: '#374151', lineHeight: '1.6', margin: 0 }}>
+                  {quote.notes}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Email Modal */}
+      {showEmailModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            padding: '30px',
+            width: '90%',
+            maxWidth: '500px',
+            maxHeight: '80vh',
+            overflow: 'auto'
+          }}>
+            <h3 style={{ fontSize: '20px', fontWeight: 'bold', color: '#1e293b', margin: '0 0 20px 0' }}>
+              Send Quote via Email
+            </h3>
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#374151' }}>
+                To:
+              </label>
+              <input
+                type="email"
+                value={emailData.to}
+                onChange={(e) => setEmailData(prev => ({ ...prev, to: e.target.value }))}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '8px',
+                  fontSize: '16px'
+                }}
+              />
+            </div>
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#374151' }}>
+                Subject:
+              </label>
+              <input
+                type="text"
+                value={emailData.subject}
+                onChange={(e) => setEmailData(prev => ({ ...prev, subject: e.target.value }))}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '8px',
+                  fontSize: '16px'
+                }}
+              />
+            </div>
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#374151' }}>
+                Message:
+              </label>
+              <textarea
+                value={emailData.message}
+                onChange={(e) => setEmailData(prev => ({ ...prev, message: e.target.value }))}
+                rows={6}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '8px',
+                  fontSize: '16px',
+                  resize: 'vertical'
+                }}
+              />
+            </div>
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setShowEmailModal(false)}
+                style={{
+                  padding: '10px 20px',
+                  backgroundColor: '#6b7280',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '500'
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSendEmail}
+                disabled={sendingEmail}
+                style={{
+                  padding: '10px 20px',
+                  backgroundColor: '#3b82f6',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  opacity: sendingEmail ? 0.5 : 1
+                }}
+              >
+                {sendingEmail ? 'Sending...' : 'Send Email'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Contractor Modal */}
+      {showAddContractorModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            padding: '30px',
+            width: '90%',
+            maxWidth: '400px'
+          }}>
+            <h3 style={{ fontSize: '20px', fontWeight: 'bold', color: '#1e293b', margin: '0 0 20px 0' }}>
+              Assign Contractor
+            </h3>
+            <p style={{ color: '#64748b', marginBottom: '20px', fontSize: '14px' }}>
+              Assign a contractor to this quote
+            </p>
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#374151' }}>
+                Select Contractor:
+              </label>
+              <select
+                value={selectedContractor}
+                onChange={(e) => setSelectedContractor(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '8px',
+                  fontSize: '16px'
+                }}
+              >
+                <option value="">Choose a contractor...</option>
+                {contractors.map((contractor) => (
+                  <option key={contractor.id} value={contractor.id}>
+                    {contractor.name} - {contractor.email}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => {
+                  setShowAddContractorModal(false)
+                  setSelectedContractor('')
+                }}
+                style={{
+                  padding: '10px 20px',
+                  backgroundColor: '#6b7280',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '500'
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleAssignContractor}
+                style={{
+                  padding: '10px 20px',
+                  backgroundColor: '#3b82f6',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '500'
+                }}
+              >
+                Assign Contractor
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Service Modal */}
+      {showAddServiceModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            padding: '30px',
+            width: '90%',
+            maxWidth: '500px'
+          }}>
+            <h3 style={{ fontSize: '20px', fontWeight: 'bold', color: '#1e293b', margin: '0 0 20px 0' }}>
+              Add Service
+            </h3>
+            <p style={{ color: '#64748b', marginBottom: '20px', fontSize: '14px' }}>
+              Add a new service to this quote
+            </p>
+            <div style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
+              Service addition functionality coming soon...
+            </div>
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setShowAddServiceModal(false)}
+                style={{
+                  padding: '10px 20px',
+                  backgroundColor: '#6b7280',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '500'
+                }}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+        </div>
+
+        {/* Services */}
+        <div style={{
+          background: 'rgba(255, 255, 255, 0.1)',
+          backdropFilter: 'blur(8px)',
+          border: '1px solid rgba(255, 255, 255, 0.2)',
+          borderRadius: '0.75rem',
+          padding: '1.5rem',
+          marginBottom: '2rem'
+        }}>
+          <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem'}}>
+            <h2 style={{fontSize: '1.25rem', fontWeight: 'bold', color: 'white', margin: 0}}>Services</h2>
+            <button
+              onClick={() => setShowAddServiceModal(true)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.25rem',
+                padding: '0.5rem 0.75rem',
+                background: 'rgba(255, 255, 255, 0.1)',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                borderRadius: '0.25rem',
+                color: 'white',
+                cursor: 'pointer',
+                fontSize: '0.75rem',
+                fontWeight: '500'
+              }}
+            >
+              <Plus style={{height: '0.875rem', width: '0.875rem'}} />
+              Add Service
+            </button>
+          </div>
+          
+          {regularServices.length === 0 ? (
+            <div style={{
+              padding: '2rem',
+              textAlign: 'center',
+              color: '#cbd5e1'
+            }}>
+              <FileText style={{height: '2rem', width: '2rem', margin: '0 auto 0.5rem auto', opacity: 0.5}} />
+              <p style={{fontSize: '0.875rem', margin: 0}}>No services added yet</p>
+            </div>
+          ) : (
+            <div>
+              {regularServices.map((item, index) => (
+                <div key={item.id} style={{
+                  padding: '1rem',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  borderRadius: '0.5rem',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  marginBottom: '0.75rem'
+                }}>
+                  <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem'}}>
+                    <div>
+                      <p style={{fontSize: '1rem', color: 'white', fontWeight: '500', margin: 0}}>{item.serviceName}</p>
+                      <p style={{fontSize: '0.875rem', color: '#cbd5e1', margin: '0.25rem 0 0 0'}}>{item.description}</p>
+                    </div>
+                    <div style={{textAlign: 'right'}}>
+                      <p style={{fontSize: '1rem', color: 'white', fontWeight: '500', margin: 0}}>${item.total.toFixed(2)}</p>
+                      <p style={{fontSize: '0.75rem', color: '#cbd5e1', margin: 0}}>
+                        {item.quantity} × ${item.unitPrice.toFixed(2)}
+                      </p>
+                    </div>
+                  </div>
+                  <div style={{display: 'flex', gap: '0.5rem', justifyContent: 'flex-end'}}>
+                    <button
+                      onClick={() => handleDeleteService(item.id)}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.25rem',
+                        padding: '0.25rem 0.5rem',
+                        background: 'rgba(239, 68, 68, 0.2)',
+                        border: '1px solid rgba(239, 68, 68, 0.3)',
+                        borderRadius: '0.25rem',
+                        color: '#f87171',
+                        cursor: 'pointer',
+                        fontSize: '0.75rem',
+                        fontWeight: '500'
+                      }}
+                    >
+                      <Trash2 style={{height: '0.75rem', width: '0.75rem'}} />
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Contractors */}
+        <div style={{
+          background: 'rgba(255, 255, 255, 0.1)',
+          backdropFilter: 'blur(8px)',
+          border: '1px solid rgba(255, 255, 255, 0.2)',
+          borderRadius: '0.75rem',
+          padding: '1.5rem',
+          marginBottom: '2rem'
+        }}>
+          <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem'}}>
+            <h2 style={{fontSize: '1.25rem', fontWeight: 'bold', color: 'white', margin: 0}}>Contractors</h2>
+            <button
+              onClick={() => setShowAddContractorModal(true)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.25rem',
+                padding: '0.5rem 0.75rem',
+                background: 'rgba(255, 255, 255, 0.1)',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                borderRadius: '0.25rem',
+                color: 'white',
+                cursor: 'pointer',
+                fontSize: '0.75rem',
+                fontWeight: '500'
+              }}
+            >
+              <Plus style={{height: '0.875rem', width: '0.875rem'}} />
+              Add Contractor
+            </button>
+          </div>
+          
+          {assignedContractors.length === 0 ? (
+            <div style={{
+              padding: '2rem',
+              textAlign: 'center',
+              color: '#cbd5e1'
+            }}>
+              <Users style={{height: '2rem', width: '2rem', margin: '0 auto 0.5rem auto', opacity: 0.5}} />
+              <p style={{fontSize: '0.875rem', margin: 0}}>No contractors assigned</p>
+            </div>
+          ) : (
+            <div>
+              {assignedContractors.map((item, index) => (
+                <div key={item.id} style={{
+                  padding: '1rem',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  borderRadius: '0.5rem',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  marginBottom: '0.75rem'
+                }}>
+                  <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem'}}>
+                    <div>
+                      <p style={{fontSize: '1rem', color: 'white', fontWeight: '500', margin: 0}}>{item.contractor?.name}</p>
+                      <p style={{fontSize: '0.875rem', color: '#cbd5e1', margin: '0.25rem 0 0 0'}}>{item.contractor?.email}</p>
+                      <p style={{fontSize: '0.75rem', color: '#cbd5e1', margin: '0.25rem 0 0 0'}}>
+                        {item.serviceName}
+                      </p>
+                    </div>
+                    <div style={{textAlign: 'right'}}>
+                      <p style={{fontSize: '1rem', color: 'white', fontWeight: '500', margin: 0}}>${item.total.toFixed(2)}</p>
+                    </div>
+                  </div>
+                  <div style={{display: 'flex', gap: '0.5rem', justifyContent: 'flex-end'}}>
+                    <button
+                      onClick={() => handleRemoveContractor(item.id)}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.25rem',
+                        padding: '0.25rem 0.5rem',
+                        background: 'rgba(245, 158, 11, 0.2)',
+                        border: '1px solid rgba(245, 158, 11, 0.3)',
+                        borderRadius: '0.25rem',
+                        color: '#f59e0b',
+                        cursor: 'pointer',
+                        fontSize: '0.75rem',
+                        fontWeight: '500'
+                      }}
+                    >
+                      <Users style={{height: '0.75rem', width: '0.75rem'}} />
+                      Remove Contractor
+                    </button>
+                    <button
+                      onClick={() => handleDeleteService(item.id)}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.25rem',
+                        padding: '0.25rem 0.5rem',
+                        background: 'rgba(239, 68, 68, 0.2)',
+                        border: '1px solid rgba(239, 68, 68, 0.3)',
+                        borderRadius: '0.25rem',
+                        color: '#f87171',
+                        cursor: 'pointer',
+                        fontSize: '0.75rem',
+                        fontWeight: '500'
+                      }}
+                    >
+                      <Trash2 style={{height: '0.75rem', width: '0.75rem'}} />
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Terms and Notes */}
+        {(quote.terms || quote.notes) && (
+          <div style={{
+            background: 'rgba(255, 255, 255, 0.1)',
+            backdropFilter: 'blur(8px)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            borderRadius: '0.75rem',
+            padding: '1.5rem',
+            marginBottom: '2rem'
+          }}>
+            {quote.terms && (
+              <div style={{marginBottom: quote.notes ? '1.5rem' : 0}}>
+                <h2 style={{fontSize: '1.25rem', fontWeight: 'bold', color: 'white', marginBottom: '1rem'}}>Terms & Conditions</h2>
+                <p style={{fontSize: '0.875rem', color: '#cbd5e1', lineHeight: '1.6', margin: 0}}>{quote.terms}</p>
+              </div>
+            )}
+            {quote.notes && (
+              <div>
+                <h2 style={{fontSize: '1.25rem', fontWeight: 'bold', color: 'white', marginBottom: '1rem'}}>Notes</h2>
+                <p style={{fontSize: '0.875rem', color: '#cbd5e1', lineHeight: '1.6', margin: 0}}>{quote.notes}</p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}

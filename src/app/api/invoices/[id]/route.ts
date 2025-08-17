@@ -6,7 +6,7 @@ import { authOptions } from '@/lib/auth'
 // GET /api/invoices/[id] - Get a specific invoice
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -23,9 +23,11 @@ export async function GET(
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
+    const resolvedParams = await params
+
     const invoice = await prisma.invoice.findFirst({
       where: {
-        id: params.id,
+        id: resolvedParams.id,
         userId: user.id
       },
       include: {
@@ -48,7 +50,21 @@ export async function GET(
       return NextResponse.json({ error: 'Invoice not found' }, { status: 404 })
     }
 
-    return NextResponse.json(invoice)
+    // Convert Decimal values to numbers for frontend compatibility
+    const invoiceWithNumbers = {
+      ...invoice,
+      subtotal: Number(invoice.subtotal),
+      taxAmount: Number(invoice.taxAmount),
+      total: Number(invoice.total),
+      items: invoice.items.map(item => ({
+        ...item,
+        quantity: Number(item.quantity),
+        unitPrice: Number(item.unitPrice),
+        total: Number(item.total)
+      }))
+    }
+
+    return NextResponse.json(invoiceWithNumbers)
   } catch (error) {
     console.error('Error fetching invoice:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
@@ -58,7 +74,7 @@ export async function GET(
 // PUT /api/invoices/[id] - Update an invoice
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -98,9 +114,11 @@ export async function PUT(
       items 
     } = body
 
+    const resolvedParams = await params
+
     const invoice = await prisma.invoice.findFirst({
       where: {
-        id: params.id,
+        id: resolvedParams.id,
         userId: user.id
       }
     })
@@ -111,7 +129,7 @@ export async function PUT(
 
     // Update invoice
     const updatedInvoice = await prisma.invoice.update({
-      where: { id: params.id },
+      where: { id: resolvedParams.id },
       data: {
         title,
         description,
@@ -138,14 +156,14 @@ export async function PUT(
     if (items && Array.isArray(items)) {
       // Delete existing items
       await prisma.invoiceItem.deleteMany({
-        where: { invoiceId: params.id }
+        where: { invoiceId: resolvedParams.id }
       })
 
       // Create new items
       for (const item of items) {
         await prisma.invoiceItem.create({
           data: {
-            invoiceId: params.id,
+            invoiceId: resolvedParams.id,
             serviceName: item.serviceName,
             description: item.description,
             quantity: parseFloat(item.quantity),
@@ -159,7 +177,15 @@ export async function PUT(
       }
     }
 
-    return NextResponse.json(updatedInvoice)
+    // Convert Decimal values to numbers for frontend compatibility
+    const updatedInvoiceWithNumbers = {
+      ...updatedInvoice,
+      subtotal: Number(updatedInvoice.subtotal),
+      taxAmount: Number(updatedInvoice.taxAmount),
+      total: Number(updatedInvoice.total)
+    }
+
+    return NextResponse.json(updatedInvoiceWithNumbers)
   } catch (error) {
     console.error('Error updating invoice:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
@@ -169,7 +195,7 @@ export async function PUT(
 // DELETE /api/invoices/[id] - Delete an invoice
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -186,9 +212,11 @@ export async function DELETE(
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
+    const resolvedParams = await params
+
     const invoice = await prisma.invoice.findFirst({
       where: {
-        id: params.id,
+        id: resolvedParams.id,
         userId: user.id
       }
     })
@@ -198,7 +226,7 @@ export async function DELETE(
     }
 
     await prisma.invoice.delete({
-      where: { id: params.id }
+      where: { id: resolvedParams.id }
     })
 
     return NextResponse.json({ message: 'Invoice deleted successfully' })

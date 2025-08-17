@@ -30,7 +30,9 @@ interface ServiceTemplate {
   id: string
   name: string
   description: string
-  basePrice: number
+  category: string
+  pricingType: 'hourly' | 'flat'
+  rate: number
   icon?: any
 }
 
@@ -41,6 +43,7 @@ interface InvoiceItem {
   quantity: number
   unitPrice: number
   total: number
+  pricingType?: 'hourly' | 'flat'
 }
 
 interface Contractor {
@@ -180,16 +183,30 @@ export default function NewInvoicePage() {
     }
   }
 
-  const addInvoiceItem = () => {
-    const newItem: InvoiceItem = {
-      id: Date.now().toString(),
-      serviceName: "",
-      description: "",
-      quantity: 1,
-      unitPrice: 0,
-      total: 0
+  const addInvoiceItem = (service?: ServiceTemplate) => {
+    if (service) {
+      const newItem: InvoiceItem = {
+        id: Date.now().toString(),
+        serviceName: service.name,
+        description: service.description || "",
+        quantity: 1,
+        unitPrice: service.rate,
+        total: service.rate,
+        pricingType: service.pricingType
+      }
+      setInvoiceItems([...invoiceItems, newItem])
+    } else {
+      const newItem: InvoiceItem = {
+        id: Date.now().toString(),
+        serviceName: "",
+        description: "",
+        quantity: 1,
+        unitPrice: 0,
+        total: 0,
+        pricingType: 'flat'
+      }
+      setInvoiceItems([...invoiceItems, newItem])
     }
-    setInvoiceItems([...invoiceItems, newItem])
   }
 
   const removeInvoiceItem = (id: string) => {
@@ -248,6 +265,9 @@ export default function NewInvoicePage() {
       return
     }
 
+    // Set default due date if none is selected (30 days from now)
+    const defaultDueDate = dueDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+
     try {
       const servicesTotal = invoiceItems.reduce((sum, item) => sum + item.total, 0)
       const contractorsTotal = invoiceContractors.reduce((sum, contractor) => sum + contractor.amount, 0)
@@ -256,11 +276,20 @@ export default function NewInvoicePage() {
       const taxAmount = subtotal * (taxRate / 100)
       const total = subtotal + taxAmount
 
+      // Filter out pricingType from items as it's not in the database schema
+      const itemsForDatabase = invoiceItems.map(item => ({
+        serviceName: item.serviceName,
+        description: item.description,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        total: item.total
+      }))
+
       const invoiceData = {
         title: `Invoice for ${selectedClient.name}`,
         description: "Professional music production services",
         status: "draft",
-        dueDate: dueDate,
+        dueDate: defaultDueDate,
         subtotal: subtotal,
         taxRate: taxRate,
         taxAmount: taxAmount,
@@ -273,7 +302,7 @@ export default function NewInvoicePage() {
         clientPhone: selectedClient.phone || "",
         clientAddress: selectedClient.address || "",
         quoteId: selectedQuote?.id || null,
-        items: invoiceItems
+        items: itemsForDatabase
       }
 
       const response = await fetch('/api/invoices', {
@@ -288,8 +317,9 @@ export default function NewInvoicePage() {
         alert('Invoice saved as draft successfully!')
         window.location.href = '/invoices'
       } else {
-        console.error('Failed to save invoice')
-        alert('Failed to save invoice')
+        const errorData = await response.json()
+        console.error('Failed to save invoice:', errorData)
+        alert(`Failed to save invoice: ${errorData.error || 'Unknown error'}`)
       }
     } catch (error) {
       console.error('Error saving invoice:', error)
@@ -303,6 +333,9 @@ export default function NewInvoicePage() {
       return
     }
 
+    // Set default due date if none is selected (30 days from now)
+    const defaultDueDate = dueDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+
     try {
       const servicesTotal = invoiceItems.reduce((sum, item) => sum + item.total, 0)
       const contractorsTotal = invoiceContractors.reduce((sum, contractor) => sum + contractor.amount, 0)
@@ -311,11 +344,20 @@ export default function NewInvoicePage() {
       const taxAmount = subtotal * (taxRate / 100)
       const total = subtotal + taxAmount
 
+      // Filter out pricingType from items as it's not in the database schema
+      const itemsForDatabase = invoiceItems.map(item => ({
+        serviceName: item.serviceName,
+        description: item.description,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        total: item.total
+      }))
+
       const invoiceData = {
         title: `Invoice for ${selectedClient.name}`,
         description: "Professional music production services",
         status: "sent",
-        dueDate: dueDate,
+        dueDate: defaultDueDate,
         subtotal: subtotal,
         taxRate: taxRate,
         taxAmount: taxAmount,
@@ -328,7 +370,7 @@ export default function NewInvoicePage() {
         clientPhone: selectedClient.phone || "",
         clientAddress: selectedClient.address || "",
         quoteId: selectedQuote?.id || null,
-        items: invoiceItems
+        items: itemsForDatabase
       }
 
       const response = await fetch('/api/invoices', {
@@ -343,8 +385,9 @@ export default function NewInvoicePage() {
         alert('Invoice sent successfully!')
         window.location.href = '/invoices'
       } else {
-        console.error('Failed to send invoice')
-        alert('Failed to send invoice')
+        const errorData = await response.json()
+        console.error('Failed to send invoice:', errorData)
+        alert(`Failed to send invoice: ${errorData.error || 'Unknown error'}`)
       }
     } catch (error) {
       console.error('Error sending invoice:', error)
@@ -598,35 +641,103 @@ export default function NewInvoicePage() {
             <div>
               <h2 style={{fontSize: '1.25rem', fontWeight: 'bold', color: 'white', marginBottom: '1.5rem'}}>Add Services</h2>
               
+              {/* Custom Service Option */}
+              <div style={{marginBottom: '1.5rem'}}>
+                <h3 style={{fontSize: '1.125rem', fontWeight: '500', color: 'white', marginBottom: '1rem'}}>Add Custom Service</h3>
+                <div style={{padding: '1rem', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.5rem', backgroundColor: 'rgba(255, 255, 255, 0.05)'}}>
+                  <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
+                    <div style={{display: 'flex', alignItems: 'center', gap: '0.75rem'}}>
+                      <div style={{padding: '0.5rem', backgroundColor: 'rgba(59, 130, 246, 0.2)', borderRadius: '0.5rem'}}>
+                        <Plus style={{height: '1.25rem', width: '1.25rem', color: '#60a5fa'}} />
+                      </div>
+                      <div>
+                        <div style={{fontWeight: '500', color: 'white'}}>Custom Service</div>
+                        <div style={{fontSize: '0.875rem', color: '#cbd5e1'}}>Add a one-time service not in your templates</div>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => addInvoiceItem()}
+                      style={{padding: '0.5rem', backgroundColor: '#2563eb', borderRadius: '0.5rem', border: 'none', cursor: 'pointer'}}
+                    >
+                      <Plus style={{height: '1rem', width: '1rem', color: 'white'}} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Service Templates */}
+              <div style={{marginBottom: '1.5rem'}}>
+                <h3 style={{fontSize: '1.125rem', fontWeight: '500', color: 'white', marginBottom: '1rem'}}>Available Services</h3>
+                <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1rem'}}>
+                  {serviceTemplates.map((service) => {
+                    // Convert icon name to component
+                    let Icon = Music // default
+                    if (service.icon) {
+                      switch (service.icon) {
+                        case 'Headphones':
+                          Icon = Headphones
+                          break
+                        case 'Mic':
+                          Icon = Mic
+                          break
+                        case 'Music':
+                        default:
+                          Icon = Music
+                          break
+                      }
+                    }
+                    return (
+                      <div key={service.id} style={{padding: '1rem', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.5rem'}}>
+                        <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
+                          <div style={{display: 'flex', alignItems: 'center', gap: '0.75rem'}}>
+                            <div style={{padding: '0.5rem', backgroundColor: 'rgba(147, 51, 234, 0.2)', borderRadius: '0.5rem'}}>
+                              <Icon style={{height: '1.25rem', width: '1.25rem', color: '#a78bfa'}} />
+                            </div>
+                            <div>
+                              <div style={{fontWeight: '500', color: 'white'}}>{service.name}</div>
+                              <div style={{fontSize: '0.875rem', color: '#cbd5e1'}}>{service.description}</div>
+                              <div style={{fontSize: '0.875rem', color: '#94a3b8'}}>${service.rate}{service.pricingType === 'hourly' ? '/hour' : ''}</div>
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => addInvoiceItem(service)}
+                            style={{padding: '0.5rem', backgroundColor: '#2563eb', borderRadius: '0.5rem', border: 'none', cursor: 'pointer'}}
+                          >
+                            <Plus style={{height: '1rem', width: '1rem', color: 'white'}} />
+                          </button>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+
               {/* Invoice Items */}
               <div style={{marginBottom: '1.5rem'}}>
                 <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem'}}>
                   <h3 style={{fontSize: '1.125rem', fontWeight: '500', color: 'white'}}>Invoice Items</h3>
-                  <button
-                    onClick={addInvoiceItem}
-                    style={{
-                      padding: '0.5rem 1rem',
-                      backgroundColor: 'rgba(59, 130, 246, 0.2)',
-                      border: '1px solid rgba(59, 130, 246, 0.3)',
-                      borderRadius: '0.25rem',
-                      color: '#60a5fa',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.25rem',
-                      fontSize: '0.875rem'
-                    }}
-                  >
-                    <Plus style={{height: '0.875rem', width: '0.875rem'}} />
-                    Add Item
-                  </button>
                 </div>
                 
                 <div style={{display: 'flex', flexDirection: 'column', gap: '1rem'}}>
                   {invoiceItems.map((item) => (
                     <div key={item.id} style={{padding: '1rem', backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: '0.5rem', border: '1px solid rgba(255, 255, 255, 0.1)'}}>
                       <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem'}}>
-                        <div style={{fontWeight: '500', color: 'white'}}>Item #{item.id}</div>
+                        <div style={{flex: 1, marginRight: '1rem'}}>
+                          <input
+                            type="text"
+                            placeholder="Enter service name"
+                            value={item.serviceName}
+                            onChange={(e) => updateInvoiceItem(item.id, 'serviceName', e.target.value)}
+                            style={{width: '100%', padding: '0.5rem', backgroundColor: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.25rem', color: 'white', outline: 'none', marginBottom: '0.5rem'}}
+                          />
+                          <textarea
+                            placeholder="Enter service description"
+                            value={item.description}
+                            onChange={(e) => updateInvoiceItem(item.id, 'description', e.target.value)}
+                            rows={2}
+                            style={{width: '100%', padding: '0.5rem', backgroundColor: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.25rem', color: 'white', outline: 'none', resize: 'vertical', fontFamily: 'inherit'}}
+                          />
+                        </div>
                         <button
                           onClick={() => removeInvoiceItem(item.id)}
                           style={{color: '#f87171', cursor: 'pointer', border: 'none', background: 'none'}}
@@ -636,25 +747,20 @@ export default function NewInvoicePage() {
                       </div>
                       <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '1rem'}}>
                         <div>
-                          <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>Service Name</label>
-                          <input
-                            type="text"
-                            value={item.serviceName}
-                            onChange={(e) => updateInvoiceItem(item.id, 'serviceName', e.target.value)}
+                          <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>Pricing Type</label>
+                          <select
+                            value={item.pricingType || 'flat'}
+                            onChange={(e) => updateInvoiceItem(item.id, 'pricingType', e.target.value as 'hourly' | 'flat')}
                             style={{width: '100%', padding: '0.5rem', backgroundColor: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.25rem', color: 'white', outline: 'none'}}
-                          />
+                          >
+                            <option value="flat">Flat Rate</option>
+                            <option value="hourly">Per Hour</option>
+                          </select>
                         </div>
                         <div>
-                          <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>Description</label>
-                          <input
-                            type="text"
-                            value={item.description}
-                            onChange={(e) => updateInvoiceItem(item.id, 'description', e.target.value)}
-                            style={{width: '100%', padding: '0.5rem', backgroundColor: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.25rem', color: 'white', outline: 'none'}}
-                          />
-                        </div>
-                        <div>
-                          <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>Quantity</label>
+                          <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>
+                            {(item.pricingType || 'flat') === 'hourly' ? 'Hours' : 'Quantity'}
+                          </label>
                           <input
                             type="number"
                             value={item.quantity}
@@ -663,7 +769,9 @@ export default function NewInvoicePage() {
                           />
                         </div>
                         <div>
-                          <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>Rate ($)</label>
+                          <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>
+                            {(item.pricingType || 'flat') === 'hourly' ? 'Rate ($/hr)' : 'Rate ($)'}
+                          </label>
                           <input
                             type="number"
                             value={item.unitPrice}
@@ -671,9 +779,12 @@ export default function NewInvoicePage() {
                             style={{width: '100%', padding: '0.5rem', backgroundColor: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.25rem', color: 'white', outline: 'none'}}
                           />
                         </div>
-                      </div>
-                      <div style={{marginTop: '1rem', padding: '0.5rem', backgroundColor: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.25rem', color: 'white', fontWeight: '500'}}>
-                        Amount: ${item.total.toLocaleString()}
+                        <div>
+                          <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>Amount</label>
+                          <div style={{padding: '0.5rem', backgroundColor: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.25rem', color: 'white', fontWeight: '500'}}>
+                            ${item.total.toLocaleString()}
+                          </div>
+                        </div>
                       </div>
                     </div>
                   ))}

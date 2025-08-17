@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
-import { Plus, Search, Eye, Edit, DollarSign, Clock, CheckCircle, User, Music, Headphones, Mic, X, Home, FileText, Users, BarChart3, Settings, Save, Trash2 } from "lucide-react"
+import { Plus, Search, Eye, Edit, DollarSign, Clock, CheckCircle, User, Music, Headphones, Mic, X, Save, Trash2 } from "lucide-react"
 import Link from "next/link"
 import UserMenu from "@/components/user-menu"
+import Navigation from "@/components/navigation"
 
 interface Contractor {
   id: string
@@ -13,6 +14,7 @@ interface Contractor {
   phone: string
   address: string
   skills: string[]
+  pricingType: "hourly" | "flat"
   rate: number
   currency: string
   status: "active" | "inactive"
@@ -48,11 +50,15 @@ export default function ContractorsPage() {
     phone: "",
     address: "",
     skills: [] as string[],
+    pricingType: "hourly" as "hourly" | "flat",
     rate: 0,
     currency: "USD",
     notes: "",
     status: "active" as "active" | "inactive"
   })
+
+  // Separate state for skills input to allow free typing
+  const [skillsInput, setSkillsInput] = useState("")
 
   // Fetch contractors from API
   useEffect(() => {
@@ -90,13 +96,25 @@ export default function ContractorsPage() {
 
   const handleAddContractor = async () => {
     if (newContractor.name && newContractor.email) {
+      // Parse skills from input
+      const skills = skillsInput
+        .split(',')
+        .map(skill => skill.trim())
+        .filter(skill => skill.length > 0)
+      
+      const contractorData = {
+        ...newContractor,
+        skills
+      }
+      
+      console.log('Submitting contractor:', contractorData)
       try {
         const response = await fetch('/api/contractors', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify(newContractor),
+          body: JSON.stringify(contractorData),
         })
 
         if (response.ok) {
@@ -108,11 +126,13 @@ export default function ContractorsPage() {
             phone: "",
             address: "",
             skills: [],
+            pricingType: "hourly",
             rate: 0,
             currency: "USD",
             notes: "",
             status: "active"
           })
+          setSkillsInput("")
           setShowAddModal(false)
         } else {
           console.error('Failed to create contractor')
@@ -125,18 +145,31 @@ export default function ContractorsPage() {
 
   const handleEditContractor = (contractor: Contractor) => {
     setEditingContractor(contractor)
+    setSkillsInput((contractor.skills || []).join(', '))
     setShowAddModal(true)
   }
 
   const handleSaveEdit = async () => {
     if (editingContractor && editingContractor.name && editingContractor.email) {
+      // Parse skills from input
+      const skills = skillsInput
+        .split(',')
+        .map(skill => skill.trim())
+        .filter(skill => skill.length > 0)
+      
+      const contractorData = {
+        ...editingContractor,
+        skills
+      }
+      
       try {
+        console.log('Submitting edited contractor data:', contractorData)
         const response = await fetch(`/api/contractors/${editingContractor.id}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify(editingContractor),
+          body: JSON.stringify(contractorData),
         })
 
         if (response.ok) {
@@ -209,43 +242,11 @@ export default function ContractorsPage() {
               <p style={{fontSize: '0.875rem', color: '#cbd5e1'}}>Uniquitous Music - Professional Billing System</p>
             </div>
           </div>
+          <UserMenu />
         </div>
 
         {/* Navigation */}
-        <div style={{backgroundColor: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.75rem', padding: '1rem', marginBottom: '2rem'}}>
-          <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
-            <div style={{display: 'flex', gap: '0.5rem'}}>
-              <Link href="/" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', color: '#cbd5e1', textDecoration: 'none', fontWeight: '500'}}>
-                <Home style={{height: '1rem', width: '1rem'}} />
-                <span>Dashboard</span>
-              </Link>
-              <Link href="/clients" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', color: '#cbd5e1', textDecoration: 'none', fontWeight: '500'}}>
-                <Users style={{height: '1rem', width: '1rem'}} />
-                <span>Clients</span>
-              </Link>
-              <Link href="/quotes" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', color: '#cbd5e1', textDecoration: 'none', fontWeight: '500'}}>
-                <FileText style={{height: '1rem', width: '1rem'}} />
-                <span>Quotes</span>
-              </Link>
-              <Link href="/invoices" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', color: '#cbd5e1', textDecoration: 'none', fontWeight: '500'}}>
-                <DollarSign style={{height: '1rem', width: '1rem'}} />
-                <span>Invoices</span>
-              </Link>
-              <Link href="/contractors" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', background: 'linear-gradient(to right, #9333ea, #3b82f6)', color: 'white', textDecoration: 'none', fontWeight: '500', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'}}>
-                <User style={{height: '1rem', width: '1rem'}} />
-                <span>Contractors</span>
-              </Link>
-
-              <Link href="/settings" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', color: '#cbd5e1', textDecoration: 'none', fontWeight: '500'}}>
-                <Settings style={{height: '1rem', width: '1rem'}} />
-                <span>Settings</span>
-              </Link>
-            </div>
-            <div style={{display: 'flex', alignItems: 'center', gap: '1rem'}}>
-              <UserMenu />
-            </div>
-          </div>
-        </div>
+        <Navigation />
 
         {/* Page Header */}
         <div style={{marginBottom: '2rem'}}>
@@ -392,7 +393,9 @@ export default function ContractorsPage() {
                       </div>
                     </td>
                     <td style={{padding: '1rem'}}>
-                      <div style={{fontWeight: '500', color: 'white'}}>${contractor.rate}/hr</div>
+                      <div style={{fontWeight: '500', color: 'white'}}>
+                        ${contractor.rate}{contractor.pricingType === 'hourly' ? '/hr' : ''}
+                      </div>
                     </td>
                     <td style={{padding: '1rem'}}>
                       <div style={{
@@ -493,7 +496,11 @@ export default function ContractorsPage() {
               <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem'}}>
                 <h2 style={{fontSize: '1.5rem', fontWeight: 'bold', color: 'white'}}>{editingContractor ? 'Edit Contractor' : 'Add New Contractor'}</h2>
                 <button
-                  onClick={() => setShowAddModal(false)}
+                  onClick={() => {
+                    setShowAddModal(false)
+                    setSkillsInput("")
+                    setEditingContractor(null)
+                  }}
                   style={{
                     padding: '0.5rem',
                     backgroundColor: 'rgba(255, 255, 255, 0.1)',
@@ -563,14 +570,16 @@ export default function ContractorsPage() {
                   <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.5rem'}}>Skills</label>
                   <input
                     type="text"
-                    placeholder="Enter skills (comma separated)"
-                    value={editingContractor ? editingContractor.skills.join(', ') : newContractor.skills.join(', ')}
+                    placeholder="e.g., mixing, mastering, recording, production"
+                    value={editingContractor ? (editingContractor.skills || []).join(', ') : skillsInput}
                     onChange={(e) => {
-                      const skills = e.target.value.split(',').map(s => s.trim()).filter(s => s)
+                      console.log('Skills input changed:', e.target.value)
                       if (editingContractor) {
-                        setEditingContractor({...editingContractor, skills})
+                        // For editing, just update the input state to allow free typing
+                        setSkillsInput(e.target.value)
                       } else {
-                        setNewContractor({...newContractor, skills})
+                        // For new contractor, just update the input state
+                        setSkillsInput(e.target.value)
                       }
                     }}
                     style={{
@@ -584,10 +593,36 @@ export default function ContractorsPage() {
                   />
                 </div>
                 <div style={{display: 'flex', flexDirection: 'column'}}>
-                  <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.5rem'}}>Hourly Rate</label>
+                  <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.5rem'}}>Pricing Type</label>
+                  <select
+                    value={editingContractor ? editingContractor.pricingType : newContractor.pricingType}
+                    onChange={(e) => {
+                      if (editingContractor) {
+                        setEditingContractor({...editingContractor, pricingType: e.target.value as "hourly" | "flat"})
+                      } else {
+                        setNewContractor({...newContractor, pricingType: e.target.value as "hourly" | "flat"})
+                      }
+                    }}
+                    style={{
+                      padding: '0.75rem',
+                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                      border: '1px solid rgba(255, 255, 255, 0.2)',
+                      borderRadius: '0.5rem',
+                      color: 'white',
+                      outline: 'none'
+                    }}
+                  >
+                    <option value="hourly">Per Hour</option>
+                    <option value="flat">Flat Rate</option>
+                  </select>
+                </div>
+                <div style={{display: 'flex', flexDirection: 'column'}}>
+                  <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.5rem'}}>
+                    {(editingContractor ? editingContractor.pricingType : newContractor.pricingType) === 'hourly' ? 'Hourly Rate' : 'Flat Rate'}
+                  </label>
                   <input
                     type="number"
-                    placeholder="Enter hourly rate"
+                    placeholder={(editingContractor ? editingContractor.pricingType : newContractor.pricingType) === 'hourly' ? "Enter hourly rate" : "Enter flat rate"}
                     value={editingContractor ? editingContractor.rate : newContractor.rate}
                     onChange={(e) => {
                       if (editingContractor) {
@@ -629,6 +664,31 @@ export default function ContractorsPage() {
                     <option value="active">Active</option>
                     <option value="inactive">Inactive</option>
                   </select>
+                </div>
+                <div style={{display: 'flex', flexDirection: 'column'}}>
+                  <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.5rem'}}>Notes</label>
+                  <textarea
+                    placeholder="Enter contractor notes (optional)"
+                    value={editingContractor?.notes || newContractor.notes}
+                    onChange={(e) => {
+                      if (editingContractor) {
+                        setEditingContractor({...editingContractor, notes: e.target.value})
+                      } else {
+                        setNewContractor({...newContractor, notes: e.target.value})
+                      }
+                    }}
+                    rows={3}
+                    style={{
+                      padding: '0.75rem',
+                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                      border: '1px solid rgba(255, 255, 255, 0.2)',
+                      borderRadius: '0.5rem',
+                      color: 'white',
+                      outline: 'none',
+                      resize: 'vertical',
+                      fontFamily: 'inherit'
+                    }}
+                  />
                 </div>
                 <button
                   onClick={editingContractor ? handleSaveEdit : handleAddContractor}

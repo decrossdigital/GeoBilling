@@ -67,6 +67,9 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     
+    console.log('Session:', session)
+    console.log('Session user:', session?.user)
+    
     if (!session?.user?.email) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
@@ -75,15 +78,42 @@ export async function POST(request: NextRequest) {
       where: { email: session.user.email }
     })
 
+    console.log('Found user:', user)
+
+    // Parse the request body
+    const body = await request.json()
+    const { name, description, category, pricingType, rate, currency } = body
+
     if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+      // Try to create the user if they don't exist
+      console.log('User not found, creating new user...')
+      const newUser = await prisma.user.create({
+        data: {
+          email: session.user.email,
+          name: session.user.name || 'Unknown User',
+          image: session.user.image || null,
+        }
+      })
+      console.log('Created new user:', newUser)
+      
+      // Use the newly created user
+      const serviceTemplate = await prisma.serviceTemplate.create({
+        data: {
+          name,
+          description: description || '',
+          category,
+          pricingType: pricingType || 'flat',
+          rate: parseFloat(rate),
+          currency: currency || 'USD',
+          userId: newUser.id
+        }
+      })
+
+      return NextResponse.json(serviceTemplate, { status: 201 })
     }
 
-    const body = await request.json()
-    const { name, description, category, basePrice, currency } = body
-
-    if (!name || !category || !basePrice) {
-      return NextResponse.json({ error: 'Name, category, and base price are required' }, { status: 400 })
+    if (!name || !category || !rate) {
+      return NextResponse.json({ error: 'Name, category, and rate are required' }, { status: 400 })
     }
 
     const serviceTemplate = await prisma.serviceTemplate.create({
@@ -91,7 +121,8 @@ export async function POST(request: NextRequest) {
         name,
         description: description || '',
         category,
-        basePrice: parseFloat(basePrice),
+        pricingType: pricingType || 'flat',
+        rate: parseFloat(rate),
         currency: currency || 'USD',
         userId: user.id
       }
@@ -100,6 +131,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(serviceTemplate, { status: 201 })
   } catch (error) {
     console.error('Error creating service template:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    console.error('Error details:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined
+    })
+    return NextResponse.json({ 
+      error: 'Internal server error',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 })
   }
 }
