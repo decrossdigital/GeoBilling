@@ -333,16 +333,16 @@ export default function ClientsPage() {
                            borderRadius: '0.25rem',
                            fontSize: '0.75rem',
                            fontWeight: '500',
-                           backgroundColor: 'rgba(52, 211, 153, 0.1)',
-                           color: '#34d399'
+                           backgroundColor: client.status === 'active' ? 'rgba(52, 211, 153, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                           color: client.status === 'active' ? '#34d399' : '#ef4444'
                          }}>
                            <div style={{
                              width: '0.5rem',
                              height: '0.5rem',
                              borderRadius: '50%',
-                             backgroundColor: '#34d399'
+                             backgroundColor: client.status === 'active' ? '#34d399' : '#ef4444'
                            }} />
-                           active
+                           {client.status}
                          </div>
                        </td>
                       <td style={{padding: '1rem'}}>
