@@ -14,6 +14,7 @@ interface Client {
   email: string
   phone: string
   address?: string
+  status: string
   createdAt: string
   updatedAt: string
 }
@@ -64,8 +65,8 @@ export default function ClientsPage() {
   )
 
   const totalClients = clients.length
-  const activeClients = totalClients // All clients are considered active for now
-  const totalRevenue = 0 // This would be calculated from invoices
+  const activeClients = clients.filter(client => client.status === 'active').length
+  const totalRevenue = 0 // This would be calculated from invoices in a real implementation
   const avgRevenue = totalClients > 0 ? totalRevenue / totalClients : 0
 
   const handleAddClient = async () => {

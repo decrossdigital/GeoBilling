@@ -39,6 +39,7 @@ interface Client {
   email: string
   phone: string
   address?: string
+  status: string
   createdAt: string
   updatedAt: string
 }
@@ -113,63 +114,26 @@ export default function ClientDetailPage() {
           })
         }
 
-        // Fetch client statistics (mock data for now)
-        setStats({
-          totalQuotes: 8,
-          totalInvoices: 12,
-          totalRevenue: 24580,
-          averageQuoteValue: 3200,
-          averageInvoiceValue: 2800,
-          lastActivity: new Date().toISOString(),
-          conversionRate: 75
-        })
+        // Fetch client statistics
+        const statsResponse = await fetch(`/api/clients/${clientId}/stats`)
+        if (statsResponse.ok) {
+          const statsData = await statsResponse.json()
+          setStats(statsData)
+        }
 
-        // Fetch job history (mock data for now)
-        setJobHistory([
-          {
-            id: "1",
-            type: "invoice",
-            title: "Studio Session - Album Recording",
-            amount: 850,
-            status: "paid",
-            date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-            reference: "INV-2024-001"
-          },
-          {
-            id: "2",
-            type: "quote",
-            title: "Mixing and Mastering Services",
-            amount: 2400,
-            status: "pending",
-            date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-            reference: "QTE-2024-015"
-          },
-          {
-            id: "3",
-            type: "invoice",
-            title: "Sound Design for Commercial",
-            amount: 1200,
-            status: "paid",
-            date: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
-            reference: "INV-2024-008"
-          }
-        ])
+        // Fetch job history
+        const historyResponse = await fetch(`/api/clients/${clientId}/history`)
+        if (historyResponse.ok) {
+          const historyData = await historyResponse.json()
+          setJobHistory(historyData)
+        }
 
-        // Fetch notes (mock data for now)
-        setNotes([
-          {
-            id: "1",
-            content: "Client prefers morning sessions. Very particular about sound quality.",
-            createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-            updatedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString()
-          },
-          {
-            id: "2",
-            content: "Discussed upcoming album project. Budget around $15k. Timeline: 3 months.",
-            createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-            updatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()
-          }
-        ])
+        // Fetch notes
+        const notesResponse = await fetch(`/api/clients/${clientId}/notes`)
+        if (notesResponse.ok) {
+          const notesData = await notesResponse.json()
+          setNotes(notesData)
+        }
 
       } catch (error) {
         console.error('Error fetching client data:', error)
@@ -222,19 +186,45 @@ export default function ClientDetailPage() {
   const handleAddNote = async () => {
     if (!newNote.trim()) return
 
-    const note: Note = {
-      id: Date.now().toString(),
-      content: newNote,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    }
+    try {
+      const response = await fetch(`/api/clients/${clientId}/notes`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ content: newNote }),
+      })
 
-    setNotes([note, ...notes])
-    setNewNote("")
+      if (response.ok) {
+        const note = await response.json()
+        setNotes([note])
+        setNewNote("")
+      } else {
+        console.error('Failed to add note')
+      }
+    } catch (error) {
+      console.error('Error adding note:', error)
+    }
   }
 
-  const handleDeleteNote = (noteId: string) => {
-    setNotes(notes.filter(note => note.id !== noteId))
+  const handleDeleteNote = async (noteId: string) => {
+    try {
+      const response = await fetch(`/api/clients/${clientId}/notes`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ noteId }),
+      })
+
+      if (response.ok) {
+        setNotes([])
+      } else {
+        console.error('Failed to delete note')
+      }
+    } catch (error) {
+      console.error('Error deleting note:', error)
+    }
   }
 
   const formatCurrency = (amount: number) => {
