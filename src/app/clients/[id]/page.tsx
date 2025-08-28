@@ -622,30 +622,29 @@ export default function ClientDetailPage() {
                     )}
                   </span>
                 </div>
-                {client.address && (
-                  <div style={{display: 'flex', alignItems: 'center', gap: '0.75rem'}}>
-                    <MapPin style={{height: '1rem', width: '1rem', color: '#cbd5e1'}} />
-                    <span style={{color: 'white'}}>
-                      {editing ? (
-                        <input
-                          type="text"
-                          value={editForm.address}
-                          onChange={(e) => setEditForm({...editForm, address: e.target.value})}
-                          style={{
-                            backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                            border: '1px solid rgba(255, 255, 255, 0.2)',
-                            borderRadius: '0.25rem',
-                            padding: '0.25rem',
-                            color: 'white',
-                            width: '250px'
-                          }}
-                        />
-                      ) : (
-                        client.address
-                      )}
-                    </span>
-                  </div>
-                )}
+                <div style={{display: 'flex', alignItems: 'center', gap: '0.75rem'}}>
+                  <MapPin style={{height: '1rem', width: '1rem', color: '#cbd5e1'}} />
+                  <span style={{color: 'white'}}>
+                    {editing ? (
+                      <input
+                        type="text"
+                        value={editForm.address}
+                        onChange={(e) => setEditForm({...editForm, address: e.target.value})}
+                        style={{
+                          backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                          border: '1px solid rgba(255, 255, 255, 0.2)',
+                          borderRadius: '0.25rem',
+                          padding: '0.25rem',
+                          color: 'white',
+                          width: '250px'
+                        }}
+                        placeholder="Enter address"
+                      />
+                    ) : (
+                      client.address || <span style={{color: '#94a3b8', fontStyle: 'italic'}}>No address provided</span>
+                    )}
+                  </span>
+                </div>
                 <div style={{display: 'flex', alignItems: 'center', gap: '0.75rem'}}>
                   <Calendar style={{height: '1rem', width: '1rem', color: '#cbd5e1'}} />
                   <span style={{color: '#cbd5e1', fontSize: '0.875rem'}}>Client since {formatDate(client.createdAt)}</span>

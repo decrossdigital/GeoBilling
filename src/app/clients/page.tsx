@@ -272,6 +272,7 @@ export default function ClientsPage() {
                   <th style={{padding: '1rem', textAlign: 'left', fontSize: '0.875rem', fontWeight: '500', color: '#cbd5e1'}}>Client</th>
                   <th style={{padding: '1rem', textAlign: 'left', fontSize: '0.875rem', fontWeight: '500', color: '#cbd5e1'}}>Company</th>
                   <th style={{padding: '1rem', textAlign: 'left', fontSize: '0.875rem', fontWeight: '500', color: '#cbd5e1'}}>Contact</th>
+                  <th style={{padding: '1rem', textAlign: 'left', fontSize: '0.875rem', fontWeight: '500', color: '#cbd5e1'}}>Address</th>
                   <th style={{padding: '1rem', textAlign: 'left', fontSize: '0.875rem', fontWeight: '500', color: '#cbd5e1'}}>Projects</th>
                   <th style={{padding: '1rem', textAlign: 'left', fontSize: '0.875rem', fontWeight: '500', color: '#cbd5e1'}}>Revenue</th>
                   <th style={{padding: '1rem', textAlign: 'left', fontSize: '0.875rem', fontWeight: '500', color: '#cbd5e1'}}>Last Contact</th>
@@ -282,11 +283,11 @@ export default function ClientsPage() {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={9} style={{textAlign: 'center', padding: '2rem'}}>Loading clients...</td>
+                    <td colSpan={10} style={{textAlign: 'center', padding: '2rem'}}>Loading clients...</td>
                   </tr>
                 ) : filteredClients.length === 0 ? (
                   <tr>
-                    <td colSpan={9} style={{textAlign: 'center', padding: '2rem'}}>No clients found.</td>
+                    <td colSpan={10} style={{textAlign: 'center', padding: '2rem'}}>No clients found.</td>
                   </tr>
                 ) : (
                   filteredClients.map((client) => (
@@ -301,6 +302,17 @@ export default function ClientsPage() {
                         <div style={{display: 'flex', flexDirection: 'column', gap: '0.25rem'}}>
                           <div style={{fontSize: '0.875rem', color: '#cbd5e1'}}>{client.email}</div>
                           <div style={{fontSize: '0.875rem', color: '#94a3b8'}}>{client.phone}</div>
+                        </div>
+                      </td>
+                      <td style={{padding: '1rem'}}>
+                        <div style={{fontSize: '0.875rem', color: '#cbd5e1'}}>
+                          {client.address ? (
+                            <div style={{maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>
+                              {client.address}
+                            </div>
+                          ) : (
+                            <span style={{color: '#94a3b8', fontStyle: 'italic'}}>No address</span>
+                          )}
                         </div>
                       </td>
                                              <td style={{padding: '1rem'}}>
@@ -445,6 +457,16 @@ export default function ClientsPage() {
                     onChange={(e) => setNewClient({...newClient, phone: e.target.value})}
                     style={{width: '100%', padding: '0.75rem', backgroundColor: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.5rem', color: 'white', outline: 'none'}}
                     placeholder="Enter phone number"
+                  />
+                </div>
+                
+                <div>
+                  <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>Address</label>
+                  <textarea
+                    value={newClient.address}
+                    onChange={(e) => setNewClient({...newClient, address: e.target.value})}
+                    style={{width: '100%', padding: '0.75rem', backgroundColor: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.5rem', color: 'white', outline: 'none', minHeight: '80px', resize: 'vertical', fontFamily: 'inherit'}}
+                    placeholder="Enter address"
                   />
                 </div>
               </div>
