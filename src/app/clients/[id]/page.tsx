@@ -148,6 +148,17 @@ export default function ClientDetailPage() {
   const handleSaveEdit = async () => {
     if (!client) return
 
+    // Basic validation
+    if (!editForm.name.trim()) {
+      alert('Client name is required')
+      return
+    }
+
+    if (!editForm.email.trim()) {
+      alert('Email is required')
+      return
+    }
+
     try {
       const response = await fetch(`/api/clients/${clientId}`, {
         method: 'PUT',
@@ -161,9 +172,14 @@ export default function ClientDetailPage() {
         const updatedClient = await response.json()
         setClient(updatedClient)
         setEditing(false)
+        alert('Client updated successfully!')
+      } else {
+        const errorData = await response.json()
+        alert(`Failed to update client: ${errorData.error || 'Unknown error'}`)
       }
     } catch (error) {
       console.error('Error updating client:', error)
+      alert('Failed to update client. Please try again.')
     }
   }
 
@@ -385,6 +401,7 @@ export default function ClientDetailPage() {
                     fontWeight: 'bold',
                     width: '300px'
                   }}
+                  placeholder="Enter client name"
                 />
               ) : (
                 client.name
@@ -405,6 +422,7 @@ export default function ClientDetailPage() {
                     fontSize: '1.125rem',
                     width: '250px'
                   }}
+                  placeholder="Enter company name"
                 />
               ) : (
                 client.company
@@ -433,7 +451,17 @@ export default function ClientDetailPage() {
                   Save
                 </button>
                 <button
-                  onClick={() => setEditing(false)}
+                  onClick={() => {
+                    setEditing(false)
+                    // Reset form to original values
+                    setEditForm({
+                      name: client.name,
+                      company: client.company,
+                      email: client.email,
+                      phone: client.phone,
+                      address: client.address || ""
+                    })
+                  }}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -594,6 +622,7 @@ export default function ClientDetailPage() {
                           color: 'white',
                           width: '200px'
                         }}
+                        placeholder="Enter email address"
                       />
                     ) : (
                       client.email
@@ -616,9 +645,10 @@ export default function ClientDetailPage() {
                           color: 'white',
                           width: '150px'
                         }}
+                        placeholder="Enter phone number"
                       />
                     ) : (
-                      client.phone
+                      client.phone || <span style={{color: '#94a3b8', fontStyle: 'italic'}}>No phone provided</span>
                     )}
                   </span>
                 </div>
@@ -626,8 +656,7 @@ export default function ClientDetailPage() {
                   <MapPin style={{height: '1rem', width: '1rem', color: '#cbd5e1'}} />
                   <span style={{color: 'white'}}>
                     {editing ? (
-                      <input
-                        type="text"
+                      <textarea
                         value={editForm.address}
                         onChange={(e) => setEditForm({...editForm, address: e.target.value})}
                         style={{
@@ -636,7 +665,11 @@ export default function ClientDetailPage() {
                           borderRadius: '0.25rem',
                           padding: '0.25rem',
                           color: 'white',
-                          width: '250px'
+                          width: '250px',
+                          minHeight: '60px',
+                          resize: 'vertical',
+                          fontFamily: 'inherit',
+                          fontSize: '0.875rem'
                         }}
                         placeholder="Enter address"
                       />
