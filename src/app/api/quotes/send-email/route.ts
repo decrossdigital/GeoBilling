@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { sendQuoteEmail } from '@/lib/email'
 
 export async function POST(request: NextRequest) {
   try {
@@ -31,20 +32,43 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Quote not found' }, { status: 404 })
     }
 
-    // TODO: Implement actual email sending functionality
-    // For now, we'll just update the quote status to 'sent'
-    await prisma.quote.update({
-      where: { id: quoteId },
-      data: { status: 'sent' }
+    // Get user details for the from email
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email }
     })
 
-    // Log the email details (in production, you'd send an actual email)
-    console.log('Email would be sent:', {
-      to,
-      subject,
-      message,
-      quoteId
-    })
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    }
+
+    // Send the actual email using Resend
+    try {
+      await sendQuoteEmail(
+        to,
+        quote.clientName,
+        quote.quoteNumber,
+        Number(quote.total),
+        `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/quotes/${quoteId}`
+      )
+
+      // Update quote status to 'sent'
+      await prisma.quote.update({
+        where: { id: quoteId },
+        data: { status: 'sent' }
+      })
+
+      console.log('Quote email sent successfully:', {
+        to,
+        quoteId,
+        quoteNumber: quote.quoteNumber
+      })
+    } catch (emailError) {
+      console.error('Failed to send quote email:', emailError)
+      return NextResponse.json(
+        { error: 'Failed to send email. Please try again.' },
+        { status: 500 }
+      )
+    }
 
     return NextResponse.json({ 
       success: true, 
