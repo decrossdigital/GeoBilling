@@ -90,7 +90,8 @@ export default function ClientDetailPage() {
     company: "",
     email: "",
     phone: "",
-    address: ""
+    address: "",
+    status: ""
   })
 
   useEffect(() => {
@@ -110,7 +111,8 @@ export default function ClientDetailPage() {
             company: clientData.company,
             email: clientData.email,
             phone: clientData.phone,
-            address: clientData.address || ""
+            address: clientData.address || "",
+            status: clientData.status
           })
         }
 
@@ -459,7 +461,8 @@ export default function ClientDetailPage() {
                       company: client.company,
                       email: client.email,
                       phone: client.phone,
-                      address: client.address || ""
+                      address: client.address || "",
+                      status: client.status
                     })
                   }}
                   style={{
@@ -681,6 +684,39 @@ export default function ClientDetailPage() {
                 <div style={{display: 'flex', alignItems: 'center', gap: '0.75rem'}}>
                   <Calendar style={{height: '1rem', width: '1rem', color: '#cbd5e1'}} />
                   <span style={{color: '#cbd5e1', fontSize: '0.875rem'}}>Client since {formatDate(client.createdAt)}</span>
+                </div>
+                
+                <div style={{display: 'flex', alignItems: 'center', gap: '0.75rem'}}>
+                  <div style={{
+                    width: '1rem',
+                    height: '1rem',
+                    borderRadius: '50%',
+                    backgroundColor: (editing ? editForm.status : client.status) === 'active' ? '#34d399' : '#ef4444'
+                  }} />
+                  <span style={{color: '#cbd5e1', fontSize: '0.875rem'}}>
+                    Status: <span style={{color: 'white', fontWeight: '500', textTransform: 'capitalize'}}>{editing ? editForm.status : client.status}</span>
+                  </span>
+                  {editing && (
+                    <button
+                      onClick={() => {
+                        const newStatus = editForm.status === 'active' ? 'inactive' : 'active'
+                        setEditForm({...editForm, status: newStatus})
+                      }}
+                      style={{
+                        marginLeft: '0.5rem',
+                        padding: '0.25rem 0.75rem',
+                        backgroundColor: editForm.status === 'active' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(52, 211, 153, 0.1)',
+                        border: editForm.status === 'active' ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid rgba(52, 211, 153, 0.3)',
+                        borderRadius: '0.25rem',
+                        color: editForm.status === 'active' ? '#ef4444' : '#34d399',
+                        cursor: 'pointer',
+                        fontSize: '0.75rem',
+                        fontWeight: '500'
+                      }}
+                    >
+                      Toggle to {editForm.status === 'active' ? 'Inactive' : 'Active'}
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
