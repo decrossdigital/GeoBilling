@@ -127,8 +127,8 @@ export async function POST(request: NextRequest) {
         userId: user.id,
         userName: user.name || '',
         userEmail: user.email,
-        userPhone: user.phone || '',
-        userAddress: user.address || ''
+        userPhone: '',
+        userAddress: ''
       }
     })
 

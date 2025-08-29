@@ -26,7 +26,7 @@ export async function GET(
 
     const contractor = await prisma.contractor.findFirst({
       where: {
-        id: params.id,
+        id: (await params).id,
         userId: user.id
       }
     })

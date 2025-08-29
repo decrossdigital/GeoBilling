@@ -17,12 +17,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
-    // Verify the quote exists and belongs to the user
-    const quote = await prisma.quote.findFirst({
-      where: {
-        id: quoteId,
-        userId: session.user.id
-      },
+          const user = await prisma.user.findUnique({
+        where: { email: session.user.email }
+      })
+
+      if (!user) {
+        return NextResponse.json({ error: 'User not found' }, { status: 404 })
+      }
+
+      // Verify the quote exists and belongs to the user
+      const quote = await prisma.quote.findFirst({
+        where: {
+          id: quoteId,
+          userId: user.id
+        },
       include: {
         client: true
       }

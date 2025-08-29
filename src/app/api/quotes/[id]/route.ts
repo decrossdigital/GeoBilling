@@ -15,10 +15,18 @@ export async function GET(
 
     const { id: quoteId } = await params
 
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email }
+    })
+
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    }
+
     const quote = await prisma.quote.findFirst({
       where: {
         id: quoteId,
-        userId: session.user.id
+        userId: user.id
       },
       include: {
         client: true,
@@ -74,11 +82,19 @@ export async function PUT(
     const { id: quoteId } = await params
     const body = await request.json()
 
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email }
+    })
+
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    }
+
     // Verify the quote exists and belongs to the user
     const existingQuote = await prisma.quote.findFirst({
       where: {
         id: quoteId,
-        userId: session.user.id
+        userId: user.id
       }
     })
 
@@ -95,7 +111,7 @@ export async function PUT(
         validUntil: body.validUntil,
         terms: body.terms,
         notes: body.notes,
-        depositAmount: body.depositAmount,
+
         subtotal: body.subtotal,
         taxRate: body.taxRate,
         taxAmount: body.taxAmount,
@@ -119,12 +135,7 @@ export async function PUT(
       taxRate: Number(updatedQuote.taxRate),
       taxAmount: Number(updatedQuote.taxAmount),
       total: Number(updatedQuote.total),
-      items: updatedQuote.items.map(item => ({
-        ...item,
-        quantity: Number(item.quantity),
-        unitPrice: Number(item.unitPrice),
-        total: Number(item.total)
-      }))
+
     }
 
     return NextResponse.json(quoteWithNumbers)
@@ -150,11 +161,19 @@ export async function DELETE(
 
     const { id: quoteId } = await params
 
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email }
+    })
+
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    }
+
     // Verify the quote exists and belongs to the user
     const existingQuote = await prisma.quote.findFirst({
       where: {
         id: quoteId,
-        userId: session.user.id
+        userId: user.id
       }
     })
 
