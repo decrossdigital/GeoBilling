@@ -518,7 +518,7 @@ export default function QuoteDetailPage() {
           </Link>
         </div>
 
-        {/* Quote Header with Client Information and Quote Details */}
+                {/* Quote Header with Client Information and Quote Details */}
         <div style={{backgroundColor: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.75rem', padding: '2rem', marginBottom: '2rem'}}>
           <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start'}}>
             <div style={{flex: 1}}>
@@ -549,7 +549,21 @@ export default function QuoteDetailPage() {
                 </div>
               </div>
 
-
+ 
+            </div>
+            
+            {/* Status Badge */}
+            <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', backgroundColor: 'rgba(255, 255, 255, 0.1)', borderRadius: '0.5rem', border: '1px solid rgba(255, 255, 255, 0.2)'}}>
+              <div style={{
+                width: '0.5rem',
+                height: '0.5rem',
+                borderRadius: '50%',
+                backgroundColor: quote.status === 'draft' ? '#6b7280' : 
+                               quote.status === 'sent' ? '#3b82f6' : 
+                               quote.status === 'accepted' ? '#10b981' : 
+                               quote.status === 'rejected' ? '#ef4444' : '#6b7280'
+              }} />
+              <span style={{color: 'white', fontWeight: '500', textTransform: 'capitalize'}}>{quote.status}</span>
             </div>
           </div>
         </div>
@@ -605,20 +619,8 @@ export default function QuoteDetailPage() {
             <div>
               <div style={{display: 'flex', flexDirection: 'column', gap: '1rem'}}>
                 <div>
-                  <span style={{color: '#cbd5e1', fontSize: '0.875rem'}}>Title:</span>
-                  <p style={{color: 'white', margin: '0', fontWeight: '500'}}>{quote.title}</p>
-                </div>
-                <div>
-                  <span style={{color: '#cbd5e1', fontSize: '0.875rem'}}>Status:</span>
-                  <p style={{color: 'white', margin: '0', fontWeight: '500', textTransform: 'capitalize'}}>{quote.status}</p>
-                </div>
-                <div>
                   <span style={{color: '#cbd5e1', fontSize: '0.875rem'}}>Valid Until:</span>
                   <p style={{color: 'white', margin: '0', fontWeight: '500'}}>{new Date(quote.validUntil).toLocaleDateString()}</p>
-                </div>
-                <div>
-                  <span style={{color: '#cbd5e1', fontSize: '0.875rem'}}>Description:</span>
-                  <p style={{color: 'white', margin: '0', fontWeight: '500'}}>{quote.description || 'No description provided'}</p>
                 </div>
               </div>
             </div>
