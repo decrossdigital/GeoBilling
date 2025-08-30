@@ -40,14 +40,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Quote not found' }, { status: 404 })
     }
 
-    // Get user details for the from email
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email }
-    })
 
-    if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 })
-    }
 
     // Send the actual email using Resend
     try {
