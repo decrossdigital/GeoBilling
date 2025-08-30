@@ -419,47 +419,26 @@ export default function ContractorsPage() {
                       </div>
                     </td>
                     <td style={{padding: '1rem'}}>
-                      <div style={{display: 'flex', gap: '0.5rem'}}>
-                        <button
-                          onClick={() => handleViewWork(contractor)}
-                          style={{
-                            padding: '0.5rem',
-                            backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                            border: '1px solid rgba(255, 255, 255, 0.2)',
-                            borderRadius: '0.25rem',
-                            color: 'white',
-                            cursor: 'pointer'
-                          }}
-                        >
-                          <Eye style={{height: '1rem', width: '1rem'}} />
-                        </button>
-                        <button
-                          onClick={() => handleEditContractor(contractor)}
-                          style={{
-                            padding: '0.5rem',
-                            backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                            border: '1px solid rgba(255, 255, 255, 0.2)',
-                            borderRadius: '0.25rem',
-                            color: 'white',
-                            cursor: 'pointer'
-                          }}
-                        >
-                          <Edit style={{height: '1rem', width: '1rem'}} />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteContractor(contractor.id)}
-                          style={{
-                            padding: '0.5rem',
-                            backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                            border: '1px solid rgba(255, 255, 255, 0.2)',
-                            borderRadius: '0.25rem',
-                            color: 'white',
-                            cursor: 'pointer'
-                          }}
-                        >
-                          <Trash2 style={{height: '1rem', width: '1rem'}} />
-                        </button>
-                      </div>
+                      <Link
+                        href={`/contractors/${contractor.id}`}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.5rem',
+                          padding: '0.5rem 1rem',
+                          backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                          border: '1px solid rgba(59, 130, 246, 0.3)',
+                          borderRadius: '0.25rem',
+                          color: '#60a5fa',
+                          textDecoration: 'none',
+                          fontSize: '0.875rem',
+                          fontWeight: '500',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        <Eye style={{height: '1rem', width: '1rem'}} />
+                        View Details
+                      </Link>
                     </td>
                   </tr>
                 ))}
