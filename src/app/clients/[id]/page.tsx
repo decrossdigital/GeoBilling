@@ -596,6 +596,7 @@ export default function ClientDetailPage() {
                       Cancel
                     </button>
                   </div>
+                  <div style={{flex: 1}}></div>
                   <button
                     onClick={() => setShowDeleteConfirm(true)}
                     style={{
