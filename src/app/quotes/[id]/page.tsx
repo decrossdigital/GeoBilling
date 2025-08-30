@@ -523,7 +523,7 @@ export default function QuoteDetailPage() {
           <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start'}}>
             <div style={{flex: 1}}>
               <h1 style={{fontSize: '2.25rem', fontWeight: 'bold', color: 'white', marginBottom: '1rem'}}>
-                Quote #{quote.quoteNumber} - {quote.title}
+                Quote #{quote.quoteNumber}
               </h1>
               
               {/* Client Information */}
@@ -549,32 +549,7 @@ export default function QuoteDetailPage() {
                 </div>
               </div>
 
-              {/* Quote Details */}
-              <div>
-                <h2 style={{fontSize: '1.125rem', fontWeight: '600', color: 'white', marginBottom: '0.75rem'}}>Quote Details</h2>
-                <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem'}}>
-                  <div>
-                    <span style={{color: '#cbd5e1', fontSize: '0.875rem'}}>Status:</span>
-                    <p style={{color: 'white', margin: '0', fontWeight: '500', textTransform: 'capitalize'}}>{quote.status}</p>
-                  </div>
-                  <div>
-                    <span style={{color: '#cbd5e1', fontSize: '0.875rem'}}>Valid Until:</span>
-                    <p style={{color: 'white', margin: '0', fontWeight: '500'}}>{new Date(quote.validUntil).toLocaleDateString()}</p>
-                  </div>
-                  <div>
-                    <span style={{color: '#cbd5e1', fontSize: '0.875rem'}}>Subtotal:</span>
-                    <p style={{color: 'white', margin: '0', fontWeight: '500'}}>${quote.subtotal.toFixed(2)}</p>
-                  </div>
-                  <div>
-                    <span style={{color: '#cbd5e1', fontSize: '0.875rem'}}>Tax:</span>
-                    <p style={{color: 'white', margin: '0', fontWeight: '500'}}>${quote.taxAmount.toFixed(2)}</p>
-                  </div>
-                  <div>
-                    <span style={{color: '#cbd5e1', fontSize: '0.875rem'}}>Total:</span>
-                    <p style={{color: 'white', margin: '0', fontSize: '1.125rem', fontWeight: '600'}}>${quote.total.toFixed(2)}</p>
-                  </div>
-                </div>
-              </div>
+
             </div>
           </div>
         </div>
@@ -620,6 +595,56 @@ export default function QuoteDetailPage() {
             <DollarSign style={{height: '1rem', width: '1rem'}} />
             {converting ? 'Converting...' : 'Convert to Invoice'}
           </button>
+        </div>
+
+        {/* Quote Details Section */}
+        <div style={{backgroundColor: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.75rem', padding: '1.5rem', marginBottom: '2rem'}}>
+          <h2 style={{fontSize: '1.25rem', fontWeight: 'bold', color: 'white', marginBottom: '1rem'}}>Quote Details</h2>
+          <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem'}}>
+            {/* Left Column */}
+            <div>
+              <div style={{display: 'flex', flexDirection: 'column', gap: '1rem'}}>
+                <div>
+                  <span style={{color: '#cbd5e1', fontSize: '0.875rem'}}>Title:</span>
+                  <p style={{color: 'white', margin: '0', fontWeight: '500'}}>{quote.title}</p>
+                </div>
+                <div>
+                  <span style={{color: '#cbd5e1', fontSize: '0.875rem'}}>Status:</span>
+                  <p style={{color: 'white', margin: '0', fontWeight: '500', textTransform: 'capitalize'}}>{quote.status}</p>
+                </div>
+                <div>
+                  <span style={{color: '#cbd5e1', fontSize: '0.875rem'}}>Valid Until:</span>
+                  <p style={{color: 'white', margin: '0', fontWeight: '500'}}>{new Date(quote.validUntil).toLocaleDateString()}</p>
+                </div>
+                <div>
+                  <span style={{color: '#cbd5e1', fontSize: '0.875rem'}}>Description:</span>
+                  <p style={{color: 'white', margin: '0', fontWeight: '500'}}>{quote.description || 'No description provided'}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column */}
+            <div>
+              <div style={{display: 'flex', flexDirection: 'column', gap: '1rem'}}>
+                <div>
+                  <span style={{color: '#cbd5e1', fontSize: '0.875rem'}}>Subtotal:</span>
+                  <p style={{color: 'white', margin: '0', fontWeight: '500'}}>${quote.subtotal.toFixed(2)}</p>
+                </div>
+                <div>
+                  <span style={{color: '#cbd5e1', fontSize: '0.875rem'}}>Tax Rate:</span>
+                  <p style={{color: 'white', margin: '0', fontWeight: '500'}}>{quote.taxRate}%</p>
+                </div>
+                <div>
+                  <span style={{color: '#cbd5e1', fontSize: '0.875rem'}}>Tax Amount:</span>
+                  <p style={{color: 'white', margin: '0', fontWeight: '500'}}>${quote.taxAmount.toFixed(2)}</p>
+                </div>
+                <div>
+                  <span style={{color: '#cbd5e1', fontSize: '0.875rem'}}>Total:</span>
+                  <p style={{color: 'white', margin: '0', fontSize: '1.25rem', fontWeight: '600'}}>${quote.total.toFixed(2)}</p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Two Column Layout */}
