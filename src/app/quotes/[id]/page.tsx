@@ -810,12 +810,12 @@ export default function QuoteDetailPage() {
             <div>
               <div style={{display: 'flex', flexDirection: 'column', gap: '1rem'}}>
                 <div>
-                  <span style={{color: '#cbd5e1', fontSize: '0.875rem'}}>Valid Until:</span>
+                  <span style={{color: '#cbd5e1', fontSize: '0.875rem'}}>Notes:</span>
                   {isEditing ? (
-                    <input
-                      type="date"
-                      value={editData.validUntil}
-                      onChange={(e) => handleEditDataChange('validUntil', e.target.value)}
+                    <textarea
+                      value={editData.notes}
+                      onChange={(e) => handleEditDataChange('notes', e.target.value)}
+                      rows={3}
                       style={{
                         width: '100%',
                         padding: '0.5rem',
@@ -824,11 +824,13 @@ export default function QuoteDetailPage() {
                         borderRadius: '0.25rem',
                         color: 'white',
                         outline: 'none',
+                        resize: 'vertical',
                         marginTop: '0.25rem'
                       }}
+                      placeholder="Enter notes..."
                     />
                   ) : (
-                    <p style={{color: 'white', margin: '0', fontWeight: '500'}}>{new Date(quote.validUntil).toLocaleDateString()}</p>
+                    <p style={{color: 'white', margin: '0', fontWeight: '500'}}>{quote.notes || 'No notes specified'}</p>
                   )}
                 </div>
               </div>
@@ -858,7 +860,7 @@ export default function QuoteDetailPage() {
           </div>
         </div>
 
-        {/* Terms and Notes */}
+        {/* Terms and Valid Until */}
         <div style={{
           background: 'rgba(255, 255, 255, 0.1)',
           backdropFilter: 'blur(8px)',
@@ -893,12 +895,12 @@ export default function QuoteDetailPage() {
             )}
           </div>
           <div>
-            <h2 style={{fontSize: '1.25rem', fontWeight: 'bold', color: 'white', marginBottom: '1rem'}}>Notes</h2>
+            <h2 style={{fontSize: '1.25rem', fontWeight: 'bold', color: 'white', marginBottom: '1rem'}}>Valid Until</h2>
             {isEditing ? (
-              <textarea
-                value={editData.notes}
-                onChange={(e) => handleEditDataChange('notes', e.target.value)}
-                rows={4}
+              <input
+                type="date"
+                value={editData.validUntil}
+                onChange={(e) => handleEditDataChange('validUntil', e.target.value)}
                 style={{
                   width: '100%',
                   padding: '0.75rem',
@@ -907,14 +909,11 @@ export default function QuoteDetailPage() {
                   borderRadius: '0.25rem',
                   color: 'white',
                   outline: 'none',
-                  resize: 'vertical',
-                  fontSize: '0.875rem',
-                  lineHeight: '1.6'
+                  fontSize: '0.875rem'
                 }}
-                placeholder="Enter notes..."
               />
             ) : (
-              <p style={{fontSize: '0.875rem', color: '#cbd5e1', lineHeight: '1.6', margin: 0}}>{quote.notes || 'No notes specified'}</p>
+              <p style={{fontSize: '0.875rem', color: '#cbd5e1', lineHeight: '1.6', margin: 0}}>{new Date(quote.validUntil).toLocaleDateString()}</p>
             )}
           </div>
         </div>
