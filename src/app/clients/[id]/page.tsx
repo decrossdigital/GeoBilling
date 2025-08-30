@@ -386,7 +386,7 @@ export default function ClientDetailPage() {
 
         {/* Client Header with Contact Information */}
         <div style={{backgroundColor: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.75rem', padding: '2rem', marginBottom: '2rem'}}>
-          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem'}}>
+          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start'}}>
             <div style={{flex: 1}}>
               <h1 style={{fontSize: '2.25rem', fontWeight: 'bold', color: 'white', marginBottom: '0.5rem'}}>
                 {editing ? (
@@ -545,7 +545,7 @@ export default function ClientDetailPage() {
               </div>
             </div>
             
-            <div style={{display: 'flex', flexDirection: 'column', gap: '0.5rem', alignItems: 'flex-end'}}>
+            <div style={{display: 'flex', flexDirection: 'column', gap: '0.5rem', alignItems: 'flex-end', height: '100%', justifyContent: 'space-between'}}>
               {editing ? (
                 <>
                   <div style={{display: 'flex', gap: '0.5rem'}}>
