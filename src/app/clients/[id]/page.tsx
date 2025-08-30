@@ -761,44 +761,11 @@ export default function ClientDetailPage() {
         </div>
 
         <div style={{display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '2rem'}}>
-          {/* Left Column - Stats & Notes */}
+          {/* Left Column - Notes & Stats */}
           <div>
 
-            {/* Client Statistics */}
-            {stats && (
-              <div style={{backgroundColor: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.75rem', padding: '1.5rem', marginBottom: '2rem'}}>
-                <h2 style={{color: 'white', fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem'}}>Statistics</h2>
-                <div style={{display: 'flex', flexDirection: 'column', gap: '1rem'}}>
-                  <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-                    <span style={{color: '#cbd5e1'}}>Total Revenue</span>
-                    <span style={{color: 'white', fontWeight: 'bold'}}>{formatCurrency(stats.totalRevenue)}</span>
-                  </div>
-                  <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-                    <span style={{color: '#cbd5e1'}}>Total Quotes</span>
-                    <span style={{color: 'white', fontWeight: 'bold'}}>{stats.totalQuotes}</span>
-                  </div>
-                  <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-                    <span style={{color: '#cbd5e1'}}>Total Invoices</span>
-                    <span style={{color: 'white', fontWeight: 'bold'}}>{stats.totalInvoices}</span>
-                  </div>
-                  <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-                    <span style={{color: '#cbd5e1'}}>Conversion Rate</span>
-                    <span style={{color: 'white', fontWeight: 'bold'}}>{stats.conversionRate}%</span>
-                  </div>
-                  <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-                    <span style={{color: '#cbd5e1'}}>Avg Quote Value</span>
-                    <span style={{color: 'white', fontWeight: 'bold'}}>{formatCurrency(stats.averageQuoteValue)}</span>
-                  </div>
-                  <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-                    <span style={{color: '#cbd5e1'}}>Avg Invoice Value</span>
-                    <span style={{color: 'white', fontWeight: 'bold'}}>{formatCurrency(stats.averageInvoiceValue)}</span>
-                  </div>
-                </div>
-              </div>
-            )}
-
             {/* Notes Section */}
-            <div style={{backgroundColor: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.75rem', padding: '1.5rem'}}>
+            <div style={{backgroundColor: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.75rem', padding: '1.5rem', marginBottom: '2rem'}}>
               <h2 style={{color: 'white', fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem'}}>Notes & Comments</h2>
               
               {/* Add Note */}
@@ -879,6 +846,39 @@ export default function ClientDetailPage() {
                 )}
               </div>
             </div>
+
+            {/* Client Statistics */}
+            {stats && (
+              <div style={{backgroundColor: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.75rem', padding: '1.5rem'}}>
+                <h2 style={{color: 'white', fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem'}}>Statistics</h2>
+                <div style={{display: 'flex', flexDirection: 'column', gap: '1rem'}}>
+                  <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                    <span style={{color: '#cbd5e1'}}>Total Revenue</span>
+                    <span style={{color: 'white', fontWeight: 'bold'}}>{formatCurrency(stats.totalRevenue)}</span>
+                  </div>
+                  <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                    <span style={{color: '#cbd5e1'}}>Total Quotes</span>
+                    <span style={{color: 'white', fontWeight: 'bold'}}>{stats.totalQuotes}</span>
+                  </div>
+                  <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                    <span style={{color: '#cbd5e1'}}>Total Invoices</span>
+                    <span style={{color: 'white', fontWeight: 'bold'}}>{stats.totalInvoices}</span>
+                  </div>
+                  <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                    <span style={{color: '#cbd5e1'}}>Conversion Rate</span>
+                    <span style={{color: 'white', fontWeight: 'bold'}}>{stats.conversionRate}%</span>
+                  </div>
+                  <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                    <span style={{color: '#cbd5e1'}}>Avg Quote Value</span>
+                    <span style={{color: 'white', fontWeight: 'bold'}}>{formatCurrency(stats.averageQuoteValue)}</span>
+                  </div>
+                  <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                    <span style={{color: '#cbd5e1'}}>Avg Invoice Value</span>
+                    <span style={{color: 'white', fontWeight: 'bold'}}>{formatCurrency(stats.averageInvoiceValue)}</span>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Right Column - Job History */}
