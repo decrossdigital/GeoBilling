@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useParams, useRouter } from 'next/navigation'
 import { ArrowLeft, Music, Home, Users, FileText, DollarSign, User, Settings } from 'lucide-react'
+import Link from 'next/link'
+import UserMenu from '@/components/user-menu'
 import QuoteHeader from '@/components/quotes/QuoteHeader'
 import QuoteDetails from '@/components/quotes/QuoteDetails'
 import QuoteServices from '@/components/quotes/QuoteServices'
@@ -479,95 +481,150 @@ export default function QuoteDetailPage() {
         <div style={{backgroundColor: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.75rem', padding: '1rem', marginBottom: '2rem'}}>
           <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
             <div style={{display: 'flex', gap: '0.5rem'}}>
-              <button
-                onClick={() => router.push('/')}
-                style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', color: '#cbd5e1', textDecoration: 'none', fontWeight: '500', background: 'none', border: 'none', cursor: 'pointer'}}
-              >
+              <Link href="/" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', color: '#cbd5e1', textDecoration: 'none', fontWeight: '500'}}>
                 <Home style={{height: '1rem', width: '1rem'}} />
                 <span>Dashboard</span>
-              </button>
-              <button
-                onClick={() => router.push('/clients')}
-                style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', color: '#cbd5e1', textDecoration: 'none', fontWeight: '500', background: 'none', border: 'none', cursor: 'pointer'}}
-              >
+              </Link>
+              <Link href="/clients" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', color: '#cbd5e1', textDecoration: 'none', fontWeight: '500'}}>
                 <Users style={{height: '1rem', width: '1rem'}} />
                 <span>Clients</span>
-              </button>
-              <button
-                onClick={() => router.push('/quotes')}
-                style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', background: 'linear-gradient(to right, #9333ea, #3b82f6)', color: 'white', textDecoration: 'none', fontWeight: '500', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)', border: 'none', cursor: 'pointer'}}
-              >
+              </Link>
+              <Link href="/quotes" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', background: 'linear-gradient(to right, #9333ea, #3b82f6)', color: 'white', textDecoration: 'none', fontWeight: '500', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'}}>
                 <FileText style={{height: '1rem', width: '1rem'}} />
                 <span>Quotes</span>
-              </button>
-              <button
-                onClick={() => router.push('/invoices')}
-                style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', color: '#cbd5e1', textDecoration: 'none', fontWeight: '500', background: 'none', border: 'none', cursor: 'pointer'}}
-              >
+              </Link>
+              <Link href="/invoices" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', color: '#cbd5e1', textDecoration: 'none', fontWeight: '500'}}>
                 <DollarSign style={{height: '1rem', width: '1rem'}} />
                 <span>Invoices</span>
-              </button>
-              <button
-                onClick={() => router.push('/contractors')}
-                style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', color: '#cbd5e1', textDecoration: 'none', fontWeight: '500', background: 'none', border: 'none', cursor: 'pointer'}}
-              >
+              </Link>
+              <Link href="/contractors" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', color: '#cbd5e1', textDecoration: 'none', fontWeight: '500'}}>
                 <User style={{height: '1rem', width: '1rem'}} />
                 <span>Contractors</span>
-              </button>
-              <button
-                onClick={() => router.push('/settings')}
-                style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', color: '#cbd5e1', textDecoration: 'none', fontWeight: '500', background: 'none', border: 'none', cursor: 'pointer'}}
-              >
+              </Link>
+              <Link href="/services" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', color: '#cbd5e1', textDecoration: 'none', fontWeight: '500'}}>
                 <Settings style={{height: '1rem', width: '1rem'}} />
-                <span>Settings</span>
-              </button>
+                <span>Services</span>
+              </Link>
             </div>
+            <UserMenu />
           </div>
         </div>
 
-        {/* Page Header */}
+        {/* Back to Quotes Link */}
         <div style={{marginBottom: '2rem'}}>
-          <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem'}}>
-            <div>
-              <h1 style={{fontSize: '2.25rem', fontWeight: 'bold', color: 'white'}}>Quote Details</h1>
-              <p style={{color: '#cbd5e1'}}>Quote #{quote.quoteNumber} - {quote.title}</p>
+          <Link href="/quotes" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#cbd5e1', textDecoration: 'none', fontSize: '0.875rem'}}>
+            <ArrowLeft style={{height: '1rem', width: '1rem'}} />
+            Back to Quotes
+          </Link>
+        </div>
+
+        {/* Quote Header with Client Information and Quote Details */}
+        <div style={{backgroundColor: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.75rem', padding: '2rem', marginBottom: '2rem'}}>
+          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start'}}>
+            <div style={{flex: 1}}>
+              <h1 style={{fontSize: '2.25rem', fontWeight: 'bold', color: 'white', marginBottom: '1rem'}}>
+                Quote #{quote.quoteNumber} - {quote.title}
+              </h1>
+              
+              {/* Client Information */}
+              <div style={{marginBottom: '1.5rem'}}>
+                <h2 style={{fontSize: '1.125rem', fontWeight: '600', color: 'white', marginBottom: '0.75rem'}}>Client Information</h2>
+                <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem'}}>
+                  <div>
+                    <span style={{color: '#cbd5e1', fontSize: '0.875rem'}}>Name:</span>
+                    <p style={{color: 'white', margin: '0', fontWeight: '500'}}>{quote.client.name}</p>
+                  </div>
+                  <div>
+                    <span style={{color: '#cbd5e1', fontSize: '0.875rem'}}>Email:</span>
+                    <p style={{color: 'white', margin: '0', fontWeight: '500'}}>{quote.client.email}</p>
+                  </div>
+                  <div>
+                    <span style={{color: '#cbd5e1', fontSize: '0.875rem'}}>Phone:</span>
+                    <p style={{color: 'white', margin: '0', fontWeight: '500'}}>{quote.client.phone || 'Not provided'}</p>
+                  </div>
+                  <div>
+                    <span style={{color: '#cbd5e1', fontSize: '0.875rem'}}>Address:</span>
+                    <p style={{color: 'white', margin: '0', fontWeight: '500'}}>{quote.client.address || 'Not provided'}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Quote Details */}
+              <div>
+                <h2 style={{fontSize: '1.125rem', fontWeight: '600', color: 'white', marginBottom: '0.75rem'}}>Quote Details</h2>
+                <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem'}}>
+                  <div>
+                    <span style={{color: '#cbd5e1', fontSize: '0.875rem'}}>Status:</span>
+                    <p style={{color: 'white', margin: '0', fontWeight: '500', textTransform: 'capitalize'}}>{quote.status}</p>
+                  </div>
+                  <div>
+                    <span style={{color: '#cbd5e1', fontSize: '0.875rem'}}>Valid Until:</span>
+                    <p style={{color: 'white', margin: '0', fontWeight: '500'}}>{new Date(quote.validUntil).toLocaleDateString()}</p>
+                  </div>
+                  <div>
+                    <span style={{color: '#cbd5e1', fontSize: '0.875rem'}}>Subtotal:</span>
+                    <p style={{color: 'white', margin: '0', fontWeight: '500'}}>${quote.subtotal.toFixed(2)}</p>
+                  </div>
+                  <div>
+                    <span style={{color: '#cbd5e1', fontSize: '0.875rem'}}>Tax:</span>
+                    <p style={{color: 'white', margin: '0', fontWeight: '500'}}>${quote.taxAmount.toFixed(2)}</p>
+                  </div>
+                  <div>
+                    <span style={{color: '#cbd5e1', fontSize: '0.875rem'}}>Total:</span>
+                    <p style={{color: 'white', margin: '0', fontSize: '1.125rem', fontWeight: '600'}}>${quote.total.toFixed(2)}</p>
+                  </div>
+                </div>
+              </div>
             </div>
-            <button
-              onClick={() => router.back()}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                color: '#60a5fa',
-                textDecoration: 'none',
-                fontSize: '0.875rem',
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer'
-              }}
-            >
-              <ArrowLeft style={{height: '1rem', width: '1rem'}} />
-              Back to Quotes
-            </button>
           </div>
         </div>
 
-        {/* Quote Header Component */}
-        <QuoteHeader
-          quote={quote}
-          onSendEmail={() => setShowEmailModal(true)}
-          onConvertToInvoice={handleConvertToInvoice}
-          converting={converting}
-        />
+        {/* Action Buttons */}
+        <div style={{display: 'flex', gap: '1rem', marginBottom: '2rem', flexWrap: 'wrap'}}>
+          <button
+            onClick={() => setShowEmailModal(true)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              padding: '0.75rem 1.5rem',
+              backgroundColor: 'linear-gradient(to right, #3b82f6, #6366f1)',
+              background: 'linear-gradient(to right, #3b82f6, #6366f1)',
+              border: 'none',
+              borderRadius: '0.5rem',
+              color: 'white',
+              cursor: 'pointer',
+              fontWeight: '500'
+            }}
+          >
+            <FileText style={{height: '1rem', width: '1rem'}} />
+            Send via Email
+          </button>
+          <button
+            onClick={handleConvertToInvoice}
+            disabled={converting}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              padding: '0.75rem 1.5rem',
+              backgroundColor: converting ? 'rgba(255, 255, 255, 0.1)' : 'linear-gradient(to right, #10b981, #14b8a6)',
+              background: converting ? 'rgba(255, 255, 255, 0.1)' : 'linear-gradient(to right, #10b981, #14b8a6)',
+              border: 'none',
+              borderRadius: '0.5rem',
+              color: 'white',
+              cursor: converting ? 'not-allowed' : 'pointer',
+              fontWeight: '500'
+            }}
+          >
+            <DollarSign style={{height: '1rem', width: '1rem'}} />
+            {converting ? 'Converting...' : 'Convert to Invoice'}
+          </button>
+        </div>
 
         {/* Two Column Layout */}
         <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem'}}>
-          {/* Left Column - Client Info and Quote Details */}
-          <div>
-            <QuoteDetails quote={quote} />
-          </div>
-
-          {/* Right Column - Services and Contractors */}
+          {/* Left Column - Services */}
           <div>
             <QuoteServices
               services={regularServices}
@@ -575,7 +632,10 @@ export default function QuoteDetailPage() {
               onEditService={handleEditServiceClick}
               onDeleteService={handleDeleteService}
             />
+          </div>
 
+          {/* Right Column - Contractors */}
+          <div>
             <QuoteContractors
               contractors={assignedContractors}
               onAddContractor={() => setShowAddContractorModal(true)}
