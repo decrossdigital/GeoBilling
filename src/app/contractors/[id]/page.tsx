@@ -294,36 +294,88 @@ export default function ContractorDetailPage() {
 
   if (loading) {
     return (
-      <div style={{minHeight: '100vh', backgroundColor: '#0f172a', color: 'white'}}>
-        <div style={{padding: '2rem', textAlign: 'center'}}>Loading contractor details...</div>
+      <div style={{minHeight: '100vh', background: 'linear-gradient(to bottom right, #0f172a, #581c87, #0f172a)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+        <div style={{textAlign: 'center'}}>
+          <div style={{fontSize: '1.5rem', marginBottom: '1rem'}}>Loading contractor...</div>
+          <div style={{width: '40px', height: '40px', border: '4px solid rgba(255,255,255,0.3)', borderTop: '4px solid white', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto'}}></div>
+        </div>
+        <style jsx>{`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}</style>
       </div>
     )
   }
 
   if (!contractor) {
     return (
-      <div style={{minHeight: '100vh', backgroundColor: '#0f172a', color: 'white'}}>
-        <div style={{padding: '2rem', textAlign: 'center'}}>Contractor not found</div>
+      <div style={{minHeight: '100vh', background: 'linear-gradient(to bottom right, #0f172a, #581c87, #0f172a)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+        <div style={{textAlign: 'center'}}>
+          <div style={{fontSize: '1.5rem', marginBottom: '1rem'}}>Contractor not found</div>
+          <Link href="/contractors" style={{color: '#60a5fa', textDecoration: 'none'}}>Back to Contractors</Link>
+        </div>
       </div>
     )
   }
 
   return (
-    <div style={{minHeight: '100vh', backgroundColor: '#0f172a', color: 'white'}}>
-      {/* Header */}
-      <div style={{backgroundColor: 'rgba(15, 23, 42, 0.95)', backdropFilter: 'blur(8px)', borderBottom: '1px solid rgba(255, 255, 255, 0.1)', position: 'sticky', top: 0, zIndex: 100}}>
-        <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 2rem'}}>
-          <div style={{display: 'flex', alignItems: 'center', gap: '1rem'}}>
-            <Link href="/contractors" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#cbd5e1', textDecoration: 'none'}}>
-              <ArrowLeft style={{height: '1rem', width: '1rem'}} />
-              Back to Contractors
-            </Link>
+    <div style={{minHeight: '100vh', background: 'linear-gradient(to bottom right, #0f172a, #581c87, #0f172a)', color: 'white'}}>
+      <div style={{maxWidth: '1200px', margin: '0 auto', padding: '2rem 1.5rem'}}>
+        {/* Header */}
+        <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2rem'}}>
+          <div style={{display: 'flex', alignItems: 'center', gap: '0.75rem'}}>
+            <div style={{padding: '0.75rem', background: 'linear-gradient(to right, #9333ea, #ec4899)', borderRadius: '1rem'}}>
+              <Music style={{height: '2rem', width: '2rem', color: 'white'}} />
+            </div>
+            <div>
+              <h1 style={{fontSize: '1.875rem', fontWeight: 'bold', color: 'white'}}>GeoBilling</h1>
+              <p style={{fontSize: '0.875rem', color: '#cbd5e1'}}>Uniquitous Music - Professional Billing System</p>
+            </div>
           </div>
-          <UserMenu />
         </div>
-      </div>
 
-      <div style={{padding: '2rem', maxWidth: '1200px', margin: '0 auto'}}>
+        {/* Navigation */}
+        <div style={{backgroundColor: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.75rem', padding: '1rem', marginBottom: '2rem'}}>
+          <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
+            <div style={{display: 'flex', gap: '0.5rem'}}>
+              <Link href="/" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', color: '#cbd5e1', textDecoration: 'none', fontWeight: '500'}}>
+                <Home style={{height: '1rem', width: '1rem'}} />
+                <span>Dashboard</span>
+              </Link>
+              <Link href="/clients" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', color: '#cbd5e1', textDecoration: 'none', fontWeight: '500'}}>
+                <Users style={{height: '1rem', width: '1rem'}} />
+                <span>Clients</span>
+              </Link>
+              <Link href="/contractors" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', background: 'linear-gradient(to right, #9333ea, #3b82f6)', color: 'white', textDecoration: 'none', fontWeight: '500', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'}}>
+                <User style={{height: '1rem', width: '1rem'}} />
+                <span>Contractors</span>
+              </Link>
+              <Link href="/quotes" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', color: '#cbd5e1', textDecoration: 'none', fontWeight: '500'}}>
+                <FileText style={{height: '1rem', width: '1rem'}} />
+                <span>Quotes</span>
+              </Link>
+              <Link href="/invoices" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', color: '#cbd5e1', textDecoration: 'none', fontWeight: '500'}}>
+                <DollarSign style={{height: '1rem', width: '1rem'}} />
+                <span>Invoices</span>
+              </Link>
+              <Link href="/services" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', color: '#cbd5e1', textDecoration: 'none', fontWeight: '500'}}>
+                <Settings style={{height: '1rem', width: '1rem'}} />
+                <span>Services</span>
+              </Link>
+            </div>
+            <UserMenu />
+          </div>
+        </div>
+
+        {/* Back to Contractors Link */}
+        <div style={{marginBottom: '2rem'}}>
+          <Link href="/contractors" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#cbd5e1', textDecoration: 'none', fontSize: '0.875rem'}}>
+            <ArrowLeft style={{height: '1rem', width: '1rem'}} />
+            Back to Contractors
+          </Link>
+        </div>
         {/* Contractor Header with Contact Information */}
         <div style={{backgroundColor: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.75rem', padding: '2rem', marginBottom: '2rem'}}>
           <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start'}}>
