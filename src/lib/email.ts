@@ -12,7 +12,7 @@ export interface EmailData {
 export const sendEmail = async (emailData: EmailData) => {
   try {
     const { data, error } = await resend.emails.send({
-      from: emailData.from || 'GeoBilling <noreply@uniquitousmusic.com>',
+      from: emailData.from || 'GeoBilling <onboarding@resend.dev>',
       to: emailData.to,
       subject: emailData.subject,
       html: emailData.html,
