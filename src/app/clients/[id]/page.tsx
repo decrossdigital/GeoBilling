@@ -83,8 +83,14 @@ export default function ClientDetailPage() {
   const [notes, setNotes] = useState<Note[]>([])
   const [loading, setLoading] = useState(true)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [showEmailModal, setShowEmailModal] = useState(false)
   const [editing, setEditing] = useState(false)
   const [newNote, setNewNote] = useState("")
+  const [emailForm, setEmailForm] = useState({
+    subject: "",
+    message: ""
+  })
+  const [sendingEmail, setSendingEmail] = useState(false)
   const [editForm, setEditForm] = useState({
     name: "",
     company: "",
@@ -222,6 +228,40 @@ export default function ClientDetailPage() {
       }
     } catch (error) {
       console.error('Error adding note:', error)
+    }
+  }
+
+  const handleSendEmail = async () => {
+    if (!emailForm.subject.trim() || !emailForm.message.trim() || !client) return
+
+    setSendingEmail(true)
+    try {
+      const response = await fetch('/api/clients/send-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          clientId: client.id,
+          to: client.email,
+          subject: emailForm.subject,
+          message: emailForm.message,
+        }),
+      })
+
+      if (response.ok) {
+        alert('Email sent successfully!')
+        setShowEmailModal(false)
+        setEmailForm({ subject: "", message: "" })
+      } else {
+        const error = await response.json()
+        alert(`Failed to send email: ${error.error}`)
+      }
+    } catch (error) {
+      console.error('Error sending email:', error)
+      alert('Failed to send email. Please try again.')
+    } finally {
+      setSendingEmail(false)
     }
   }
 
@@ -680,8 +720,8 @@ export default function ClientDetailPage() {
             <Plus style={{height: '1rem', width: '1rem'}} />
             Create Invoice
           </button>
-          <a
-            href={`mailto:${client.email}`}
+          <button
+            onClick={() => setShowEmailModal(true)}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -692,13 +732,12 @@ export default function ClientDetailPage() {
               borderRadius: '0.5rem',
               color: 'white',
               cursor: 'pointer',
-              fontWeight: '500',
-              textDecoration: 'none'
+              fontWeight: '500'
             }}
           >
             <Mail style={{height: '1rem', width: '1rem'}} />
             Email
-          </a>
+          </button>
           <a
             href={`tel:${client.phone}`}
             style={{
@@ -881,6 +920,148 @@ export default function ClientDetailPage() {
             </div>
           </div>
         </div>
+
+        {/* Email Modal */}
+        {showEmailModal && (
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 999999
+          }}>
+            <div style={{
+              backgroundColor: 'rgba(15, 23, 42, 0.95)',
+              backdropFilter: 'blur(8px)',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
+              borderRadius: '0.75rem',
+              padding: '2rem',
+              maxWidth: '500px',
+              width: '90%'
+            }}>
+              <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem'}}>
+                <h3 style={{color: 'white', fontSize: '1.25rem', fontWeight: 'bold'}}>Send Email to {client?.name}</h3>
+                <button
+                  onClick={() => setShowEmailModal(false)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#cbd5e1',
+                    cursor: 'pointer',
+                    padding: '0.25rem'
+                  }}
+                >
+                  <X style={{height: '1.5rem', width: '1.5rem'}} />
+                </button>
+              </div>
+              
+              <div style={{marginBottom: '1.5rem'}}>
+                <label style={{display: 'block', color: '#cbd5e1', marginBottom: '0.5rem', fontSize: '0.875rem'}}>
+                  To:
+                </label>
+                <input
+                  type="email"
+                  value={client?.email || ''}
+                  disabled
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                    borderRadius: '0.5rem',
+                    color: '#94a3b8',
+                    outline: 'none',
+                    fontFamily: 'inherit'
+                  }}
+                />
+              </div>
+
+              <div style={{marginBottom: '1.5rem'}}>
+                <label style={{display: 'block', color: '#cbd5e1', marginBottom: '0.5rem', fontSize: '0.875rem'}}>
+                  Subject:
+                </label>
+                <input
+                  type="text"
+                  value={emailForm.subject}
+                  onChange={(e) => setEmailForm({...emailForm, subject: e.target.value})}
+                  placeholder="Enter email subject..."
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                    borderRadius: '0.5rem',
+                    color: 'white',
+                    outline: 'none',
+                    fontFamily: 'inherit'
+                  }}
+                />
+              </div>
+
+              <div style={{marginBottom: '2rem'}}>
+                <label style={{display: 'block', color: '#cbd5e1', marginBottom: '0.5rem', fontSize: '0.875rem'}}>
+                  Message:
+                </label>
+                <textarea
+                  value={emailForm.message}
+                  onChange={(e) => setEmailForm({...emailForm, message: e.target.value})}
+                  placeholder="Enter your message..."
+                  rows={8}
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                    borderRadius: '0.5rem',
+                    color: 'white',
+                    outline: 'none',
+                    resize: 'vertical',
+                    fontFamily: 'inherit'
+                  }}
+                />
+              </div>
+
+              <div style={{display: 'flex', gap: '1rem', justifyContent: 'flex-end'}}>
+                <button
+                  onClick={() => setShowEmailModal(false)}
+                  disabled={sendingEmail}
+                  style={{
+                    padding: '0.75rem 1.5rem',
+                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                    borderRadius: '0.5rem',
+                    color: 'white',
+                    cursor: sendingEmail ? 'not-allowed' : 'pointer',
+                    fontWeight: '500',
+                    opacity: sendingEmail ? 0.5 : 1
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSendEmail}
+                  disabled={!emailForm.subject.trim() || !emailForm.message.trim() || sendingEmail}
+                  style={{
+                    padding: '0.75rem 1.5rem',
+                    backgroundColor: (!emailForm.subject.trim() || !emailForm.message.trim() || sendingEmail) ? 'rgba(59, 130, 246, 0.5)' : '#3b82f6',
+                    border: 'none',
+                    borderRadius: '0.5rem',
+                    color: 'white',
+                    cursor: (!emailForm.subject.trim() || !emailForm.message.trim() || sendingEmail) ? 'not-allowed' : 'pointer',
+                    fontWeight: '500'
+                  }}
+                >
+                  {sendingEmail ? 'Sending...' : 'Send Email'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Delete Confirmation Modal */}
         {showDeleteConfirm && (
