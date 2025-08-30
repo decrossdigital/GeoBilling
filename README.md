@@ -190,3 +190,4 @@ For support, email george@uniquitousmusic.com or create an issue in the reposito
 - Email: george@uniquitousmusic.com
 - Phone: (609) 316-8080
 - Services: Music Production, Mixing, Mastering, Editing
+# Build command updated to skip migrations temporarily
