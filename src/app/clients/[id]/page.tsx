@@ -545,54 +545,74 @@ export default function ClientDetailPage() {
               </div>
             </div>
             
-            <div style={{display: 'flex', gap: '0.5rem'}}>
+            <div style={{display: 'flex', flexDirection: 'column', gap: '0.5rem', alignItems: 'flex-end'}}>
               {editing ? (
                 <>
+                  <div style={{display: 'flex', gap: '0.5rem'}}>
+                    <button
+                      onClick={handleSaveEdit}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        padding: '0.75rem 1.5rem',
+                        backgroundColor: '#10b981',
+                        border: 'none',
+                        borderRadius: '0.5rem',
+                        color: 'white',
+                        cursor: 'pointer',
+                        fontWeight: '500'
+                      }}
+                    >
+                      <Save style={{height: '1rem', width: '1rem'}} />
+                      Save
+                    </button>
+                    <button
+                      onClick={() => {
+                        setEditing(false)
+                        // Reset form to original values
+                        setEditForm({
+                          name: client.name,
+                          company: client.company,
+                          email: client.email,
+                          phone: client.phone,
+                          address: client.address || "",
+                          status: client.status
+                        })
+                      }}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        padding: '0.75rem 1.5rem',
+                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                        border: '1px solid rgba(255, 255, 255, 0.2)',
+                        borderRadius: '0.5rem',
+                        color: 'white',
+                        cursor: 'pointer',
+                        fontWeight: '500'
+                      }}
+                    >
+                      Cancel
+                    </button>
+                  </div>
                   <button
-                    onClick={handleSaveEdit}
+                    onClick={() => setShowDeleteConfirm(true)}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
                       gap: '0.5rem',
                       padding: '0.75rem 1.5rem',
-                      backgroundColor: '#10b981',
-                      border: 'none',
+                      backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                      border: '1px solid rgba(239, 68, 68, 0.3)',
                       borderRadius: '0.5rem',
-                      color: 'white',
+                      color: '#ef4444',
                       cursor: 'pointer',
                       fontWeight: '500'
                     }}
                   >
-                    <Save style={{height: '1rem', width: '1rem'}} />
-                    Save
-                  </button>
-                  <button
-                    onClick={() => {
-                      setEditing(false)
-                      // Reset form to original values
-                      setEditForm({
-                        name: client.name,
-                        company: client.company,
-                        email: client.email,
-                        phone: client.phone,
-                        address: client.address || "",
-                        status: client.status
-                      })
-                    }}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.5rem',
-                      padding: '0.75rem 1.5rem',
-                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                      border: '1px solid rgba(255, 255, 255, 0.2)',
-                      borderRadius: '0.5rem',
-                      color: 'white',
-                      cursor: 'pointer',
-                      fontWeight: '500'
-                    }}
-                  >
-                    Cancel
+                    <Trash2 style={{height: '1rem', width: '1rem'}} />
+                    Delete Client
                   </button>
                 </>
               ) : (
@@ -697,24 +717,7 @@ export default function ClientDetailPage() {
             <Phone style={{height: '1rem', width: '1rem'}} />
             Call
           </a>
-          <button
-            onClick={() => setShowDeleteConfirm(true)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              padding: '0.75rem 1.5rem',
-              backgroundColor: 'rgba(239, 68, 68, 0.1)',
-              border: '1px solid rgba(239, 68, 68, 0.3)',
-              borderRadius: '0.5rem',
-              color: '#ef4444',
-              cursor: 'pointer',
-              fontWeight: '500'
-            }}
-          >
-            <Trash2 style={{height: '1rem', width: '1rem'}} />
-            Delete
-          </button>
+
         </div>
 
         <div style={{display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '2rem'}}>
