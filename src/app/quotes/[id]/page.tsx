@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useParams, useRouter } from 'next/navigation'
-import { ArrowLeft, Music, Home, Users, FileText, DollarSign, User, Settings } from 'lucide-react'
+import { ArrowLeft, Music, Home, Users, FileText, DollarSign, User, Settings, Edit, Save, X } from 'lucide-react'
 import Link from 'next/link'
 import UserMenu from '@/components/user-menu'
 import QuoteHeader from '@/components/quotes/QuoteHeader'
@@ -92,6 +92,14 @@ export default function QuoteDetailPage() {
     description: '',
     quantity: 1,
     unitPrice: 0
+  })
+  const [isEditing, setIsEditing] = useState(false)
+  const [editData, setEditData] = useState({
+    project: '',
+    projectDescription: '',
+    validUntil: '',
+    terms: '',
+    notes: ''
   })
 
   useEffect(() => {
@@ -444,6 +452,60 @@ export default function QuoteDetailPage() {
     setServiceForm(prev => ({ ...prev, [field]: value }))
   }
 
+  const handleEditClick = () => {
+    if (quote) {
+      setEditData({
+        project: quote.project || '',
+        projectDescription: quote.projectDescription || '',
+        validUntil: quote.validUntil,
+        terms: quote.terms || '',
+        notes: quote.notes || ''
+      })
+      setIsEditing(true)
+    }
+  }
+
+  const handleSaveEdit = async () => {
+    if (!quote) return
+
+    try {
+      const response = await fetch(`/api/quotes/${quoteId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...quote,
+          project: editData.project,
+          projectDescription: editData.projectDescription,
+          validUntil: editData.validUntil,
+          terms: editData.terms,
+          notes: editData.notes
+        })
+      })
+
+      if (response.ok) {
+        const updatedQuote = await response.json()
+        setQuote(updatedQuote)
+        setIsEditing(false)
+        alert('Quote updated successfully!')
+      } else {
+        alert('Failed to update quote')
+      }
+    } catch (error) {
+      console.error('Error updating quote:', error)
+      alert('Error updating quote')
+    }
+  }
+
+  const handleCancelEdit = () => {
+    setIsEditing(false)
+  }
+
+  const handleEditDataChange = (field: string, value: string) => {
+    setEditData(prev => ({ ...prev, [field]: value }))
+  }
+
   if (loading) {
     return (
       <div style={{ padding: '20px', textAlign: 'center' }}>
@@ -549,11 +611,50 @@ export default function QuoteDetailPage() {
                   </div>
                   <div>
                     <span style={{color: '#cbd5e1', fontSize: '0.875rem'}}>Project:</span>
-                    <p style={{color: 'white', margin: '0', fontWeight: '500'}}>{quote.project || 'Not specified'}</p>
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        value={editData.project}
+                        onChange={(e) => handleEditDataChange('project', e.target.value)}
+                        style={{
+                          width: '100%',
+                          padding: '0.5rem',
+                          backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                          border: '1px solid rgba(255, 255, 255, 0.2)',
+                          borderRadius: '0.25rem',
+                          color: 'white',
+                          outline: 'none',
+                          marginTop: '0.25rem'
+                        }}
+                        placeholder="Enter project name..."
+                      />
+                    ) : (
+                      <p style={{color: 'white', margin: '0', fontWeight: '500'}}>{quote.project || 'Not specified'}</p>
+                    )}
                   </div>
                   <div>
                     <span style={{color: '#cbd5e1', fontSize: '0.875rem'}}>Project Description:</span>
-                    <p style={{color: 'white', margin: '0', fontWeight: '500'}}>{quote.projectDescription || 'Not provided'}</p>
+                    {isEditing ? (
+                      <textarea
+                        value={editData.projectDescription}
+                        onChange={(e) => handleEditDataChange('projectDescription', e.target.value)}
+                        rows={3}
+                        style={{
+                          width: '100%',
+                          padding: '0.5rem',
+                          backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                          border: '1px solid rgba(255, 255, 255, 0.2)',
+                          borderRadius: '0.25rem',
+                          color: 'white',
+                          outline: 'none',
+                          resize: 'vertical',
+                          marginTop: '0.25rem'
+                        }}
+                        placeholder="Describe the project details..."
+                      />
+                    ) : (
+                      <p style={{color: 'white', margin: '0', fontWeight: '500'}}>{quote.projectDescription || 'Not provided'}</p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -579,6 +680,65 @@ export default function QuoteDetailPage() {
 
         {/* Action Buttons */}
         <div style={{display: 'flex', gap: '1rem', marginBottom: '2rem', flexWrap: 'wrap'}}>
+          {!isEditing ? (
+            <button
+              onClick={handleEditClick}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                padding: '0.75rem 1.5rem',
+                backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                border: '1px solid rgba(255, 255, 255, 0.3)',
+                borderRadius: '0.5rem',
+                color: 'white',
+                cursor: 'pointer',
+                fontWeight: '500'
+              }}
+            >
+              <Edit style={{height: '1rem', width: '1rem'}} />
+              Edit Details
+            </button>
+          ) : (
+            <>
+              <button
+                onClick={handleSaveEdit}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.75rem 1.5rem',
+                  background: 'linear-gradient(to right, #10b981, #14b8a6)',
+                  border: 'none',
+                  borderRadius: '0.5rem',
+                  color: 'white',
+                  cursor: 'pointer',
+                  fontWeight: '500'
+                }}
+              >
+                <Save style={{height: '1rem', width: '1rem'}} />
+                Save Changes
+              </button>
+              <button
+                onClick={handleCancelEdit}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.75rem 1.5rem',
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  borderRadius: '0.5rem',
+                  color: 'white',
+                  cursor: 'pointer',
+                  fontWeight: '500'
+                }}
+              >
+                <X style={{height: '1rem', width: '1rem'}} />
+                Cancel
+              </button>
+            </>
+          )}
           <button
             onClick={() => setShowEmailModal(true)}
             style={{
@@ -651,7 +811,25 @@ export default function QuoteDetailPage() {
               <div style={{display: 'flex', flexDirection: 'column', gap: '1rem'}}>
                 <div>
                   <span style={{color: '#cbd5e1', fontSize: '0.875rem'}}>Valid Until:</span>
-                  <p style={{color: 'white', margin: '0', fontWeight: '500'}}>{new Date(quote.validUntil).toLocaleDateString()}</p>
+                  {isEditing ? (
+                    <input
+                      type="date"
+                      value={editData.validUntil}
+                      onChange={(e) => handleEditDataChange('validUntil', e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '0.5rem',
+                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                        border: '1px solid rgba(255, 255, 255, 0.2)',
+                        borderRadius: '0.25rem',
+                        color: 'white',
+                        outline: 'none',
+                        marginTop: '0.25rem'
+                      }}
+                    />
+                  ) : (
+                    <p style={{color: 'white', margin: '0', fontWeight: '500'}}>{new Date(quote.validUntil).toLocaleDateString()}</p>
+                  )}
                 </div>
               </div>
             </div>
@@ -681,29 +859,65 @@ export default function QuoteDetailPage() {
         </div>
 
         {/* Terms and Notes */}
-        {(quote.terms || quote.notes) && (
-          <div style={{
-            background: 'rgba(255, 255, 255, 0.1)',
-            backdropFilter: 'blur(8px)',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
-            borderRadius: '0.75rem',
-            padding: '1.5rem',
-            marginBottom: '2rem'
-          }}>
-            {quote.terms && (
-              <div style={{marginBottom: quote.notes ? '1.5rem' : 0}}>
-                <h2 style={{fontSize: '1.25rem', fontWeight: 'bold', color: 'white', marginBottom: '1rem'}}>Terms & Conditions</h2>
-                <p style={{fontSize: '0.875rem', color: '#cbd5e1', lineHeight: '1.6', margin: 0}}>{quote.terms}</p>
-              </div>
-            )}
-            {quote.notes && (
-              <div>
-                <h2 style={{fontSize: '1.25rem', fontWeight: 'bold', color: 'white', marginBottom: '1rem'}}>Notes</h2>
-                <p style={{fontSize: '0.875rem', color: '#cbd5e1', lineHeight: '1.6', margin: 0}}>{quote.notes}</p>
-              </div>
+        <div style={{
+          background: 'rgba(255, 255, 255, 0.1)',
+          backdropFilter: 'blur(8px)',
+          border: '1px solid rgba(255, 255, 255, 0.2)',
+          borderRadius: '0.75rem',
+          padding: '1.5rem',
+          marginBottom: '2rem'
+        }}>
+          <div style={{marginBottom: '1.5rem'}}>
+            <h2 style={{fontSize: '1.25rem', fontWeight: 'bold', color: 'white', marginBottom: '1rem'}}>Terms & Conditions</h2>
+            {isEditing ? (
+              <textarea
+                value={editData.terms}
+                onChange={(e) => handleEditDataChange('terms', e.target.value)}
+                rows={4}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  borderRadius: '0.25rem',
+                  color: 'white',
+                  outline: 'none',
+                  resize: 'vertical',
+                  fontSize: '0.875rem',
+                  lineHeight: '1.6'
+                }}
+                placeholder="Enter terms and conditions..."
+              />
+            ) : (
+              <p style={{fontSize: '0.875rem', color: '#cbd5e1', lineHeight: '1.6', margin: 0}}>{quote.terms || 'No terms specified'}</p>
             )}
           </div>
-        )}
+          <div>
+            <h2 style={{fontSize: '1.25rem', fontWeight: 'bold', color: 'white', marginBottom: '1rem'}}>Notes</h2>
+            {isEditing ? (
+              <textarea
+                value={editData.notes}
+                onChange={(e) => handleEditDataChange('notes', e.target.value)}
+                rows={4}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  borderRadius: '0.25rem',
+                  color: 'white',
+                  outline: 'none',
+                  resize: 'vertical',
+                  fontSize: '0.875rem',
+                  lineHeight: '1.6'
+                }}
+                placeholder="Enter notes..."
+              />
+            ) : (
+              <p style={{fontSize: '0.875rem', color: '#cbd5e1', lineHeight: '1.6', margin: 0}}>{quote.notes || 'No notes specified'}</p>
+            )}
+          </div>
+        </div>
 
         {/* Quote Modals Component */}
         <QuoteModals
