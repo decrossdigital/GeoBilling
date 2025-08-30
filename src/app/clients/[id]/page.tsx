@@ -384,123 +384,238 @@ export default function ClientDetailPage() {
           </Link>
         </div>
 
-        {/* Client Header */}
-        <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2rem'}}>
-          <div>
-            <h1 style={{fontSize: '2.25rem', fontWeight: 'bold', color: 'white', marginBottom: '0.5rem'}}>
+        {/* Client Header with Contact Information */}
+        <div style={{backgroundColor: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.75rem', padding: '2rem', marginBottom: '2rem'}}>
+          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem'}}>
+            <div style={{flex: 1}}>
+              <h1 style={{fontSize: '2.25rem', fontWeight: 'bold', color: 'white', marginBottom: '0.5rem'}}>
+                {editing ? (
+                  <input
+                    type="text"
+                    value={editForm.name}
+                    onChange={(e) => setEditForm({...editForm, name: e.target.value})}
+                    style={{
+                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                      border: '1px solid rgba(255, 255, 255, 0.2)',
+                      borderRadius: '0.5rem',
+                      padding: '0.5rem',
+                      color: 'white',
+                      fontSize: '2.25rem',
+                      fontWeight: 'bold',
+                      width: '300px'
+                    }}
+                    placeholder="Enter client name"
+                  />
+                ) : (
+                  client.name
+                )}
+              </h1>
+              <p style={{color: '#cbd5e1', fontSize: '1.125rem', marginBottom: '1rem'}}>
+                {editing ? (
+                  <input
+                    type="text"
+                    value={editForm.company}
+                    onChange={(e) => setEditForm({...editForm, company: e.target.value})}
+                    style={{
+                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                      border: '1px solid rgba(255, 255, 255, 0.2)',
+                      borderRadius: '0.5rem',
+                      padding: '0.5rem',
+                      color: '#cbd5e1',
+                      fontSize: '1.125rem',
+                      width: '250px'
+                    }}
+                    placeholder="Enter company name"
+                  />
+                ) : (
+                  client.company
+                )}
+              </p>
+              
+              {/* Contact Information Grid */}
+              <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1rem'}}>
+                <div style={{display: 'flex', alignItems: 'center', gap: '0.75rem'}}>
+                  <Mail style={{height: '1rem', width: '1rem', color: '#cbd5e1'}} />
+                  <span style={{color: 'white'}}>
+                    {editing ? (
+                      <input
+                        type="email"
+                        value={editForm.email}
+                        onChange={(e) => setEditForm({...editForm, email: e.target.value})}
+                        style={{
+                          backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                          border: '1px solid rgba(255, 255, 255, 0.2)',
+                          borderRadius: '0.25rem',
+                          padding: '0.25rem',
+                          color: 'white',
+                          width: '200px'
+                        }}
+                        placeholder="Enter email address"
+                      />
+                    ) : (
+                      client.email
+                    )}
+                  </span>
+                </div>
+                <div style={{display: 'flex', alignItems: 'center', gap: '0.75rem'}}>
+                  <Phone style={{height: '1rem', width: '1rem', color: '#cbd5e1'}} />
+                  <span style={{color: 'white'}}>
+                    {editing ? (
+                      <input
+                        type="tel"
+                        value={editForm.phone}
+                        onChange={(e) => setEditForm({...editForm, phone: e.target.value})}
+                        style={{
+                          backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                          border: '1px solid rgba(255, 255, 255, 0.2)',
+                          borderRadius: '0.25rem',
+                          padding: '0.25rem',
+                          color: 'white',
+                          width: '150px'
+                        }}
+                        placeholder="Enter phone number"
+                      />
+                    ) : (
+                      client.phone || <span style={{color: '#94a3b8', fontStyle: 'italic'}}>No phone provided</span>
+                    )}
+                  </span>
+                </div>
+                <div style={{display: 'flex', alignItems: 'center', gap: '0.75rem'}}>
+                  <MapPin style={{height: '1rem', width: '1rem', color: '#cbd5e1'}} />
+                  <span style={{color: 'white'}}>
+                    {editing ? (
+                      <textarea
+                        value={editForm.address}
+                        onChange={(e) => setEditForm({...editForm, address: e.target.value})}
+                        style={{
+                          backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                          border: '1px solid rgba(255, 255, 255, 0.2)',
+                          borderRadius: '0.25rem',
+                          padding: '0.25rem',
+                          color: 'white',
+                          width: '250px',
+                          minHeight: '60px',
+                          resize: 'vertical',
+                          fontFamily: 'inherit',
+                          fontSize: '0.875rem'
+                        }}
+                        placeholder="Enter address"
+                      />
+                    ) : (
+                      client.address || <span style={{color: '#94a3b8', fontStyle: 'italic'}}>No address provided</span>
+                    )}
+                  </span>
+                </div>
+                <div style={{display: 'flex', alignItems: 'center', gap: '0.75rem'}}>
+                  <Calendar style={{height: '1rem', width: '1rem', color: '#cbd5e1'}} />
+                  <span style={{color: '#cbd5e1', fontSize: '0.875rem'}}>Client since {formatDate(client.createdAt)}</span>
+                </div>
+                <div style={{display: 'flex', alignItems: 'center', gap: '0.75rem'}}>
+                  <div style={{
+                    width: '1rem',
+                    height: '1rem',
+                    borderRadius: '50%',
+                    backgroundColor: (editing ? editForm.status : client.status) === 'active' ? '#34d399' : '#ef4444'
+                  }} />
+                  <span style={{color: '#cbd5e1', fontSize: '0.875rem'}}>
+                    Status: <span style={{color: 'white', fontWeight: '500', textTransform: 'capitalize'}}>{editing ? editForm.status : client.status}</span>
+                  </span>
+                  {editing && (
+                    <button
+                      onClick={() => {
+                        const newStatus = editForm.status === 'active' ? 'inactive' : 'active'
+                        setEditForm({...editForm, status: newStatus})
+                      }}
+                      style={{
+                        marginLeft: '0.5rem',
+                        padding: '0.25rem 0.75rem',
+                        backgroundColor: editForm.status === 'active' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(52, 211, 153, 0.1)',
+                        border: editForm.status === 'active' ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid rgba(52, 211, 153, 0.3)',
+                        borderRadius: '0.25rem',
+                        color: editForm.status === 'active' ? '#ef4444' : '#34d399',
+                        cursor: 'pointer',
+                        fontSize: '0.75rem',
+                        fontWeight: '500'
+                      }}
+                    >
+                      Toggle to {editForm.status === 'active' ? 'Inactive' : 'Active'}
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+            
+            <div style={{display: 'flex', gap: '0.5rem'}}>
               {editing ? (
-                <input
-                  type="text"
-                  value={editForm.name}
-                  onChange={(e) => setEditForm({...editForm, name: e.target.value})}
-                  style={{
-                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                    border: '1px solid rgba(255, 255, 255, 0.2)',
-                    borderRadius: '0.5rem',
-                    padding: '0.5rem',
-                    color: 'white',
-                    fontSize: '2.25rem',
-                    fontWeight: 'bold',
-                    width: '300px'
-                  }}
-                  placeholder="Enter client name"
-                />
+                <>
+                  <button
+                    onClick={handleSaveEdit}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      padding: '0.75rem 1.5rem',
+                      backgroundColor: '#10b981',
+                      border: 'none',
+                      borderRadius: '0.5rem',
+                      color: 'white',
+                      cursor: 'pointer',
+                      fontWeight: '500'
+                    }}
+                  >
+                    <Save style={{height: '1rem', width: '1rem'}} />
+                    Save
+                  </button>
+                  <button
+                    onClick={() => {
+                      setEditing(false)
+                      // Reset form to original values
+                      setEditForm({
+                        name: client.name,
+                        company: client.company,
+                        email: client.email,
+                        phone: client.phone,
+                        address: client.address || "",
+                        status: client.status
+                      })
+                    }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      padding: '0.75rem 1.5rem',
+                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                      border: '1px solid rgba(255, 255, 255, 0.2)',
+                      borderRadius: '0.5rem',
+                      color: 'white',
+                      cursor: 'pointer',
+                      fontWeight: '500'
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </>
               ) : (
-                client.name
-              )}
-            </h1>
-            <p style={{color: '#cbd5e1', fontSize: '1.125rem'}}>
-              {editing ? (
-                <input
-                  type="text"
-                  value={editForm.company}
-                  onChange={(e) => setEditForm({...editForm, company: e.target.value})}
-                  style={{
-                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                    border: '1px solid rgba(255, 255, 255, 0.2)',
-                    borderRadius: '0.5rem',
-                    padding: '0.5rem',
-                    color: '#cbd5e1',
-                    fontSize: '1.125rem',
-                    width: '250px'
-                  }}
-                  placeholder="Enter company name"
-                />
-              ) : (
-                client.company
-              )}
-            </p>
-          </div>
-          <div style={{display: 'flex', gap: '0.5rem'}}>
-            {editing ? (
-              <>
                 <button
-                  onClick={handleSaveEdit}
+                  onClick={() => setEditing(true)}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
                     gap: '0.5rem',
                     padding: '0.75rem 1.5rem',
-                    backgroundColor: '#10b981',
-                    border: 'none',
+                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
                     borderRadius: '0.5rem',
                     color: 'white',
                     cursor: 'pointer',
                     fontWeight: '500'
                   }}
                 >
-                  <Save style={{height: '1rem', width: '1rem'}} />
-                  Save
+                  <Edit style={{height: '1rem', width: '1rem'}} />
+                  Edit
                 </button>
-                <button
-                  onClick={() => {
-                    setEditing(false)
-                    // Reset form to original values
-                    setEditForm({
-                      name: client.name,
-                      company: client.company,
-                      email: client.email,
-                      phone: client.phone,
-                      address: client.address || "",
-                      status: client.status
-                    })
-                  }}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    padding: '0.75rem 1.5rem',
-                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                    border: '1px solid rgba(255, 255, 255, 0.2)',
-                    borderRadius: '0.5rem',
-                    color: 'white',
-                    cursor: 'pointer',
-                    fontWeight: '500'
-                  }}
-                >
-                  Cancel
-                </button>
-              </>
-            ) : (
-              <button
-                onClick={() => setEditing(true)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  padding: '0.75rem 1.5rem',
-                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
-                  borderRadius: '0.5rem',
-                  color: 'white',
-                  cursor: 'pointer',
-                  fontWeight: '500'
-                }}
-              >
-                <Edit style={{height: '1rem', width: '1rem'}} />
-                Edit
-              </button>
-            )}
+              )}
+            </div>
           </div>
         </div>
 
@@ -603,123 +718,8 @@ export default function ClientDetailPage() {
         </div>
 
         <div style={{display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '2rem'}}>
-          {/* Left Column - Client Info & Stats */}
+          {/* Left Column - Stats & Notes */}
           <div>
-            {/* Contact Information */}
-            <div style={{backgroundColor: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.75rem', padding: '1.5rem', marginBottom: '2rem'}}>
-              <h2 style={{color: 'white', fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem'}}>Contact Information</h2>
-              <div style={{display: 'flex', flexDirection: 'column', gap: '1rem'}}>
-                <div style={{display: 'flex', alignItems: 'center', gap: '0.75rem'}}>
-                  <Mail style={{height: '1rem', width: '1rem', color: '#cbd5e1'}} />
-                  <span style={{color: 'white'}}>
-                    {editing ? (
-                      <input
-                        type="email"
-                        value={editForm.email}
-                        onChange={(e) => setEditForm({...editForm, email: e.target.value})}
-                        style={{
-                          backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                          border: '1px solid rgba(255, 255, 255, 0.2)',
-                          borderRadius: '0.25rem',
-                          padding: '0.25rem',
-                          color: 'white',
-                          width: '200px'
-                        }}
-                        placeholder="Enter email address"
-                      />
-                    ) : (
-                      client.email
-                    )}
-                  </span>
-                </div>
-                <div style={{display: 'flex', alignItems: 'center', gap: '0.75rem'}}>
-                  <Phone style={{height: '1rem', width: '1rem', color: '#cbd5e1'}} />
-                  <span style={{color: 'white'}}>
-                    {editing ? (
-                      <input
-                        type="tel"
-                        value={editForm.phone}
-                        onChange={(e) => setEditForm({...editForm, phone: e.target.value})}
-                        style={{
-                          backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                          border: '1px solid rgba(255, 255, 255, 0.2)',
-                          borderRadius: '0.25rem',
-                          padding: '0.25rem',
-                          color: 'white',
-                          width: '150px'
-                        }}
-                        placeholder="Enter phone number"
-                      />
-                    ) : (
-                      client.phone || <span style={{color: '#94a3b8', fontStyle: 'italic'}}>No phone provided</span>
-                    )}
-                  </span>
-                </div>
-                <div style={{display: 'flex', alignItems: 'center', gap: '0.75rem'}}>
-                  <MapPin style={{height: '1rem', width: '1rem', color: '#cbd5e1'}} />
-                  <span style={{color: 'white'}}>
-                    {editing ? (
-                      <textarea
-                        value={editForm.address}
-                        onChange={(e) => setEditForm({...editForm, address: e.target.value})}
-                        style={{
-                          backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                          border: '1px solid rgba(255, 255, 255, 0.2)',
-                          borderRadius: '0.25rem',
-                          padding: '0.25rem',
-                          color: 'white',
-                          width: '250px',
-                          minHeight: '60px',
-                          resize: 'vertical',
-                          fontFamily: 'inherit',
-                          fontSize: '0.875rem'
-                        }}
-                        placeholder="Enter address"
-                      />
-                    ) : (
-                      client.address || <span style={{color: '#94a3b8', fontStyle: 'italic'}}>No address provided</span>
-                    )}
-                  </span>
-                </div>
-                <div style={{display: 'flex', alignItems: 'center', gap: '0.75rem'}}>
-                  <Calendar style={{height: '1rem', width: '1rem', color: '#cbd5e1'}} />
-                  <span style={{color: '#cbd5e1', fontSize: '0.875rem'}}>Client since {formatDate(client.createdAt)}</span>
-                </div>
-                
-                <div style={{display: 'flex', alignItems: 'center', gap: '0.75rem'}}>
-                  <div style={{
-                    width: '1rem',
-                    height: '1rem',
-                    borderRadius: '50%',
-                    backgroundColor: (editing ? editForm.status : client.status) === 'active' ? '#34d399' : '#ef4444'
-                  }} />
-                  <span style={{color: '#cbd5e1', fontSize: '0.875rem'}}>
-                    Status: <span style={{color: 'white', fontWeight: '500', textTransform: 'capitalize'}}>{editing ? editForm.status : client.status}</span>
-                  </span>
-                  {editing && (
-                    <button
-                      onClick={() => {
-                        const newStatus = editForm.status === 'active' ? 'inactive' : 'active'
-                        setEditForm({...editForm, status: newStatus})
-                      }}
-                      style={{
-                        marginLeft: '0.5rem',
-                        padding: '0.25rem 0.75rem',
-                        backgroundColor: editForm.status === 'active' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(52, 211, 153, 0.1)',
-                        border: editForm.status === 'active' ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid rgba(52, 211, 153, 0.3)',
-                        borderRadius: '0.25rem',
-                        color: editForm.status === 'active' ? '#ef4444' : '#34d399',
-                        cursor: 'pointer',
-                        fontSize: '0.75rem',
-                        fontWeight: '500'
-                      }}
-                    >
-                      Toggle to {editForm.status === 'active' ? 'Inactive' : 'Active'}
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
 
             {/* Client Statistics */}
             {stats && (
