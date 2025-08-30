@@ -63,6 +63,8 @@ export default function NewQuotePage() {
   const [quoteContractors, setQuoteContractors] = useState<QuoteContractor[]>([])
   const [quoteNotes, setQuoteNotes] = useState("")
   const [validUntil, setValidUntil] = useState("")
+  const [project, setProject] = useState("")
+  const [projectDescription, setProjectDescription] = useState("")
   const [clients, setClients] = useState<Client[]>([])
   const [contractors, setContractors] = useState<Contractor[]>([])
   const [serviceTemplates, setServiceTemplates] = useState<ServiceTemplate[]>([])
@@ -242,6 +244,8 @@ export default function NewQuotePage() {
       const quoteData = {
         title: `Quote for ${selectedClient.name}`,
         description: "Professional music production services",
+        project: project,
+        projectDescription: projectDescription,
         status: "draft",
         validUntil: defaultValidUntil,
         subtotal: subtotal,
@@ -311,6 +315,8 @@ export default function NewQuotePage() {
       const quoteData = {
         title: `Quote for ${selectedClient.name}`,
         description: "Professional music production services",
+        project: project,
+        projectDescription: projectDescription,
         status: "sent",
         validUntil: defaultValidUntil,
         subtotal: subtotal,
@@ -832,6 +838,16 @@ export default function NewQuotePage() {
                 <h3 style={{fontSize: '1.125rem', fontWeight: '500', color: 'white', marginBottom: '1rem'}}>Additional Details</h3>
                 <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem'}}>
                   <div>
+                    <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>Project</label>
+                    <input
+                      type="text"
+                      value={project}
+                      onChange={(e) => setProject(e.target.value)}
+                      style={{width: '100%', padding: '0.5rem', backgroundColor: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.25rem', color: 'white', outline: 'none'}}
+                      placeholder="Enter project name..."
+                    />
+                  </div>
+                  <div>
                     <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>Valid Until</label>
                     <input
                       type="date"
@@ -840,6 +856,16 @@ export default function NewQuotePage() {
                       style={{width: '100%', padding: '0.5rem', backgroundColor: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.25rem', color: 'white', outline: 'none'}}
                     />
                   </div>
+                </div>
+                <div style={{marginTop: '1rem'}}>
+                  <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>Project Description</label>
+                  <textarea
+                    value={projectDescription}
+                    onChange={(e) => setProjectDescription(e.target.value)}
+                    rows={3}
+                    style={{width: '100%', padding: '0.5rem', backgroundColor: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.25rem', color: 'white', outline: 'none', resize: 'vertical'}}
+                    placeholder="Describe the project details..."
+                  />
                 </div>
                 <div style={{marginTop: '1rem'}}>
                   <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>Notes</label>
