@@ -243,7 +243,7 @@ export default function ClientDetailPage() {
         },
         body: JSON.stringify({
           clientId: client.id,
-          to: client.email,
+          to: 'george@uniquitousmusic.com', // Sandbox mode - send to verified email
           subject: emailForm.subject,
           message: emailForm.message,
         }),
@@ -962,11 +962,11 @@ export default function ClientDetailPage() {
               
               <div style={{marginBottom: '1.5rem'}}>
                 <label style={{display: 'block', color: '#cbd5e1', marginBottom: '0.5rem', fontSize: '0.875rem'}}>
-                  To:
+                  To: (Sandbox Mode - Sends to george@uniquitousmusic.com)
                 </label>
                 <input
                   type="email"
-                  value={client?.email || ''}
+                  value="george@uniquitousmusic.com"
                   disabled
                   style={{
                     width: '100%',
