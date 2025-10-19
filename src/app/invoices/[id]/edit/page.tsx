@@ -14,6 +14,8 @@ interface InvoiceItem {
   quantity: number
   unitPrice: number
   total: number
+  taxable: boolean
+  pricingType?: 'hourly' | 'flat'
 }
 
 interface Client {
@@ -82,7 +84,11 @@ export default function EditInvoicePage() {
             email: data.clientEmail,
             company: data.clientName
           })
-          setInvoiceItems(data.items || [])
+          setInvoiceItems(data.items.map((item: any) => ({
+            ...item,
+            taxable: item.taxable !== undefined ? item.taxable : false,
+            pricingType: item.pricingType || 'flat'
+          })) || [])
           setDueDate(data.dueDate ? new Date(data.dueDate).toISOString().split('T')[0] : "")
           setNotes(data.notes || "")
           setInvoiceNumber(data.invoiceNumber || "")
@@ -109,11 +115,10 @@ export default function EditInvoicePage() {
         if (response.ok) {
           const data = await response.json()
           setClients(data)
-        } else {
-          console.error('Failed to fetch clients')
         }
+        // Clients list is optional for editing (client is already selected)
       } catch (error) {
-        console.error('Error fetching clients:', error)
+        // Clients list is optional for editing, silently ignore errors
       }
     }
 
@@ -131,7 +136,9 @@ export default function EditInvoicePage() {
       description: "",
       quantity: 1,
       unitPrice: 0,
-      total: 0
+      total: 0,
+      taxable: false,
+      pricingType: 'flat'
     }
     setInvoiceItems([...invoiceItems, newItem])
   }
@@ -160,7 +167,8 @@ export default function EditInvoicePage() {
     setSaving(true)
     try {
       const subtotal = invoiceItems.reduce((sum, item) => sum + item.total, 0)
-      const taxAmount = subtotal * (invoiceData.taxRate / 100)
+      const taxableAmount = invoiceItems.reduce((sum, item) => sum + (item.taxable ? item.total : 0), 0)
+      const taxAmount = taxableAmount * (invoiceData.taxRate / 100)
       const total = subtotal + taxAmount
 
       const updatedInvoice = {
@@ -210,7 +218,8 @@ export default function EditInvoicePage() {
     setSaving(true)
     try {
       const subtotal = invoiceItems.reduce((sum, item) => sum + item.total, 0)
-      const taxAmount = subtotal * (invoiceData.taxRate / 100)
+      const taxableAmount = invoiceItems.reduce((sum, item) => sum + (item.taxable ? item.total : 0), 0)
+      const taxAmount = taxableAmount * (invoiceData.taxRate / 100)
       const total = subtotal + taxAmount
 
       const updatedInvoice = {
@@ -255,7 +264,7 @@ export default function EditInvoicePage() {
   }
 
   const nextStep = () => {
-    if (currentStep < 4) setCurrentStep(currentStep + 1)
+    if (currentStep < 2) setCurrentStep(currentStep + 1)
   }
 
   const prevStep = () => {
@@ -263,9 +272,8 @@ export default function EditInvoicePage() {
   }
 
   const steps = [
-    { number: 1, title: "Client Selection" },
-    { number: 2, title: "Add Services" },
-    { number: 3, title: "Review & Send" }
+    { number: 1, title: "Invoice Items", description: "Add items to invoice" },
+    { number: 2, title: "Review & Send", description: "Review and send invoice" }
   ]
 
   if (loading) {
@@ -379,36 +387,22 @@ export default function EditInvoicePage() {
           </div>
         </div>
 
+        {/* Client Info Banner */}
+        {selectedClient && (
+          <div style={{backgroundColor: 'rgba(147, 51, 234, 0.1)', border: '1px solid rgba(147, 51, 234, 0.3)', borderRadius: '0.75rem', padding: '1rem', marginBottom: '2rem'}}>
+            <div style={{display: 'flex', alignItems: 'center', gap: '0.75rem'}}>
+              <Users style={{height: '1.25rem', width: '1.25rem', color: '#a78bfa'}} />
+              <div>
+                <p style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem'}}>Editing invoice for:</p>
+                <p style={{fontSize: '1.125rem', fontWeight: '600', color: 'white'}}>{selectedClient.name} - {selectedClient.email}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Step Content */}
         <div style={{backgroundColor: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.75rem', padding: '2rem'}}>
           {currentStep === 1 && (
-            <div>
-              <h2 style={{fontSize: '1.5rem', fontWeight: 'bold', color: 'white', marginBottom: '1.5rem'}}>Select Client</h2>
-              <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1rem'}}>
-                {clients.map((client) => (
-                  <div
-                    key={client.id}
-                    onClick={() => selectClient(client)}
-                    style={{
-                      padding: '1.5rem',
-                      borderRadius: '0.5rem',
-                      border: '2px solid',
-                      borderColor: selectedClient?.id === client.id ? '#3b82f6' : 'rgba(255, 255, 255, 0.2)',
-                      backgroundColor: selectedClient?.id === client.id ? 'rgba(59, 130, 246, 0.1)' : 'rgba(255, 255, 255, 0.05)',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s'
-                    }}
-                  >
-                    <div style={{fontWeight: '500', color: 'white', marginBottom: '0.5rem'}}>{client.name}</div>
-                    <div style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem'}}>{client.company}</div>
-                    <div style={{fontSize: '0.875rem', color: '#94a3b8'}}>{client.email}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {currentStep === 2 && (
             <div>
               <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem'}}>
                 <h2 style={{fontSize: '1.5rem', fontWeight: 'bold', color: 'white'}}>Invoice Items</h2>
@@ -466,7 +460,7 @@ export default function EditInvoicePage() {
                         <Trash2 style={{height: '1rem', width: '1rem'}} />
                       </button>
                     </div>
-                    <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem'}}>
+                    <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '1rem'}}>
                       <div>
                         <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>Quantity</label>
                         <input
@@ -486,6 +480,18 @@ export default function EditInvoicePage() {
                         />
                       </div>
                       <div>
+                        <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>Taxable</label>
+                        <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem', backgroundColor: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.25rem'}}>
+                          <input
+                            type="checkbox"
+                            checked={item.taxable}
+                            onChange={(e) => updateInvoiceItem(item.id, 'taxable', e.target.checked)}
+                            style={{width: '1rem', height: '1rem', accentColor: '#3b82f6'}}
+                          />
+                          <span style={{fontSize: '0.875rem', color: 'white'}}>Yes</span>
+                        </div>
+                      </div>
+                      <div>
                         <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>Amount</label>
                         <div style={{padding: '0.5rem', backgroundColor: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.25rem', color: 'white', fontWeight: '500'}}>
                           ${item.total.toLocaleString()}
@@ -498,7 +504,7 @@ export default function EditInvoicePage() {
             </div>
           )}
 
-          {currentStep === 3 && (
+          {currentStep === 2 && (
             <div>
               <h2 style={{fontSize: '1.5rem', fontWeight: 'bold', color: 'white', marginBottom: '1.5rem'}}>Review & Send</h2>
               
@@ -588,62 +594,6 @@ export default function EditInvoicePage() {
               </div>
             </div>
           )}
-
-          {currentStep === 4 && (
-            <div>
-              <h2 style={{fontSize: '1.5rem', fontWeight: 'bold', color: 'white', marginBottom: '1.5rem'}}>Final Review</h2>
-              <div style={{textAlign: 'center', padding: '2rem'}}>
-                <div style={{marginBottom: '2rem'}}>
-                  <div style={{fontSize: '2rem', fontWeight: 'bold', color: 'white', marginBottom: '0.5rem'}}>${invoiceData.total.toLocaleString()}</div>
-                  <div style={{fontSize: '1rem', color: '#cbd5e1'}}>Total Invoice Amount</div>
-                </div>
-                
-                <div style={{display: 'flex', flexDirection: 'column', gap: '1rem', maxWidth: '400px', margin: '0 auto'}}>
-                  <button
-                    onClick={handleSaveInvoice}
-                    disabled={saving}
-                    style={{
-                      padding: '1rem 2rem',
-                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                      border: '1px solid rgba(255, 255, 255, 0.2)',
-                      borderRadius: '0.5rem',
-                      color: 'white',
-                      cursor: saving ? 'not-allowed' : 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '0.5rem',
-                      fontWeight: '500'
-                    }}
-                  >
-                    <Save style={{height: '1rem', width: '1rem'}} />
-                    {saving ? 'Saving...' : 'Save Invoice'}
-                  </button>
-                  
-                  <button
-                    onClick={handleSendInvoice}
-                    disabled={saving}
-                    style={{
-                      padding: '1rem 2rem',
-                      background: 'linear-gradient(to right, #059669, #0d9488)',
-                      color: 'white',
-                      borderRadius: '0.5rem',
-                      border: 'none',
-                      cursor: saving ? 'not-allowed' : 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '0.5rem',
-                      fontWeight: '500'
-                    }}
-                  >
-                    <Send style={{height: '1rem', width: '1rem'}} />
-                    {saving ? 'Sending...' : 'Send Invoice'}
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Navigation Buttons */}
@@ -668,25 +618,68 @@ export default function EditInvoicePage() {
             Previous
           </button>
           
-          <button
-            onClick={nextStep}
-            disabled={currentStep === 4}
-            style={{
-              padding: '0.75rem 1.5rem',
-              background: currentStep === 4 ? 'rgba(255, 255, 255, 0.1)' : 'linear-gradient(to right, #2563eb, #4f46e5)',
-              border: 'none',
-              borderRadius: '0.5rem',
-              color: 'white',
-              cursor: currentStep === 4 ? 'not-allowed' : 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              opacity: currentStep === 4 ? 0.5 : 1
-            }}
-          >
-            Next
-            <ArrowRight style={{height: '1rem', width: '1rem'}} />
-          </button>
+          {currentStep === 2 ? (
+            <div style={{display: 'flex', gap: '1rem'}}>
+              <button
+                onClick={handleSaveInvoice}
+                disabled={saving}
+                style={{
+                  padding: '0.75rem 1.5rem',
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  borderRadius: '0.5rem',
+                  color: 'white',
+                  cursor: saving ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  fontWeight: '500'
+                }}
+              >
+                <Save style={{height: '1rem', width: '1rem'}} />
+                {saving ? 'Saving...' : 'Save as Draft'}
+              </button>
+              
+              <button
+                onClick={handleSendInvoice}
+                disabled={saving}
+                style={{
+                  padding: '0.75rem 1.5rem',
+                  background: 'linear-gradient(to right, #10b981, #14b8a6)',
+                  color: 'white',
+                  borderRadius: '0.5rem',
+                  border: 'none',
+                  cursor: saving ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  fontWeight: '500'
+                }}
+              >
+                <Send style={{height: '1rem', width: '1rem'}} />
+                {saving ? 'Sending...' : 'Update & Send Invoice'}
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={nextStep}
+              style={{
+                padding: '0.75rem 1.5rem',
+                background: 'linear-gradient(to right, #9333ea, #3b82f6)',
+                border: 'none',
+                borderRadius: '0.5rem',
+                color: 'white',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                fontWeight: '500'
+              }}
+            >
+              Next
+              <ArrowRight style={{height: '1rem', width: '1rem'}} />
+            </button>
+          )}
         </div>
       </div>
     </div>

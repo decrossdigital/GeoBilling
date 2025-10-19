@@ -5,16 +5,7 @@ import { useSession } from "next-auth/react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import UserMenu from "@/components/user-menu"
-import { ArrowLeft, Save, Send, ChevronRight, ChevronLeft, Plus, Trash2, Music, Headphones, Mic, Home, FileText, Users, BarChart3, Settings, User, DollarSign, ArrowRight } from "lucide-react"
-
-interface QuoteItem {
-  id: string
-  serviceName: string
-  description: string
-  quantity: number
-  unitPrice: number
-  total: number
-}
+import { ArrowLeft, Save, Send, ChevronRight, ChevronLeft, Plus, Trash2, Music, Headphones, Mic, Home, FileText, Users, BarChart3, Settings, User, Loader2 } from "lucide-react"
 
 interface Client {
   id: string
@@ -25,76 +16,144 @@ interface Client {
   address?: string
 }
 
-interface Quote {
+interface ServiceTemplate {
   id: string
-  quoteNumber: string
-  title: string
+  name: string
   description: string
-  status: string
-  validUntil: string
-  subtotal: number
-  taxRate: number
-  taxAmount: number
+  category: string
+  pricingType: 'hourly' | 'flat'
+  rate: number
+  icon?: any
+}
+
+interface QuoteItem {
+  id: string
+  serviceName: string
+  description: string
+  quantity: number
+  unitPrice: number
   total: number
-  notes: string
-  terms: string
-  clientId: string
-  clientName: string
-  clientEmail: string
-  clientPhone: string
-  clientAddress: string
-  items: QuoteItem[]
+  taxable: boolean
+  pricingType?: 'hourly' | 'flat'
+}
+
+interface Contractor {
+  id: string
+  name: string
+  email: string
+  specialty: string
+  pricingType: "hourly" | "flat"
+  rate: number
+}
+
+interface QuoteContractor {
+  id: string
+  contractorId: string
+  contractorName: string
+  specialty: string
+  paymentType: "hourly" | "flat"
+  hours?: number
+  rate: number
+  amount: number
 }
 
 export default function EditQuotePage() {
   const { data: session } = useSession()
   const params = useParams()
   const router = useRouter()
-  const [currentStep, setCurrentStep] = useState(1)
+  const quoteId = params?.id as string
+  
   const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [quoteData, setQuoteData] = useState<Quote | null>(null)
-  const [clients, setClients] = useState<Client[]>([])
+  const [currentStep, setCurrentStep] = useState(1)
   const [selectedClient, setSelectedClient] = useState<Client | null>(null)
   const [quoteItems, setQuoteItems] = useState<QuoteItem[]>([])
+  const [quoteContractors, setQuoteContractors] = useState<QuoteContractor[]>([])
+  const [quoteNotes, setQuoteNotes] = useState("")
   const [validUntil, setValidUntil] = useState("")
-  const [notes, setNotes] = useState("")
-  const [quoteNumber, setQuoteNumber] = useState("")
+  const [project, setProject] = useState("")
+  const [projectDescription, setProjectDescription] = useState("")
+  const [clients, setClients] = useState<Client[]>([])
+  const [contractors, setContractors] = useState<Contractor[]>([])
+  const [serviceTemplates, setServiceTemplates] = useState<ServiceTemplate[]>([])
 
-  // Fetch quote data
+  // Fetch existing quote data
   useEffect(() => {
     const fetchQuote = async () => {
-      if (!session || !params.id) return
+      if (!session || !quoteId) return
       
       try {
-        const response = await fetch(`/api/quotes/${params.id}`)
+        const response = await fetch(`/api/quotes/${quoteId}`)
         if (response.ok) {
-          const data = await response.json()
-          setQuoteData(data)
+          const quote = await response.json()
+          
+          // Check if quote is a draft
+          if (quote.status !== 'draft') {
+            alert('Only draft quotes can be edited')
+            router.push(`/quotes/${quoteId}`)
+            return
+          }
+          
+          // Set client
           setSelectedClient({
-            id: data.clientId,
-            name: data.clientName,
-            email: data.clientEmail,
-            company: data.clientName
+            id: quote.client.id,
+            name: quote.client.name,
+            email: quote.client.email,
+            company: quote.client.company || '',
+            phone: quote.client.phone,
+            address: quote.client.address
           })
-          setQuoteItems(data.items || [])
-          setValidUntil(data.validUntil ? new Date(data.validUntil).toISOString().split('T')[0] : "")
-          setNotes(data.notes || "")
-          setQuoteNumber(data.quoteNumber || "")
+          
+          // Set quote items
+          const items = quote.items
+            .filter((item: any) => !item.contractorId)
+            .map((item: any) => ({
+              id: item.id,
+              serviceName: item.serviceName,
+              description: item.description || '',
+              quantity: Number(item.quantity),
+              unitPrice: Number(item.unitPrice),
+              total: Number(item.total),
+              taxable: item.taxable,
+              pricingType: item.pricingType || 'flat'
+            }))
+          setQuoteItems(items)
+          
+          // Set contractors
+          const contractorItems = quote.items
+            .filter((item: any) => item.contractorId)
+            .map((item: any) => ({
+              id: item.id,
+              contractorId: item.contractorId,
+              contractorName: item.serviceName,
+              specialty: item.contractor?.specialty || '',
+              paymentType: (item.pricingType || 'hourly') as 'hourly' | 'flat',
+              hours: item.pricingType === 'hourly' ? Number(item.quantity) : undefined,
+              rate: Number(item.unitPrice),
+              amount: Number(item.total)
+            }))
+          setQuoteContractors(contractorItems)
+          
+          // Set other fields
+          setQuoteNotes(quote.notes || '')
+          setValidUntil(quote.validUntil ? new Date(quote.validUntil).toISOString().split('T')[0] : '')
+          setProject(quote.project || '')
+          setProjectDescription(quote.projectDescription || '')
+          
+          setLoading(false)
         } else {
           console.error('Failed to fetch quote')
+          router.push('/quotes')
         }
       } catch (error) {
         console.error('Error fetching quote:', error)
-      } finally {
-        setLoading(false)
+        router.push('/quotes')
       }
     }
 
     fetchQuote()
-  }, [session, params.id])
+  }, [session, quoteId, router])
 
-  // Fetch clients
+  // Fetch clients from API
   useEffect(() => {
     const fetchClients = async () => {
       if (!session) return
@@ -104,31 +163,75 @@ export default function EditQuotePage() {
         if (response.ok) {
           const data = await response.json()
           setClients(data)
-        } else {
-          console.error('Failed to fetch clients')
         }
+        // Clients list is optional for editing (client is already selected)
       } catch (error) {
-        console.error('Error fetching clients:', error)
+        // Clients list is optional for editing, silently ignore errors
       }
     }
 
     fetchClients()
   }, [session])
 
-  const selectClient = (client: Client) => {
-    setSelectedClient(client)
-  }
+  // Fetch contractors from API
+  useEffect(() => {
+    const fetchContractors = async () => {
+      if (!session) return
+      
+      try {
+        const response = await fetch('/api/contractors')
+        if (response.ok) {
+          const data = await response.json()
+          setContractors(data)
+        }
+        // Contractors list is optional for editing
+      } catch (error) {
+        // Contractors list is optional for editing, silently ignore errors
+      }
+    }
+
+    fetchContractors()
+  }, [session])
+
+  // Fetch service templates from API
+  useEffect(() => {
+    const fetchServiceTemplates = async () => {
+      if (!session) return
+      
+      try {
+        const response = await fetch('/api/services')
+        if (response.ok) {
+          const data = await response.json()
+          const templates = data.map((service: any) => ({
+            id: service.id,
+            name: service.name,
+            description: service.description || '',
+            category: service.category || 'General',
+            pricingType: service.pricingType || 'flat',
+            rate: service.rate || 0
+          }))
+          setServiceTemplates(templates)
+        }
+        // Service templates are optional for editing, no need to show errors
+      } catch (error) {
+        // Service templates are optional for editing, silently ignore errors
+      }
+    }
+
+    fetchServiceTemplates()
+  }, [session])
 
   const addQuoteItem = () => {
-    const newItem: QuoteItem = {
-      id: Date.now().toString(),
-      serviceName: "",
-      description: "",
+    setQuoteItems([...quoteItems, {
+      id: Math.random().toString(36).substr(2, 9),
+      serviceName: '',
+      description: '',
       quantity: 1,
       unitPrice: 0,
-      total: 0
-    }
-    setQuoteItems([...quoteItems, newItem])
+      total: 0,
+      taxable: false,
+      pricingType: 'flat'
+    }])
   }
 
   const removeQuoteItem = (id: string) => {
@@ -139,9 +242,11 @@ export default function EditQuotePage() {
     setQuoteItems(quoteItems.map(item => {
       if (item.id === id) {
         const updatedItem = { ...item, [field]: value }
-        // Recalculate total
+        // Recalculate total - ensure values are numbers
         if (field === 'quantity' || field === 'unitPrice') {
-          updatedItem.total = updatedItem.quantity * updatedItem.unitPrice
+          const quantity = Number(updatedItem.quantity) || 0
+          const unitPrice = Number(updatedItem.unitPrice) || 0
+          updatedItem.total = quantity * unitPrice
         }
         return updatedItem
       }
@@ -149,108 +254,139 @@ export default function EditQuotePage() {
     }))
   }
 
-  const handleSaveQuote = async () => {
-    if (!quoteData || !selectedClient) return
+  const addContractor = () => {
+    setQuoteContractors([...quoteContractors, {
+      id: Math.random().toString(36).substr(2, 9),
+      contractorId: '',
+      contractorName: '',
+      specialty: '',
+      paymentType: 'hourly',
+      hours: 0,
+      rate: 0,
+      amount: 0
+    }])
+  }
 
-    setSaving(true)
-    try {
-      const subtotal = quoteItems.reduce((sum, item) => sum + item.total, 0)
-      const taxAmount = subtotal * (quoteData.taxRate / 100)
-      const total = subtotal + taxAmount
+  const removeContractor = (id: string) => {
+    setQuoteContractors(quoteContractors.filter(contractor => contractor.id !== id))
+  }
 
-      const updatedQuote = {
-        ...quoteData,
-        title: quoteData.title,
-        description: quoteData.description,
-        status: "draft",
-        validUntil: validUntil,
-        subtotal: subtotal,
-        taxAmount: taxAmount,
-        total: total,
-        notes: notes,
-        clientId: selectedClient.id,
-        clientName: selectedClient.name,
-        clientEmail: selectedClient.email,
-        clientPhone: selectedClient.phone || "",
-        clientAddress: selectedClient.address || "",
-        items: quoteItems
+  const updateContractor = (id: string, field: keyof QuoteContractor, value: any) => {
+    setQuoteContractors(quoteContractors.map(contractor => {
+      if (contractor.id === id) {
+        const updatedContractor = { ...contractor, [field]: value }
+        // Recalculate amount - ensure values are numbers
+        if (field === 'hours' || field === 'rate') {
+          const hours = Number(updatedContractor.hours) || 0
+          const rate = Number(updatedContractor.rate) || 0
+          updatedContractor.amount = hours * rate
+        }
+        return updatedContractor
       }
+      return contractor
+    }))
+  }
 
-      const response = await fetch(`/api/quotes/${params.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(updatedQuote),
-      })
-
-      if (response.ok) {
-        alert('Quote saved successfully!')
-        router.push('/quotes')
-      } else {
-        console.error('Failed to save quote')
-        alert('Failed to save quote')
-      }
-    } catch (error) {
-      console.error('Error saving quote:', error)
-      alert('Error saving quote')
-    } finally {
-      setSaving(false)
+  const selectContractor = (quoteContractorId: string, contractorId: string) => {
+    const selectedContractor = contractors.find(c => c.id === contractorId)
+    if (selectedContractor) {
+      updateContractor(quoteContractorId, 'contractorId', contractorId)
+      updateContractor(quoteContractorId, 'contractorName', selectedContractor.name)
+      updateContractor(quoteContractorId, 'specialty', selectedContractor.specialty)
+      updateContractor(quoteContractorId, 'rate', selectedContractor.rate)
+      updateContractor(quoteContractorId, 'paymentType', selectedContractor.pricingType)
     }
   }
 
-  const handleSendQuote = async () => {
-    if (!quoteData || !selectedClient) return
+  const handleUpdateQuote = async (status: 'draft' | 'sent') => {
+    if (!selectedClient) {
+      alert('Please select a client first')
+      return
+    }
 
-    setSaving(true)
     try {
-      const subtotal = quoteItems.reduce((sum, item) => sum + item.total, 0)
-      const taxAmount = subtotal * (quoteData.taxRate / 100)
+      const servicesTotal = quoteItems.reduce((sum, item) => sum + item.total, 0)
+      const contractorsTotal = quoteContractors.reduce((sum, contractor) => sum + contractor.amount, 0)
+      const subtotal = servicesTotal + contractorsTotal
+      const taxableAmount = quoteItems.reduce((sum, item) => sum + (item.taxable ? item.total : 0), 0)
+      const taxRate = 8 // 8% tax
+      const taxAmount = taxableAmount * (taxRate / 100)
       const total = subtotal + taxAmount
 
-      const updatedQuote = {
-        ...quoteData,
-        title: quoteData.title,
-        description: quoteData.description,
-        status: "sent",
-        validUntil: validUntil,
-        subtotal: subtotal,
-        taxAmount: taxAmount,
-        total: total,
-        notes: notes,
-        clientId: selectedClient.id,
-        clientName: selectedClient.name,
-        clientEmail: selectedClient.email,
-        clientPhone: selectedClient.phone || "",
-        clientAddress: selectedClient.address || "",
-        items: quoteItems
+      const defaultValidUntil = validUntil || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+
+      // Delete all existing items
+      const existingQuote = await fetch(`/api/quotes/${quoteId}`)
+      if (existingQuote.ok) {
+        const quoteData = await existingQuote.json()
+        for (const item of quoteData.items) {
+          await fetch(`/api/quotes/${quoteId}/items/${item.id}`, {
+            method: 'DELETE'
+          })
+        }
       }
 
-      const response = await fetch(`/api/quotes/${params.id}`, {
+      // Update quote basic info
+      await fetch(`/api/quotes/${quoteId}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(updatedQuote),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: `Quote for ${selectedClient.name}`,
+          description: "Professional music production services",
+          project: project,
+          projectDescription: projectDescription,
+          status: status,
+          validUntil: defaultValidUntil,
+          notes: quoteNotes,
+          terms: "Payment due within 30 days"
+        })
       })
 
-      if (response.ok) {
-        alert('Quote sent successfully!')
-        router.push('/quotes')
-      } else {
-        console.error('Failed to send quote')
-        alert('Failed to send quote')
+      // Add all items back
+      const allItems = [
+        ...quoteItems.map(item => ({
+          serviceName: item.serviceName,
+          description: item.description,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          total: item.total,
+          taxable: item.taxable,
+          pricingType: item.pricingType
+        })),
+        ...quoteContractors.map(contractor => ({
+          serviceName: contractor.contractorName,
+          description: contractor.specialty,
+          quantity: contractor.paymentType === 'hourly' ? (contractor.hours || 0) : 1,
+          unitPrice: contractor.rate,
+          total: contractor.amount,
+          taxable: false,
+          contractorId: contractor.contractorId,
+          pricingType: contractor.paymentType
+        }))
+      ]
+
+      for (const item of allItems) {
+        await fetch(`/api/quotes/${quoteId}/items`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(item)
+        })
       }
+
+      if (status === 'sent') {
+        alert('Quote updated and sent successfully!')
+      } else {
+        alert('Quote updated as draft!')
+      }
+      router.push(`/quotes/${quoteId}`)
     } catch (error) {
-      console.error('Error sending quote:', error)
-      alert('Error sending quote')
-    } finally {
-      setSaving(false)
+      console.error('Error updating quote:', error)
+      alert('Error updating quote')
     }
   }
 
   const nextStep = () => {
-    if (currentStep < 4) setCurrentStep(currentStep + 1)
+    if (currentStep < 3) setCurrentStep(currentStep + 1)
   }
 
   const prevStep = () => {
@@ -258,26 +394,24 @@ export default function EditQuotePage() {
   }
 
   const steps = [
-    { number: 1, title: "Client Selection" },
-    { number: 2, title: "Add Services" },
-    { number: 3, title: "Review & Send" }
+    { number: 1, title: "Add Services", description: "Select services and set pricing" },
+    { number: 2, title: "Add Contractors", description: "Select contractors and payment terms" },
+    { number: 3, title: "Review & Send", description: "Review quote details and send to client" }
   ]
+
+  const servicesTotal = quoteItems.reduce((sum, item) => sum + item.total, 0)
+  const contractorsTotal = quoteContractors.reduce((sum, contractor) => sum + contractor.amount, 0)
+  const subtotal = servicesTotal + contractorsTotal
+  const taxableAmount = quoteItems.reduce((sum, item) => sum + (item.taxable ? item.total : 0), 0)
+  const taxAmount = taxableAmount * 0.08 // 8% tax on taxable items only
+  const totalAmount = subtotal + taxAmount
 
   if (loading) {
     return (
-      <div style={{minHeight: '100vh', background: 'linear-gradient(to bottom right, #0f172a, #581c87, #0f172a)', color: 'white'}}>
-        <div style={{maxWidth: '1200px', margin: '0 auto', padding: '2rem 1.5rem'}}>
-          <div style={{textAlign: 'center', padding: '4rem'}}>Loading quote...</div>
-        </div>
-      </div>
-    )
-  }
-
-  if (!quoteData) {
-    return (
-      <div style={{minHeight: '100vh', background: 'linear-gradient(to bottom right, #0f172a, #581c87, #0f172a)', color: 'white'}}>
-        <div style={{maxWidth: '1200px', margin: '0 auto', padding: '2rem 1.5rem'}}>
-          <div style={{textAlign: 'center', padding: '4rem'}}>Quote not found</div>
+      <div style={{minHeight: '100vh', background: 'linear-gradient(to bottom right, #0f172a, #581c87, #0f172a)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+        <div style={{textAlign: 'center'}}>
+          <Loader2 style={{height: '3rem', width: '3rem', color: '#a78bfa', margin: '0 auto', animation: 'spin 1s linear infinite'}} />
+          <p style={{marginTop: '1rem', color: '#cbd5e1'}}>Loading quote...</p>
         </div>
       </div>
     )
@@ -297,173 +431,184 @@ export default function EditQuotePage() {
               <p style={{fontSize: '0.875rem', color: '#cbd5e1'}}>Uniquitous Music - Professional Billing System</p>
             </div>
           </div>
+          <UserMenu />
         </div>
 
         {/* Navigation */}
         <div style={{backgroundColor: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.75rem', padding: '1rem', marginBottom: '2rem'}}>
-          <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
-            <div style={{display: 'flex', gap: '0.5rem'}}>
-              <Link href="/" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', color: '#cbd5e1', textDecoration: 'none', fontWeight: '500'}}>
-                <Home style={{height: '1rem', width: '1rem'}} />
-                <span>Dashboard</span>
-              </Link>
-              <Link href="/clients" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', color: '#cbd5e1', textDecoration: 'none', fontWeight: '500'}}>
-                <Users style={{height: '1rem', width: '1rem'}} />
-                <span>Clients</span>
-              </Link>
-              <Link href="/quotes" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', background: 'linear-gradient(to right, #9333ea, #3b82f6)', color: 'white', textDecoration: 'none', fontWeight: '500', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'}}>
-                <FileText style={{height: '1rem', width: '1rem'}} />
-                <span>Quotes</span>
-              </Link>
-              <Link href="/invoices" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', color: '#cbd5e1', textDecoration: 'none', fontWeight: '500'}}>
-                <DollarSign style={{height: '1rem', width: '1rem'}} />
-                <span>Invoices</span>
-              </Link>
-            </div>
-            <div style={{display: 'flex', alignItems: 'center', gap: '1rem'}}>
-              <UserMenu />
-            </div>
+          <div style={{display: 'flex', gap: '0.5rem'}}>
+            <Link href="/" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', color: '#cbd5e1', textDecoration: 'none', fontWeight: '500'}}>
+              <Home style={{height: '1rem', width: '1rem'}} />
+              <span>Dashboard</span>
+            </Link>
+            <Link href="/clients" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', color: '#cbd5e1', textDecoration: 'none', fontWeight: '500'}}>
+              <Users style={{height: '1rem', width: '1rem'}} />
+              <span>Clients</span>
+            </Link>
+            <Link href="/contractors" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', color: '#cbd5e1', textDecoration: 'none', fontWeight: '500'}}>
+              <User style={{height: '1rem', width: '1rem'}} />
+              <span>Contractors</span>
+            </Link>
+            <Link href="/quotes" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', background: 'linear-gradient(to right, #9333ea, #3b82f6)', color: 'white', textDecoration: 'none', fontWeight: '500', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'}}>
+              <FileText style={{height: '1rem', width: '1rem'}} />
+              <span>Quotes</span>
+            </Link>
+            <Link href="/invoices" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', color: '#cbd5e1', textDecoration: 'none', fontWeight: '500'}}>
+              <BarChart3 style={{height: '1rem', width: '1rem'}} />
+              <span>Invoices</span>
+            </Link>
+            <Link href="/services" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', color: '#cbd5e1', textDecoration: 'none', fontWeight: '500'}}>
+              <Settings style={{height: '1rem', width: '1rem'}} />
+              <span>Services</span>
+            </Link>
           </div>
+        </div>
+
+        {/* Back Link */}
+        <div style={{marginBottom: '2rem'}}>
+          <Link href={`/quotes/${quoteId}`} style={{display: 'inline-flex', alignItems: 'center', gap: '0.5rem', color: '#cbd5e1', textDecoration: 'none', fontSize: '0.875rem'}}>
+            <ArrowLeft style={{height: '1rem', width: '1rem'}} />
+            Back to Quote
+          </Link>
         </div>
 
         {/* Page Header */}
         <div style={{marginBottom: '2rem'}}>
-          <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem'}}>
-            <div style={{display: 'flex', alignItems: 'center', gap: '1rem'}}>
-              <Link href="/quotes">
-                <button style={{color: '#cbd5e1', cursor: 'pointer', border: 'none', background: 'none', padding: '0.5rem'}}>
-                  <ArrowLeft style={{height: '1.25rem', width: '1.25rem'}} />
-                </button>
-              </Link>
-              <div>
-                <h1 style={{fontSize: '2.25rem', fontWeight: 'bold', color: 'white'}}>Edit Quote</h1>
-                <p style={{color: '#cbd5e1'}}>Update quote details and services</p>
-              </div>
-            </div>
-          </div>
+          <h1 style={{fontSize: '2.25rem', fontWeight: 'bold', color: 'white'}}>Edit Quote</h1>
+          <p style={{color: '#cbd5e1'}}>Update quote details and send to client</p>
         </div>
 
         {/* Progress Steps */}
-        <div style={{marginBottom: '2rem'}}>
-          <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
-            {[1, 2, 3, 4].map((step) => (
-              <div key={step} style={{display: 'flex', alignItems: 'center', flex: 1}}>
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: '2.5rem',
-                  height: '2.5rem',
-                  borderRadius: '50%',
-                  backgroundColor: currentStep >= step ? 'linear-gradient(to right, #2563eb, #4f46e5)' : 'rgba(255, 255, 255, 0.1)',
-                  color: currentStep >= step ? 'white' : '#cbd5e1',
-                  fontWeight: '500',
-                  marginRight: '0.5rem'
-                }}>
-                  {step}
+        <div style={{marginBottom: '3rem'}}>
+          <div style={{display: 'flex', justifyContent: 'space-between', position: 'relative'}}>
+            {steps.map((step, index) => (
+              <div key={step.number} style={{flex: 1, position: 'relative'}}>
+                {/* Connector Line */}
+                {index < steps.length - 1 && (
+                  <div 
+                    style={{
+                      position: 'absolute',
+                      top: '1.5rem',
+                      left: '50%',
+                      width: '100%',
+                      height: '2px',
+                      background: currentStep > step.number ? 'linear-gradient(to right, #9333ea, #3b82f6)' : 'rgba(255, 255, 255, 0.2)',
+                      zIndex: 0
+                    }}
+                  />
+                )}
+                
+                {/* Step Circle */}
+                <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative', zIndex: 1}}>
+                  <div 
+                    style={{
+                      width: '3rem',
+                      height: '3rem',
+                      borderRadius: '50%',
+                      background: currentStep >= step.number ? 'linear-gradient(to right, #9333ea, #3b82f6)' : 'rgba(255, 255, 255, 0.1)',
+                      border: currentStep >= step.number ? 'none' : '2px solid rgba(255, 255, 255, 0.2)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontWeight: 'bold',
+                      fontSize: '1.125rem',
+                      marginBottom: '0.5rem',
+                      color: 'white'
+                    }}
+                  >
+                    {step.number}
+                  </div>
+                  <div style={{textAlign: 'center'}}>
+                    <p style={{fontSize: '0.875rem', fontWeight: '600', color: currentStep >= step.number ? 'white' : '#cbd5e1', marginBottom: '0.25rem'}}>{step.title}</p>
+                    <p style={{fontSize: '0.75rem', color: '#94a3b8'}}>{step.description}</p>
+                  </div>
                 </div>
-                <div style={{flex: 1, height: '2px', backgroundColor: currentStep > step ? '#3b82f6' : 'rgba(255, 255, 255, 0.2)'}} />
               </div>
             ))}
           </div>
-          <div style={{display: 'flex', justifyContent: 'space-between', marginTop: '0.5rem'}}>
-            <span style={{fontSize: '0.875rem', color: '#cbd5e1'}}>Client</span>
-            <span style={{fontSize: '0.875rem', color: '#cbd5e1'}}>Services</span>
-            <span style={{fontSize: '0.875rem', color: '#cbd5e1'}}>Review</span>
-            <span style={{fontSize: '0.875rem', color: '#cbd5e1'}}>Send</span>
-          </div>
         </div>
 
-        {/* Step Content */}
-        <div style={{backgroundColor: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.75rem', padding: '2rem'}}>
-          {currentStep === 1 && (
-            <div>
-              <h2 style={{fontSize: '1.5rem', fontWeight: 'bold', color: 'white', marginBottom: '1.5rem'}}>Select Client</h2>
-              <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1rem'}}>
-                {clients.map((client) => (
-                  <div
-                    key={client.id}
-                    onClick={() => selectClient(client)}
-                    style={{
-                      padding: '1.5rem',
-                      borderRadius: '0.5rem',
-                      border: '2px solid',
-                      borderColor: selectedClient?.id === client.id ? '#3b82f6' : 'rgba(255, 255, 255, 0.2)',
-                      backgroundColor: selectedClient?.id === client.id ? 'rgba(59, 130, 246, 0.1)' : 'rgba(255, 255, 255, 0.05)',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s'
-                    }}
-                  >
-                    <div style={{fontWeight: '500', color: 'white', marginBottom: '0.5rem'}}>{client.name}</div>
-                    <div style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem'}}>{client.company}</div>
-                    <div style={{fontSize: '0.875rem', color: '#94a3b8'}}>{client.email}</div>
-                  </div>
-                ))}
+        {/* Client Info Banner */}
+        {selectedClient && (
+          <div style={{backgroundColor: 'rgba(147, 51, 234, 0.1)', border: '1px solid rgba(147, 51, 234, 0.3)', borderRadius: '0.75rem', padding: '1rem', marginBottom: '2rem'}}>
+            <div style={{display: 'flex', alignItems: 'center', gap: '0.75rem'}}>
+              <Users style={{height: '1.25rem', width: '1.25rem', color: '#a78bfa'}} />
+              <div>
+                <p style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem'}}>Editing quote for:</p>
+                <p style={{fontSize: '1.125rem', fontWeight: '600', color: 'white'}}>{selectedClient.name} - {selectedClient.email}</p>
               </div>
             </div>
-          )}
+          </div>
+        )}
 
-          {currentStep === 2 && (
+        {/* Step Content */}
+        <div style={{backgroundColor: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.75rem', padding: '2rem', marginBottom: '2rem'}}>
+          
+          {/* Step 1: Add Services */}
+          {currentStep === 1 && (
             <div>
-              <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem'}}>
-                <h2 style={{fontSize: '1.5rem', fontWeight: 'bold', color: 'white'}}>Quote Items</h2>
+              <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem'}}>
+                <div>
+                  <h2 style={{fontSize: '1.5rem', fontWeight: 'bold'}}>Add Services</h2>
+                  <p style={{color: '#cbd5e1'}}>Select services and set pricing for this quote</p>
+                </div>
                 <button
                   onClick={addQuoteItem}
                   style={{
-                    padding: '0.5rem 1rem',
-                    backgroundColor: 'rgba(59, 130, 246, 0.2)',
-                    border: '1px solid rgba(59, 130, 246, 0.3)',
-                    borderRadius: '0.25rem',
-                    color: '#60a5fa',
-                    cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '0.25rem',
-                    fontSize: '0.875rem'
+                    gap: '0.5rem',
+                    padding: '0.75rem 1.5rem',
+                    background: 'linear-gradient(to right, #9333ea, #3b82f6)',
+                    color: 'white',
+                    borderRadius: '0.5rem',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontWeight: '500'
                   }}
                 >
-                  <Plus style={{height: '0.875rem', width: '0.875rem'}} />
-                  Add Item
+                  <Plus style={{height: '1rem', width: '1rem'}} />
+                  Add Service
                 </button>
               </div>
-              
+
               <div style={{display: 'flex', flexDirection: 'column', gap: '1rem'}}>
                 {quoteItems.map((item) => (
-                  <div key={item.id} style={{padding: '1rem', backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: '0.5rem', border: '1px solid rgba(255, 255, 255, 0.1)'}}>
-                    <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem'}}>
-                      <div style={{flex: 1, marginRight: '1rem'}}>
+                  <div key={item.id} style={{backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: '0.5rem', padding: '1.5rem', border: '1px solid rgba(255, 255, 255, 0.1)'}}>
+                    <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem'}}>
+                      <div style={{flex: 1}}>
+                        <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>Service Name</label>
                         <input
                           type="text"
-                          placeholder="Service name"
                           value={item.serviceName}
                           onChange={(e) => updateQuoteItem(item.id, 'serviceName', e.target.value)}
-                          style={{width: '100%', padding: '0.5rem', backgroundColor: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.25rem', color: 'white', outline: 'none', marginBottom: '0.5rem'}}
-                        />
-                        <textarea
-                          placeholder="Description"
-                          value={item.description}
-                          onChange={(e) => updateQuoteItem(item.id, 'description', e.target.value)}
-                          rows={2}
-                          style={{width: '100%', padding: '0.5rem', backgroundColor: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.25rem', color: 'white', outline: 'none', resize: 'vertical'}}
+                          style={{width: '100%', padding: '0.5rem', backgroundColor: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.25rem', color: 'white', outline: 'none'}}
+                          placeholder="Enter service name"
                         />
                       </div>
                       <button
                         onClick={() => removeQuoteItem(item.id)}
-                        style={{
-                          padding: '0.5rem',
-                          backgroundColor: 'rgba(239, 68, 68, 0.2)',
-                          border: '1px solid rgba(239, 68, 68, 0.3)',
-                          borderRadius: '0.25rem',
-                          color: '#f87171',
-                          cursor: 'pointer'
-                        }}
+                        style={{color: '#f87171', cursor: 'pointer', border: 'none', background: 'none'}}
                       >
                         <Trash2 style={{height: '1rem', width: '1rem'}} />
                       </button>
                     </div>
-                    <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem'}}>
+                    <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr', gap: '1rem'}}>
                       <div>
-                        <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>Quantity</label>
+                        <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>Pricing Type</label>
+                        <select
+                          value={item.pricingType || 'flat'}
+                          onChange={(e) => updateQuoteItem(item.id, 'pricingType', e.target.value as 'hourly' | 'flat')}
+                          style={{width: '100%', padding: '0.5rem', backgroundColor: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.25rem', color: 'white', outline: 'none'}}
+                        >
+                          <option value="flat">Flat Rate</option>
+                          <option value="hourly">Per Hour</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>
+                          {(item.pricingType || 'flat') === 'hourly' ? 'Hours' : 'Quantity'}
+                        </label>
                         <input
                           type="number"
                           value={item.quantity}
@@ -472,13 +617,27 @@ export default function EditQuotePage() {
                         />
                       </div>
                       <div>
-                        <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>Rate ($)</label>
+                        <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>
+                          {(item.pricingType || 'flat') === 'hourly' ? 'Rate ($/hr)' : 'Rate ($)'}
+                        </label>
                         <input
                           type="number"
                           value={item.unitPrice}
                           onChange={(e) => updateQuoteItem(item.id, 'unitPrice', parseFloat(e.target.value) || 0)}
                           style={{width: '100%', padding: '0.5rem', backgroundColor: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.25rem', color: 'white', outline: 'none'}}
                         />
+                      </div>
+                      <div>
+                        <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>Taxable</label>
+                        <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem', backgroundColor: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.25rem'}}>
+                          <input
+                            type="checkbox"
+                            checked={item.taxable}
+                            onChange={(e) => updateQuoteItem(item.id, 'taxable', e.target.checked)}
+                            style={{width: '1rem', height: '1rem', accentColor: '#3b82f6'}}
+                          />
+                          <span style={{fontSize: '0.875rem', color: 'white'}}>Yes</span>
+                        </div>
                       </div>
                       <div>
                         <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>Amount</label>
@@ -489,27 +648,233 @@ export default function EditQuotePage() {
                     </div>
                   </div>
                 ))}
+
+                {quoteItems.length === 0 && (
+                  <div style={{textAlign: 'center', padding: '3rem', color: '#94a3b8'}}>
+                    <p>No services added yet. Click "Add Service" to get started.</p>
+                  </div>
+                )}
               </div>
             </div>
           )}
 
+          {/* Step 2: Add Contractors */}
+          {currentStep === 2 && (
+            <div>
+              <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem'}}>
+                <div>
+                  <h2 style={{fontSize: '1.5rem', fontWeight: 'bold'}}>Add Contractors</h2>
+                  <p style={{color: '#cbd5e1'}}>Assign contractors and set payment terms</p>
+                </div>
+                <button
+                  onClick={addContractor}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    padding: '0.75rem 1.5rem',
+                    background: 'linear-gradient(to right, #9333ea, #3b82f6)',
+                    color: 'white',
+                    borderRadius: '0.5rem',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontWeight: '500'
+                  }}
+                >
+                  <Plus style={{height: '1rem', width: '1rem'}} />
+                  Add Contractor
+                </button>
+              </div>
+
+              <div style={{display: 'flex', flexDirection: 'column', gap: '1rem'}}>
+                {quoteContractors.map((contractor) => (
+                  <div key={contractor.id} style={{backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: '0.5rem', padding: '1.5rem', border: '1px solid rgba(255, 255, 255, 0.1)'}}>
+                    <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem'}}>
+                      <div style={{flex: 1}}>
+                        <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>Select Contractor</label>
+                        <select
+                          value={contractor.contractorId}
+                          onChange={(e) => selectContractor(contractor.id, e.target.value)}
+                          style={{width: '100%', padding: '0.5rem', backgroundColor: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.25rem', color: 'white', outline: 'none'}}
+                        >
+                          <option value="">Choose a contractor...</option>
+                          {contractors.map((c) => (
+                            <option key={c.id} value={c.id}>{c.name} - {c.specialty}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <button
+                        onClick={() => removeContractor(contractor.id)}
+                        style={{color: '#f87171', cursor: 'pointer', border: 'none', background: 'none', marginLeft: '1rem'}}
+                      >
+                        <Trash2 style={{height: '1rem', width: '1rem'}} />
+                      </button>
+                    </div>
+                    
+                    {contractor.contractorId && (
+                      <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '1rem'}}>
+                        <div>
+                          <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>Payment Type</label>
+                          <select
+                            value={contractor.paymentType}
+                            onChange={(e) => updateContractor(contractor.id, 'paymentType', e.target.value as 'hourly' | 'flat')}
+                            style={{width: '100%', padding: '0.5rem', backgroundColor: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.25rem', color: 'white', outline: 'none'}}
+                          >
+                            <option value="hourly">Hourly</option>
+                            <option value="flat">Flat Rate</option>
+                          </select>
+                        </div>
+                        {contractor.paymentType === 'hourly' && (
+                          <div>
+                            <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>Hours</label>
+                            <input
+                              type="number"
+                              value={contractor.hours || 0}
+                              onChange={(e) => updateContractor(contractor.id, 'hours', parseFloat(e.target.value) || 0)}
+                              style={{width: '100%', padding: '0.5rem', backgroundColor: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.25rem', color: 'white', outline: 'none'}}
+                            />
+                          </div>
+                        )}
+                        <div>
+                          <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>Rate ($)</label>
+                          <input
+                            type="number"
+                            value={contractor.rate}
+                            onChange={(e) => updateContractor(contractor.id, 'rate', parseFloat(e.target.value) || 0)}
+                            style={{width: '100%', padding: '0.5rem', backgroundColor: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.25rem', color: 'white', outline: 'none'}}
+                          />
+                        </div>
+                        <div>
+                          <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>Amount</label>
+                          <div style={{padding: '0.5rem', backgroundColor: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.25rem', color: 'white', fontWeight: '500'}}>
+                            ${contractor.amount.toLocaleString()}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+
+                {quoteContractors.length === 0 && (
+                  <div style={{textAlign: 'center', padding: '3rem', color: '#94a3b8'}}>
+                    <p>No contractors added yet. Click "Add Contractor" to get started.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Step 3: Review & Send */}
           {currentStep === 3 && (
             <div>
-              <h2 style={{fontSize: '1.5rem', fontWeight: 'bold', color: 'white', marginBottom: '1.5rem'}}>Review & Send</h2>
-              
+              <h2 style={{fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1rem'}}>Review & Send Quote</h2>
+              <p style={{color: '#cbd5e1', marginBottom: '2rem'}}>Review all details before sending to client</p>
+
               <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem'}}>
+                {/* Left Column */}
                 <div>
-                  <h3 style={{fontSize: '1.125rem', fontWeight: '500', color: 'white', marginBottom: '1rem'}}>Quote Details</h3>
-                  <div style={{backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: '0.5rem', padding: '1rem'}}>
+                  {/* Client Info */}
+                  <div style={{backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: '0.5rem', padding: '1.5rem', marginBottom: '1.5rem'}}>
+                    <h3 style={{fontSize: '1.125rem', fontWeight: '600', color: 'white', marginBottom: '1rem'}}>Client Information</h3>
+                    <div style={{display: 'flex', flexDirection: 'column', gap: '0.5rem'}}>
+                      <div>
+                        <span style={{color: '#94a3b8', fontSize: '0.875rem'}}>Name: </span>
+                        <span style={{color: 'white'}}>{selectedClient?.name}</span>
+                      </div>
+                      <div>
+                        <span style={{color: '#94a3b8', fontSize: '0.875rem'}}>Email: </span>
+                        <span style={{color: 'white'}}>{selectedClient?.email}</span>
+                      </div>
+                      {selectedClient?.phone && (
+                        <div>
+                          <span style={{color: '#94a3b8', fontSize: '0.875rem'}}>Phone: </span>
+                          <span style={{color: 'white'}}>{selectedClient.phone}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Services Breakdown */}
+                  {quoteItems.length > 0 && (
                     <div style={{marginBottom: '1rem'}}>
-                      <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>Quote Number</label>
+                      <h4 style={{fontSize: '1rem', fontWeight: '500', color: 'white', marginBottom: '0.5rem'}}>Services</h4>
+                      <div style={{backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: '0.5rem', padding: '1rem'}}>
+                        {quoteItems.map((item) => (
+                          <div key={item.id} style={{display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem'}}>
+                            <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
+                              <span style={{color: '#cbd5e1'}}>{item.serviceName} (x{item.quantity})</span>
+                              {!item.taxable && (
+                                <span style={{fontSize: '0.75rem', color: '#fbbf24', backgroundColor: 'rgba(251, 191, 36, 0.1)', padding: '0.125rem 0.375rem', borderRadius: '0.25rem'}}>
+                                  Non-taxable
+                                </span>
+                              )}
+                            </div>
+                            <span style={{color: 'white'}}>${item.total.toLocaleString()}</span>
+                          </div>
+                        ))}
+                        <div style={{display: 'flex', justifyContent: 'space-between', borderTop: '1px solid rgba(255, 255, 255, 0.2)', paddingTop: '0.5rem', fontWeight: '500'}}>
+                          <span style={{color: '#cbd5e1'}}>Services Total:</span>
+                          <span style={{color: 'white'}}>${servicesTotal.toLocaleString()}</span>
+                        </div>
+                        <div style={{display: 'flex', justifyContent: 'space-between', paddingTop: '0.25rem', fontSize: '0.875rem'}}>
+                          <span style={{color: '#94a3b8'}}>Taxable Amount:</span>
+                          <span style={{color: '#cbd5e1'}}>${taxableAmount.toLocaleString()}</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Contractors Breakdown */}
+                  {quoteContractors.length > 0 && (
+                    <div style={{marginBottom: '1rem'}}>
+                      <h4 style={{fontSize: '1rem', fontWeight: '500', color: 'white', marginBottom: '0.5rem'}}>Contractors</h4>
+                      <div style={{backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: '0.5rem', padding: '1rem'}}>
+                        {quoteContractors.map((contractor) => (
+                          <div key={contractor.id} style={{display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem'}}>
+                            <span style={{color: '#cbd5e1'}}>
+                              {contractor.contractorName}
+                              {contractor.paymentType === 'hourly' && ` (${contractor.hours}h)`}
+                            </span>
+                            <span style={{color: 'white'}}>${contractor.amount.toLocaleString()}</span>
+                          </div>
+                        ))}
+                        <div style={{display: 'flex', justifyContent: 'space-between', borderTop: '1px solid rgba(255, 255, 255, 0.2)', paddingTop: '0.5rem', fontWeight: '500'}}>
+                          <span style={{color: '#cbd5e1'}}>Contractors Total:</span>
+                          <span style={{color: 'white'}}>${contractorsTotal.toLocaleString()}</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Right Column */}
+                <div>
+                  {/* Additional Details */}
+                  <div style={{backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: '0.5rem', padding: '1.5rem', marginBottom: '1.5rem'}}>
+                    <h3 style={{fontSize: '1.125rem', fontWeight: '600', color: 'white', marginBottom: '1rem'}}>Additional Details</h3>
+                    
+                    <div style={{marginBottom: '1rem'}}>
+                      <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>Project</label>
                       <input
                         type="text"
-                        value={quoteNumber}
-                        onChange={(e) => setQuoteNumber(e.target.value)}
+                        value={project}
+                        onChange={(e) => setProject(e.target.value)}
                         style={{width: '100%', padding: '0.5rem', backgroundColor: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.25rem', color: 'white', outline: 'none'}}
+                        placeholder="Enter project name..."
                       />
                     </div>
+
+                    <div style={{marginBottom: '1rem'}}>
+                      <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>Project Description</label>
+                      <textarea
+                        value={projectDescription}
+                        onChange={(e) => setProjectDescription(e.target.value)}
+                        rows={3}
+                        style={{width: '100%', padding: '0.5rem', backgroundColor: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.25rem', color: 'white', outline: 'none', resize: 'vertical'}}
+                        placeholder="Describe the project details..."
+                      />
+                    </div>
+
                     <div style={{marginBottom: '1rem'}}>
                       <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>Valid Until</label>
                       <input
@@ -519,109 +884,37 @@ export default function EditQuotePage() {
                         style={{width: '100%', padding: '0.5rem', backgroundColor: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.25rem', color: 'white', outline: 'none'}}
                       />
                     </div>
+
                     <div>
                       <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>Notes</label>
                       <textarea
-                        value={notes}
-                        onChange={(e) => setNotes(e.target.value)}
+                        value={quoteNotes}
+                        onChange={(e) => setQuoteNotes(e.target.value)}
                         rows={3}
                         style={{width: '100%', padding: '0.5rem', backgroundColor: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.25rem', color: 'white', outline: 'none', resize: 'vertical'}}
-                        placeholder="Add any additional notes for the client..."
+                        placeholder="Add any additional notes..."
                       />
                     </div>
                   </div>
-                </div>
-                
-                <div>
-                  <h3 style={{fontSize: '1.125rem', fontWeight: '500', color: 'white', marginBottom: '1rem'}}>Quote Summary</h3>
-                  <div style={{backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: '0.5rem', padding: '1rem'}}>
-                    <div style={{marginBottom: '1rem'}}>
-                      <div style={{fontWeight: '500', color: 'white', marginBottom: '0.5rem'}}>Client</div>
-                      <div style={{fontSize: '0.875rem', color: '#cbd5e1'}}>{selectedClient?.name}</div>
-                      <div style={{fontSize: '0.875rem', color: '#94a3b8'}}>{selectedClient?.company}</div>
-                    </div>
-                    
-                    <div style={{marginBottom: '1rem'}}>
-                      <div style={{fontWeight: '500', color: 'white', marginBottom: '0.5rem'}}>Services</div>
-                      {quoteItems.map((item) => (
-                        <div key={item.id} style={{display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem'}}>
-                          <span style={{fontSize: '0.875rem', color: '#cbd5e1'}}>{item.serviceName}</span>
-                          <span style={{fontSize: '0.875rem', color: 'white'}}>${item.total.toLocaleString()}</span>
-                        </div>
-                      ))}
-                    </div>
-                    
-                    <div style={{borderTop: '1px solid rgba(255, 255, 255, 0.2)', paddingTop: '1rem'}}>
+
+                  {/* Total */}
+                  <div style={{backgroundColor: 'rgba(147, 51, 234, 0.1)', border: '1px solid rgba(147, 51, 234, 0.3)', borderRadius: '0.5rem', padding: '1.5rem'}}>
+                    <h3 style={{fontSize: '1.125rem', fontWeight: '600', color: 'white', marginBottom: '1rem'}}>Quote Total</h3>
+                    <div style={{backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: '0.5rem', padding: '1rem'}}>
                       <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem'}}>
                         <span style={{color: '#cbd5e1'}}>Subtotal:</span>
-                        <span style={{color: 'white'}}>${quoteData.subtotal.toLocaleString()}</span>
+                        <span style={{color: 'white'}}>${subtotal.toLocaleString()}</span>
                       </div>
                       <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem'}}>
-                        <span style={{color: '#cbd5e1'}}>Tax (8%):</span>
-                        <span style={{color: 'white'}}>${quoteData.taxAmount.toLocaleString()}</span>
+                        <span style={{color: '#cbd5e1'}}>Tax (8% on taxable items):</span>
+                        <span style={{color: 'white'}}>${taxAmount.toLocaleString()}</span>
                       </div>
-                      <div style={{display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', borderTop: '1px solid rgba(255, 255, 255, 0.2)', paddingTop: '0.5rem'}}>
+                      <div style={{display: 'flex', justifyContent: 'space-between', borderTop: '1px solid rgba(255, 255, 255, 0.2)', paddingTop: '0.5rem', fontWeight: 'bold'}}>
                         <span style={{color: 'white'}}>Total:</span>
-                        <span style={{color: 'white', fontSize: '1.125rem'}}>${quoteData.total.toLocaleString()}</span>
+                        <span style={{color: 'white', fontSize: '1.125rem'}}>${totalAmount.toLocaleString()}</span>
                       </div>
                     </div>
                   </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {currentStep === 4 && (
-            <div>
-              <h2 style={{fontSize: '1.5rem', fontWeight: 'bold', color: 'white', marginBottom: '1.5rem'}}>Final Review</h2>
-              <div style={{textAlign: 'center', padding: '2rem'}}>
-                <div style={{marginBottom: '2rem'}}>
-                  <div style={{fontSize: '2rem', fontWeight: 'bold', color: 'white', marginBottom: '0.5rem'}}>${quoteData.total.toLocaleString()}</div>
-                  <div style={{fontSize: '1rem', color: '#cbd5e1'}}>Total Quote Amount</div>
-                </div>
-                
-                <div style={{display: 'flex', flexDirection: 'column', gap: '1rem', maxWidth: '400px', margin: '0 auto'}}>
-                  <button
-                    onClick={handleSaveQuote}
-                    disabled={saving}
-                    style={{
-                      padding: '1rem 2rem',
-                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                      border: '1px solid rgba(255, 255, 255, 0.2)',
-                      borderRadius: '0.5rem',
-                      color: 'white',
-                      cursor: saving ? 'not-allowed' : 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '0.5rem',
-                      fontWeight: '500'
-                    }}
-                  >
-                    <Save style={{height: '1rem', width: '1rem'}} />
-                    {saving ? 'Saving...' : 'Save Quote'}
-                  </button>
-                  
-                  <button
-                    onClick={handleSendQuote}
-                    disabled={saving}
-                    style={{
-                      padding: '1rem 2rem',
-                      background: 'linear-gradient(to right, #059669, #0d9488)',
-                      color: 'white',
-                      borderRadius: '0.5rem',
-                      border: 'none',
-                      cursor: saving ? 'not-allowed' : 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '0.5rem',
-                      fontWeight: '500'
-                    }}
-                  >
-                    <Send style={{height: '1rem', width: '1rem'}} />
-                    {saving ? 'Sending...' : 'Send Quote'}
-                  </button>
                 </div>
               </div>
             </div>
@@ -629,46 +922,88 @@ export default function EditQuotePage() {
         </div>
 
         {/* Navigation Buttons */}
-        <div style={{display: 'flex', justifyContent: 'space-between', marginTop: '2rem'}}>
+        <div style={{display: 'flex', justifyContent: 'space-between', gap: '1rem'}}>
           <button
             onClick={prevStep}
             disabled={currentStep === 1}
             style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
               padding: '0.75rem 1.5rem',
-              backgroundColor: currentStep === 1 ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.2)',
+              backgroundColor: currentStep === 1 ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.1)',
               border: '1px solid rgba(255, 255, 255, 0.2)',
               borderRadius: '0.5rem',
               color: currentStep === 1 ? '#94a3b8' : 'white',
               cursor: currentStep === 1 ? 'not-allowed' : 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              opacity: currentStep === 1 ? 0.5 : 1
+              fontWeight: '500'
             }}
           >
-            <ArrowLeft style={{height: '1rem', width: '1rem'}} />
+            <ChevronLeft style={{height: '1rem', width: '1rem'}} />
             Previous
           </button>
-          
-          <button
-            onClick={nextStep}
-            disabled={currentStep === 4}
-            style={{
-              padding: '0.75rem 1.5rem',
-              background: currentStep === 4 ? 'rgba(255, 255, 255, 0.1)' : 'linear-gradient(to right, #2563eb, #4f46e5)',
-              border: 'none',
-              borderRadius: '0.5rem',
-              color: 'white',
-              cursor: currentStep === 4 ? 'not-allowed' : 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              opacity: currentStep === 4 ? 0.5 : 1
-            }}
-          >
-            Next
-            <ArrowRight style={{height: '1rem', width: '1rem'}} />
-          </button>
+
+          <div style={{display: 'flex', gap: '1rem'}}>
+            {currentStep === 3 ? (
+              <>
+                <button
+                  onClick={() => handleUpdateQuote('draft')}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    padding: '0.75rem 1.5rem',
+                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                    borderRadius: '0.5rem',
+                    color: 'white',
+                    cursor: 'pointer',
+                    fontWeight: '500'
+                  }}
+                >
+                  <Save style={{height: '1rem', width: '1rem'}} />
+                  Save as Draft
+                </button>
+                <button
+                  onClick={() => handleUpdateQuote('sent')}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    padding: '0.75rem 1.5rem',
+                    background: 'linear-gradient(to right, #10b981, #14b8a6)',
+                    color: 'white',
+                    borderRadius: '0.5rem',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontWeight: '500'
+                  }}
+                >
+                  <Send style={{height: '1rem', width: '1rem'}} />
+                  Update & Send Quote
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={nextStep}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.75rem 1.5rem',
+                  background: 'linear-gradient(to right, #9333ea, #3b82f6)',
+                  color: 'white',
+                  borderRadius: '0.5rem',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontWeight: '500'
+                }}
+              >
+                Next
+                <ChevronRight style={{height: '1rem', width: '1rem'}} />
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>

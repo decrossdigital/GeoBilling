@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useParams, useRouter } from 'next/navigation'
-import { ArrowLeft, Music, Home, Users, FileText, DollarSign, User, Settings, CreditCard, Send, Download, Edit, Trash2, CheckCircle, Clock, XCircle } from 'lucide-react'
+import { ArrowLeft, Music, Home, Users, FileText, DollarSign, User, Settings, CreditCard, Send, Download, Edit, Edit2, Trash2, CheckCircle, Clock, XCircle } from 'lucide-react'
 import Link from 'next/link'
 
 interface Client {
@@ -348,7 +348,28 @@ export default function InvoiceDetailPage() {
             Back to Invoices
           </button>
 
-          <div style={{display: 'flex', gap: '0.5rem'}}>
+          <div style={{display: 'flex', gap: '0.5rem', flexWrap: 'wrap'}}>
+            {invoice.status === 'draft' && (
+              <Link
+                href={`/invoices/${invoice.id}/edit`}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.75rem 1.5rem',
+                  background: 'linear-gradient(to right, #9333ea, #3b82f6)',
+                  color: 'white',
+                  borderRadius: '0.5rem',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontWeight: '500',
+                  textDecoration: 'none'
+                }}
+              >
+                <Edit2 style={{height: '1rem', width: '1rem'}} />
+                Edit Invoice
+              </Link>
+            )}
             {invoice.status === 'sent' && (
               <button
                 onClick={() => setShowPaymentModal(true)}
@@ -369,24 +390,26 @@ export default function InvoiceDetailPage() {
                 Process Payment
               </button>
             )}
-            <button
-              onClick={() => setShowEmailModal(true)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                padding: '0.75rem 1.5rem',
-                background: 'linear-gradient(to right, #3b82f6, #1d4ed8)',
-                color: 'white',
-                borderRadius: '0.5rem',
-                border: 'none',
-                cursor: 'pointer',
-                fontWeight: '500'
-              }}
-            >
-              <Send style={{height: '1rem', width: '1rem'}} />
-              Send via Email
-            </button>
+            {invoice.status === 'draft' && (
+              <button
+                onClick={() => setShowEmailModal(true)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.75rem 1.5rem',
+                  background: 'linear-gradient(to right, #3b82f6, #1d4ed8)',
+                  color: 'white',
+                  borderRadius: '0.5rem',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontWeight: '500'
+                }}
+              >
+                <Send style={{height: '1rem', width: '1rem'}} />
+                Send Invoice
+              </button>
+            )}
             <button
               onClick={handleDownload}
               style={{
