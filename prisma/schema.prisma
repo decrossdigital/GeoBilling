@@ -181,6 +181,8 @@ model Quote {
   quoteNumber String   @unique
   title       String
   description String?  @db.Text
+  project     String?
+  projectDescription String? @db.Text
   status      String   @default("draft") // "draft", "sent", "accepted", "rejected", "expired"
   validUntil  DateTime
   subtotal    Decimal  @db.Decimal(10, 2)
