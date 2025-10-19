@@ -32,6 +32,7 @@ interface QuoteItem {
   quantity: number
   unitPrice: number
   total: number
+  taxable: boolean
   pricingType?: 'hourly' | 'flat'
 }
 
@@ -148,6 +149,7 @@ export default function NewQuotePage() {
         quantity: 1,
         unitPrice: service.rate,
         total: service.rate,
+        taxable: false,
         pricingType: service.pricingType
       }
       setQuoteItems([...quoteItems, newItem])
@@ -159,6 +161,7 @@ export default function NewQuotePage() {
         quantity: 1,
         unitPrice: 0,
         total: 0,
+        taxable: false,
         pricingType: 'flat'
       }
       setQuoteItems([...quoteItems, newItem])
@@ -229,8 +232,9 @@ export default function NewQuotePage() {
       const servicesTotal = quoteItems.reduce((sum, item) => sum + item.total, 0)
       const contractorsTotal = quoteContractors.reduce((sum, contractor) => sum + contractor.amount, 0)
       const subtotal = servicesTotal + contractorsTotal
+      const taxableAmount = quoteItems.reduce((sum, item) => sum + (item.taxable ? item.total : 0), 0)
       const taxRate = 8 // 8% tax
-      const taxAmount = subtotal * (taxRate / 100)
+      const taxAmount = taxableAmount * (taxRate / 100)
       const total = subtotal + taxAmount
 
       // Set default validUntil date if not provided (30 days from now)
@@ -242,7 +246,8 @@ export default function NewQuotePage() {
         description: item.description,
         quantity: item.quantity,
         unitPrice: item.unitPrice,
-        total: item.total
+        total: item.total,
+        taxable: item.taxable
       }))
       
       const quoteData = {
@@ -300,8 +305,9 @@ export default function NewQuotePage() {
       const servicesTotal = quoteItems.reduce((sum, item) => sum + item.total, 0)
       const contractorsTotal = quoteContractors.reduce((sum, contractor) => sum + contractor.amount, 0)
       const subtotal = servicesTotal + contractorsTotal
+      const taxableAmount = quoteItems.reduce((sum, item) => sum + (item.taxable ? item.total : 0), 0)
       const taxRate = 8 // 8% tax
-      const taxAmount = subtotal * (taxRate / 100)
+      const taxAmount = taxableAmount * (taxRate / 100)
       const total = subtotal + taxAmount
 
       // Set default validUntil date if not provided (30 days from now)
@@ -313,7 +319,8 @@ export default function NewQuotePage() {
         description: item.description,
         quantity: item.quantity,
         unitPrice: item.unitPrice,
-        total: item.total
+        total: item.total,
+        taxable: item.taxable
       }))
       
       const quoteData = {
@@ -377,7 +384,8 @@ export default function NewQuotePage() {
   const servicesTotal = quoteItems.reduce((sum, item) => sum + item.total, 0)
   const contractorsTotal = quoteContractors.reduce((sum, contractor) => sum + contractor.amount, 0)
   const subtotal = servicesTotal + contractorsTotal
-  const taxAmount = subtotal * 0.08 // 8% tax
+  const taxableAmount = quoteItems.reduce((sum, item) => sum + (item.taxable ? item.total : 0), 0)
+  const taxAmount = taxableAmount * 0.08 // 8% tax on taxable items only
   const totalAmount = subtotal + taxAmount
 
   return (
@@ -618,7 +626,7 @@ export default function NewQuotePage() {
                             <Trash2 style={{height: '1rem', width: '1rem'}} />
                           </button>
                         </div>
-                                              <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '1rem'}}>
+                                              <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr', gap: '1rem'}}>
                         <div>
                           <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>Pricing Type</label>
                           <select
@@ -651,6 +659,18 @@ export default function NewQuotePage() {
                             onChange={(e) => updateQuoteItem(item.id, 'unitPrice', parseFloat(e.target.value) || 0)}
                             style={{width: '100%', padding: '0.5rem', backgroundColor: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.25rem', color: 'white', outline: 'none'}}
                           />
+                        </div>
+                        <div>
+                          <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>Taxable</label>
+                          <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem', backgroundColor: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.25rem'}}>
+                            <input
+                              type="checkbox"
+                              checked={item.taxable}
+                              onChange={(e) => updateQuoteItem(item.id, 'taxable', e.target.checked)}
+                              style={{width: '1rem', height: '1rem', accentColor: '#3b82f6'}}
+                            />
+                            <span style={{fontSize: '0.875rem', color: 'white'}}>Yes</span>
+                          </div>
                         </div>
                         <div>
                           <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>Amount</label>
@@ -785,13 +805,24 @@ export default function NewQuotePage() {
                     <div style={{backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: '0.5rem', padding: '1rem'}}>
                       {quoteItems.map((item) => (
                         <div key={item.id} style={{display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem'}}>
-                          <span style={{color: '#cbd5e1'}}>{item.serviceName} (x{item.quantity})</span>
+                          <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
+                            <span style={{color: '#cbd5e1'}}>{item.serviceName} (x{item.quantity})</span>
+                            {!item.taxable && (
+                              <span style={{fontSize: '0.75rem', color: '#fbbf24', backgroundColor: 'rgba(251, 191, 36, 0.1)', padding: '0.125rem 0.375rem', borderRadius: '0.25rem'}}>
+                                Non-taxable
+                              </span>
+                            )}
+                          </div>
                           <span style={{color: 'white'}}>${item.total.toLocaleString()}</span>
                         </div>
                       ))}
                       <div style={{display: 'flex', justifyContent: 'space-between', borderTop: '1px solid rgba(255, 255, 255, 0.2)', paddingTop: '0.5rem', fontWeight: '500'}}>
                         <span style={{color: '#cbd5e1'}}>Services Total:</span>
                         <span style={{color: 'white'}}>${servicesTotal.toLocaleString()}</span>
+                      </div>
+                      <div style={{display: 'flex', justifyContent: 'space-between', paddingTop: '0.25rem', fontSize: '0.875rem'}}>
+                        <span style={{color: '#94a3b8'}}>Taxable Amount:</span>
+                        <span style={{color: '#cbd5e1'}}>${taxableAmount.toLocaleString()}</span>
                       </div>
                     </div>
                   </div>
@@ -827,7 +858,7 @@ export default function NewQuotePage() {
                     <span style={{color: 'white'}}>${subtotal.toLocaleString()}</span>
                   </div>
                   <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem'}}>
-                    <span style={{color: '#cbd5e1'}}>Tax (8%):</span>
+                    <span style={{color: '#cbd5e1'}}>Tax (8% on taxable items):</span>
                     <span style={{color: 'white'}}>${taxAmount.toLocaleString()}</span>
                   </div>
                   <div style={{display: 'flex', justifyContent: 'space-between', borderTop: '1px solid rgba(255, 255, 255, 0.2)', paddingTop: '0.5rem', fontWeight: 'bold'}}>

@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { useSession } from "next-auth/react"
 import { 
-  Settings, Building, Save, Music, Mail, Phone, Globe, MapPin, CheckCircle, AlertCircle
+  Settings, Building, Save, Music, Mail, Phone, Globe, MapPin, CheckCircle, AlertCircle, Percent
 } from "lucide-react"
 import Navigation from "@/components/navigation"
 import Link from "next/link"
@@ -18,6 +18,7 @@ interface CompanySettings {
   description: string
   industry: string
   taxId: string
+  taxRate: number
 }
 
 export default function SettingsPage() {
@@ -30,7 +31,8 @@ export default function SettingsPage() {
     website: "https://uniquitousmusic.com",
     description: "Professional music production and audio engineering services",
     industry: "Music Production & Audio Engineering",
-    taxId: "12-3456789"
+    taxId: "12-3456789",
+    taxRate: 8
   })
 
   const [savedStatus, setSavedStatus] = useState<"idle" | "saving" | "success" | "error">("idle")
@@ -48,7 +50,7 @@ export default function SettingsPage() {
     }
   }
 
-  const updateField = (field: keyof CompanySettings, value: string) => {
+  const updateField = (field: keyof CompanySettings, value: string | number) => {
     setSettings(prev => ({
       ...prev,
       [field]: value
@@ -210,6 +212,36 @@ export default function SettingsPage() {
               style={{width: '100%', padding: '0.5rem', backgroundColor: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.25rem', color: 'white', outline: 'none', resize: 'vertical'}}
               placeholder="Enter company description"
             />
+          </div>
+        </div>
+
+        {/* Tax Settings */}
+        <div style={{backgroundColor: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.75rem', padding: '1.5rem', marginTop: '2rem'}}>
+          <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem'}}>
+            <Percent style={{height: '1.5rem', width: '1.5rem', color: '#a78bfa'}} />
+            <h2 style={{fontSize: '1.25rem', fontWeight: 'bold', color: 'white'}}>Tax Settings</h2>
+          </div>
+
+          <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1rem'}}>
+            <div>
+              <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>Default Tax Rate (%)</label>
+              <div style={{position: 'relative'}}>
+                <input
+                  type="number"
+                  value={settings.taxRate}
+                  onChange={(e) => updateField('taxRate', parseFloat(e.target.value) || 0)}
+                  style={{width: '100%', padding: '0.5rem 2.5rem 0.5rem 0.5rem', backgroundColor: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.25rem', color: 'white', outline: 'none'}}
+                  placeholder="Enter tax rate"
+                  min="0"
+                  max="100"
+                  step="0.1"
+                />
+                <div style={{position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: '#cbd5e1', fontSize: '0.875rem'}}>%</div>
+              </div>
+              <p style={{fontSize: '0.75rem', color: '#94a3b8', marginTop: '0.25rem'}}>
+                This rate will be applied to taxable items in quotes and invoices
+              </p>
+            </div>
           </div>
         </div>
       </div>

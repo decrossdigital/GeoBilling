@@ -45,6 +45,7 @@ export async function POST(
         quantity: parseFloat(body.quantity) || 0,
         unitPrice: parseFloat(body.unitPrice) || 0,
         total: parseFloat(body.total) || 0,
+        taxable: body.taxable !== undefined ? body.taxable : false,
         contractorId: body.contractorId || null,
         serviceTemplateId: body.serviceTemplateId || null,
         sortOrder: body.sortOrder || 0
@@ -61,7 +62,8 @@ export async function POST(
     })
 
     const subtotal = allItems.reduce((sum, item) => sum + Number(item.total), 0)
-    const taxAmount = subtotal * (Number(quote.taxRate) / 100)
+    const taxableAmount = allItems.reduce((sum, item) => sum + (item.taxable ? Number(item.total) : 0), 0)
+    const taxAmount = taxableAmount * (Number(quote.taxRate) / 100)
     const total = subtotal + taxAmount
 
     // Update quote totals

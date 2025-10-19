@@ -54,7 +54,8 @@ export async function GET(
     // Recalculate subtotal from items
     const recalculatedSubtotal = itemsWithNumbers.reduce((sum, item) => sum + item.total, 0)
     const taxRate = Number(quote.taxRate)
-    const recalculatedTaxAmount = recalculatedSubtotal * (taxRate / 100)
+    const taxableAmount = itemsWithNumbers.reduce((sum, item) => sum + (item.taxable ? item.total : 0), 0)
+    const recalculatedTaxAmount = taxableAmount * (taxRate / 100)
     const recalculatedTotal = recalculatedSubtotal + recalculatedTaxAmount
 
     // Convert Decimal values to numbers for frontend compatibility
@@ -124,7 +125,8 @@ export async function PUT(
     // Recalculate totals based on current items
     const recalculatedSubtotal = currentQuote.items.reduce((sum, item) => sum + Number(item.total), 0)
     const taxRate = Number(currentQuote.taxRate)
-    const recalculatedTaxAmount = recalculatedSubtotal * (taxRate / 100)
+    const taxableAmount = currentQuote.items.reduce((sum, item) => sum + (item.taxable ? Number(item.total) : 0), 0)
+    const recalculatedTaxAmount = taxableAmount * (taxRate / 100)
     const recalculatedTotal = recalculatedSubtotal + recalculatedTaxAmount
 
     // Update the quote with recalculated totals

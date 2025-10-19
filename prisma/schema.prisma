@@ -227,6 +227,7 @@ model QuoteItem {
   quantity        Decimal  @db.Decimal(10, 2)
   unitPrice       Decimal  @db.Decimal(10, 2)
   total           Decimal  @db.Decimal(10, 2)
+  taxable         Boolean  @default(false)
   contractorId    String?
   serviceTemplateId String?
   sortOrder       Int      @default(0)
@@ -304,6 +305,7 @@ model InvoiceItem {
   quantity        Decimal  @db.Decimal(10, 2)
   unitPrice       Decimal  @db.Decimal(10, 2)
   total           Decimal  @db.Decimal(10, 2)
+  taxable         Boolean  @default(false)
   contractorId    String?
   serviceTemplateId String?
   sortOrder       Int      @default(0)
