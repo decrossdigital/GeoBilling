@@ -43,19 +43,28 @@ export async function GET(
       return NextResponse.json({ error: 'Quote not found' }, { status: 404 })
     }
 
+    // Recalculate totals based on current items to fix any calculation errors
+    const itemsWithNumbers = quote.items.map(item => ({
+      ...item,
+      quantity: Number(item.quantity),
+      unitPrice: Number(item.unitPrice),
+      total: Number(item.total)
+    }))
+
+    // Recalculate subtotal from items
+    const recalculatedSubtotal = itemsWithNumbers.reduce((sum, item) => sum + item.total, 0)
+    const taxRate = Number(quote.taxRate)
+    const recalculatedTaxAmount = recalculatedSubtotal * (taxRate / 100)
+    const recalculatedTotal = recalculatedSubtotal + recalculatedTaxAmount
+
     // Convert Decimal values to numbers for frontend compatibility
     const quoteWithNumbers = {
       ...quote,
-      subtotal: Number(quote.subtotal),
-      taxRate: Number(quote.taxRate),
-      taxAmount: Number(quote.taxAmount),
-      total: Number(quote.total),
-      items: quote.items.map(item => ({
-        ...item,
-        quantity: Number(item.quantity),
-        unitPrice: Number(item.unitPrice),
-        total: Number(item.total)
-      }))
+      subtotal: recalculatedSubtotal,
+      taxRate: taxRate,
+      taxAmount: recalculatedTaxAmount,
+      total: recalculatedTotal,
+      items: itemsWithNumbers
     }
 
     return NextResponse.json(quoteWithNumbers)
@@ -102,20 +111,36 @@ export async function PUT(
       return NextResponse.json({ error: 'Quote not found' }, { status: 404 })
     }
 
-    // Update the quote
+    // Get current items to recalculate totals
+    const currentQuote = await prisma.quote.findFirst({
+      where: { id: quoteId },
+      include: { items: true }
+    })
+
+    if (!currentQuote) {
+      return NextResponse.json({ error: 'Quote not found' }, { status: 404 })
+    }
+
+    // Recalculate totals based on current items
+    const recalculatedSubtotal = currentQuote.items.reduce((sum, item) => sum + Number(item.total), 0)
+    const taxRate = Number(currentQuote.taxRate)
+    const recalculatedTaxAmount = recalculatedSubtotal * (taxRate / 100)
+    const recalculatedTotal = recalculatedSubtotal + recalculatedTaxAmount
+
+    // Update the quote with recalculated totals
     const updatedQuote = await prisma.quote.update({
       where: { id: quoteId },
       data: {
         title: body.title,
         description: body.description,
+        project: body.project,
+        projectDescription: body.projectDescription,
         validUntil: body.validUntil,
         terms: body.terms,
         notes: body.notes,
-
-        subtotal: body.subtotal,
-        taxRate: body.taxRate,
-        taxAmount: body.taxAmount,
-        total: body.total
+        subtotal: recalculatedSubtotal,
+        taxAmount: recalculatedTaxAmount,
+        total: recalculatedTotal
       },
       include: {
         client: true,
@@ -131,11 +156,16 @@ export async function PUT(
     // Convert Decimal values to numbers for frontend compatibility
     const quoteWithNumbers = {
       ...updatedQuote,
-      subtotal: Number(updatedQuote.subtotal),
-      taxRate: Number(updatedQuote.taxRate),
-      taxAmount: Number(updatedQuote.taxAmount),
-      total: Number(updatedQuote.total),
-
+      subtotal: recalculatedSubtotal,
+      taxRate: taxRate,
+      taxAmount: recalculatedTaxAmount,
+      total: recalculatedTotal,
+      items: updatedQuote.items.map(item => ({
+        ...item,
+        quantity: Number(item.quantity),
+        unitPrice: Number(item.unitPrice),
+        total: Number(item.total)
+      }))
     }
 
     return NextResponse.json(quoteWithNumbers)
