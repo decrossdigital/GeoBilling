@@ -173,9 +173,11 @@ export default function NewQuotePage() {
     setQuoteItems(quoteItems.map(item => {
       if (item.id === id) {
         const updatedItem = { ...item, [field]: value }
-        // Recalculate total
+        // Recalculate total - ensure values are numbers
         if (field === 'quantity' || field === 'unitPrice') {
-          updatedItem.total = updatedItem.quantity * updatedItem.unitPrice
+          const quantity = Number(updatedItem.quantity) || 0
+          const unitPrice = Number(updatedItem.unitPrice) || 0
+          updatedItem.total = quantity * unitPrice
         }
         return updatedItem
       }
@@ -201,9 +203,11 @@ export default function NewQuotePage() {
     setQuoteContractors(quoteContractors.map(contractor => {
       if (contractor.id === id) {
         const updatedContractor = { ...contractor, [field]: value }
-        // Recalculate amount
+        // Recalculate amount - ensure values are numbers
         if (field === 'hours' || field === 'rate') {
-          updatedContractor.amount = (updatedContractor.hours || 0) * updatedContractor.rate
+          const hours = Number(updatedContractor.hours) || 0
+          const rate = Number(updatedContractor.rate) || 0
+          updatedContractor.amount = hours * rate
         }
         return updatedContractor
       }
