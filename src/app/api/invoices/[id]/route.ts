@@ -54,6 +54,7 @@ export async function GET(
     const invoiceWithNumbers = {
       ...invoice,
       subtotal: Number(invoice.subtotal),
+      taxRate: Number(invoice.taxRate),
       taxAmount: Number(invoice.taxAmount),
       total: Number(invoice.total),
       items: invoice.items.map(item => ({
@@ -186,8 +187,15 @@ export async function PUT(
     const updatedInvoiceWithNumbers = {
       ...updatedInvoice,
       subtotal: Number(updatedInvoice.subtotal),
+      taxRate: Number(updatedInvoice.taxRate),
       taxAmount: Number(updatedInvoice.taxAmount),
-      total: Number(updatedInvoice.total)
+      total: Number(updatedInvoice.total),
+      items: updatedInvoice.items.map(item => ({
+        ...item,
+        quantity: Number(item.quantity),
+        unitPrice: Number(item.unitPrice),
+        total: Number(item.total)
+      }))
     }
 
     return NextResponse.json(updatedInvoiceWithNumbers)
