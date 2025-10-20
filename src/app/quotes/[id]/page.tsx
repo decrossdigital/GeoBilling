@@ -619,12 +619,14 @@ export default function QuoteDetailPage() {
                         style={{
                           width: '100%',
                           padding: '0.5rem',
-                          backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                          border: '1px solid rgba(255, 255, 255, 0.2)',
+                          backgroundColor: 'rgba(59, 130, 246, 0.15)',
+                          border: '2px solid rgba(59, 130, 246, 0.5)',
                           borderRadius: '0.25rem',
                           color: 'white',
                           outline: 'none',
-                          marginTop: '0.25rem'
+                          marginTop: '0.25rem',
+                          boxShadow: '0 0 0 3px rgba(59, 130, 246, 0.1)',
+                          transition: 'all 0.2s'
                         }}
                         placeholder="Enter project name..."
                       />
@@ -642,13 +644,15 @@ export default function QuoteDetailPage() {
                         style={{
                           width: '100%',
                           padding: '0.5rem',
-                          backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                          border: '1px solid rgba(255, 255, 255, 0.2)',
+                          backgroundColor: 'rgba(59, 130, 246, 0.15)',
+                          border: '2px solid rgba(59, 130, 246, 0.5)',
                           borderRadius: '0.25rem',
                           color: 'white',
                           outline: 'none',
                           resize: 'vertical',
-                          marginTop: '0.25rem'
+                          marginTop: '0.25rem',
+                          boxShadow: '0 0 0 3px rgba(59, 130, 246, 0.1)',
+                          transition: 'all 0.2s'
                         }}
                         placeholder="Describe the project details..."
                       />
@@ -819,13 +823,15 @@ export default function QuoteDetailPage() {
                       style={{
                         width: '100%',
                         padding: '0.5rem',
-                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                        border: '1px solid rgba(255, 255, 255, 0.2)',
+                        backgroundColor: 'rgba(59, 130, 246, 0.15)',
+                        border: '2px solid rgba(59, 130, 246, 0.5)',
                         borderRadius: '0.25rem',
                         color: 'white',
                         outline: 'none',
                         resize: 'vertical',
-                        marginTop: '0.25rem'
+                        marginTop: '0.25rem',
+                        boxShadow: '0 0 0 3px rgba(59, 130, 246, 0.1)',
+                        transition: 'all 0.2s'
                       }}
                       placeholder="Enter notes..."
                     />
@@ -879,14 +885,16 @@ export default function QuoteDetailPage() {
                 style={{
                   width: '100%',
                   padding: '0.75rem',
-                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  backgroundColor: 'rgba(59, 130, 246, 0.15)',
+                  border: '2px solid rgba(59, 130, 246, 0.5)',
                   borderRadius: '0.25rem',
                   color: 'white',
                   outline: 'none',
                   resize: 'vertical',
                   fontSize: '0.875rem',
-                  lineHeight: '1.6'
+                  lineHeight: '1.6',
+                  boxShadow: '0 0 0 3px rgba(59, 130, 246, 0.1)',
+                  transition: 'all 0.2s'
                 }}
                 placeholder="Enter terms and conditions..."
               />
@@ -904,12 +912,14 @@ export default function QuoteDetailPage() {
                 style={{
                   width: '100%',
                   padding: '0.75rem',
-                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  backgroundColor: 'rgba(59, 130, 246, 0.15)',
+                  border: '2px solid rgba(59, 130, 246, 0.5)',
                   borderRadius: '0.25rem',
                   color: 'white',
                   outline: 'none',
-                  fontSize: '0.875rem'
+                  fontSize: '0.875rem',
+                  boxShadow: '0 0 0 3px rgba(59, 130, 246, 0.1)',
+                  transition: 'all 0.2s'
                 }}
               />
             ) : (
