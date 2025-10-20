@@ -75,8 +75,8 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
     const { 
-      title, 
-      description, 
+      project,
+      projectDescription,
       status, 
       validUntil, 
       subtotal, 
@@ -93,8 +93,8 @@ export async function POST(request: NextRequest) {
       items 
     } = body
 
-    if (!title || !clientId) {
-      return NextResponse.json({ error: 'Title and client are required' }, { status: 400 })
+    if (!project || !clientId) {
+      return NextResponse.json({ error: 'Project and client are required' }, { status: 400 })
     }
 
     // Generate quote number
@@ -109,8 +109,10 @@ export async function POST(request: NextRequest) {
     const quote = await prisma.quote.create({
       data: {
         quoteNumber,
-        title,
-        description: description || '',
+        title: project,
+        description: projectDescription || '',
+        project: project,
+        projectDescription: projectDescription || '',
         status: status || 'draft',
         validUntil: validUntilDate,
         subtotal: parseFloat(subtotal) || 0,
