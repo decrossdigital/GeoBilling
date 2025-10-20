@@ -190,15 +190,17 @@ export default function QuoteDetailPage() {
           clientEmail: quote?.client.email,
           clientPhone: quote?.client.phone,
           clientAddress: quote?.client.address,
-          title: quote?.title,
-          description: quote?.description,
+          project: quote?.project,
+          projectDescription: quote?.projectDescription,
           items: quote?.items,
           subtotal: quote?.subtotal,
           taxRate: quote?.taxRate,
           taxAmount: quote?.taxAmount,
           total: quote?.total,
+          notes: quote?.notes,
+          terms: quote?.terms,
           dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-          status: 'unpaid'
+          status: 'draft'
         })
       })
 

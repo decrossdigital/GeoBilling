@@ -249,8 +249,8 @@ model QuoteItem {
 model Invoice {
   id            String   @id @default(cuid())
   invoiceNumber String   @unique
-  title         String
-  description   String?  @db.Text
+  project       String
+  projectDescription String? @db.Text
   status        String   @default("draft") // "draft", "sent", "paid", "overdue", "cancelled"
   issueDate     DateTime @default(now())
   dueDate       DateTime

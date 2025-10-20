@@ -77,6 +77,8 @@ export default function NewInvoicePage() {
   const [dueDate, setDueDate] = useState("")
   const [paymentTerms, setPaymentTerms] = useState("net30")
   const [notes, setNotes] = useState("")
+  const [project, setProject] = useState("")
+  const [projectDescription, setProjectDescription] = useState("")
   const [clients, setClients] = useState<Client[]>([])
   const [approvedQuotes, setApprovedQuotes] = useState<Quote[]>([])
   const [contractors, setContractors] = useState<Contractor[]>([])
@@ -295,8 +297,8 @@ export default function NewInvoicePage() {
       }))
 
       const invoiceData = {
-        title: `Invoice for ${selectedClient.name}`,
-        description: "Professional music production services",
+        project: project || `Invoice for ${selectedClient.name}`,
+        projectDescription: projectDescription || "Professional music production services",
         status: "draft",
         dueDate: defaultDueDate,
         subtotal: subtotal,
@@ -365,8 +367,8 @@ export default function NewInvoicePage() {
       }))
 
       const invoiceData = {
-        title: `Invoice for ${selectedClient.name}`,
-        description: "Professional music production services",
+        project: project || `Invoice for ${selectedClient.name}`,
+        projectDescription: projectDescription || "Professional music production services",
         status: "sent",
         dueDate: defaultDueDate,
         subtotal: subtotal,
@@ -1003,7 +1005,17 @@ export default function NewInvoicePage() {
               {/* Additional Details */}
               <div style={{marginBottom: '2rem'}}>
                 <h3 style={{fontSize: '1.125rem', fontWeight: '500', color: 'white', marginBottom: '1rem'}}>Additional Details</h3>
-                <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem'}}>
+                <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem'}}>
+                  <div>
+                    <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>Project</label>
+                    <input
+                      type="text"
+                      value={project}
+                      onChange={(e) => setProject(e.target.value)}
+                      style={{width: '100%', padding: '0.5rem', backgroundColor: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.25rem', color: 'white', outline: 'none'}}
+                      placeholder="Enter project name..."
+                    />
+                  </div>
                   <div>
                     <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>Due Date</label>
                     <input
@@ -1026,6 +1038,16 @@ export default function NewInvoicePage() {
                       <option value="net60">Net 60</option>
                     </select>
                   </div>
+                </div>
+                <div style={{marginTop: '1rem'}}>
+                  <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>Project Description</label>
+                  <textarea
+                    value={projectDescription}
+                    onChange={(e) => setProjectDescription(e.target.value)}
+                    rows={3}
+                    style={{width: '100%', padding: '0.5rem', backgroundColor: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.25rem', color: 'white', outline: 'none', resize: 'vertical'}}
+                    placeholder="Describe the project details..."
+                  />
                 </div>
                 <div style={{marginTop: '1rem'}}>
                   <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>Notes</label>

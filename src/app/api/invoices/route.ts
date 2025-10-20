@@ -74,8 +74,8 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
     const { 
-      title, 
-      description, 
+      project, 
+      projectDescription, 
       status, 
       dueDate, 
       subtotal, 
@@ -95,8 +95,8 @@ export async function POST(request: NextRequest) {
       items 
     } = body
 
-    if (!title || !clientId || !dueDate) {
-      return NextResponse.json({ error: 'Title, client, and due date are required' }, { status: 400 })
+    if (!project || !clientId || !dueDate) {
+      return NextResponse.json({ error: 'Project, client, and due date are required' }, { status: 400 })
     }
 
     // Generate invoice number
@@ -108,8 +108,8 @@ export async function POST(request: NextRequest) {
     const invoice = await prisma.invoice.create({
       data: {
         invoiceNumber,
-        title,
-        description: description || '',
+        project,
+        projectDescription: projectDescription || '',
         status: status || 'draft',
         dueDate: new Date(dueDate),
         subtotal: parseFloat(subtotal) || 0,

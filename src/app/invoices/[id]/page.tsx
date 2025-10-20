@@ -39,8 +39,8 @@ interface InvoiceItem {
 interface Invoice {
   id: string
   invoiceNumber: string
-  title: string
-  description: string
+  project: string
+  projectDescription: string
   status: "draft" | "sent" | "paid" | "overdue" | "cancelled"
   subtotal: number
   taxRate: number
@@ -88,7 +88,7 @@ export default function InvoiceDetailPage() {
           setEmailData({
             to: data.client.email,
             subject: `Invoice ${data.invoiceNumber} from ${data.userName || 'GeoBilling'}`,
-            message: `Dear ${data.client.name},\n\nPlease find attached invoice ${data.invoiceNumber} for ${data.title}.\n\nTotal Amount: $${(data.total || 0).toFixed(2)}\nDue Date: ${new Date(data.dueDate).toLocaleDateString()}\n\nThank you for your business.\n\nBest regards,\n${data.userName || 'GeoBilling Team'}`
+            message: `Dear ${data.client.name},\n\nPlease find attached invoice ${data.invoiceNumber} for ${data.project}.\n\nTotal Amount: $${(data.total || 0).toFixed(2)}\nDue Date: ${new Date(data.dueDate).toLocaleDateString()}\n\nThank you for your business.\n\nBest regards,\n${data.userName || 'GeoBilling Team'}`
           })
         } else {
           console.error('Error fetching invoice details')
@@ -430,7 +430,7 @@ export default function InvoiceDetailPage() {
         <div style={{backgroundColor: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.75rem', padding: '2rem', marginBottom: '2rem'}}>
           <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem'}}>
             <div>
-              <h1 style={{fontSize: '2.25rem', fontWeight: 'bold', color: 'white', marginBottom: '0.5rem'}}>{invoice.title}</h1>
+              <h1 style={{fontSize: '2.25rem', fontWeight: 'bold', color: 'white', marginBottom: '0.5rem'}}>{invoice.project}</h1>
               <p style={{fontSize: '1.125rem', color: '#cbd5e1'}}>Invoice #{invoice.invoiceNumber}</p>
             </div>
             <div style={{
