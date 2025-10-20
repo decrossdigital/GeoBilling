@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useParams, useRouter } from 'next/navigation'
-import { ArrowLeft, Music, Home, Users, FileText, DollarSign, User, Settings, Edit, Save, X, Edit2 } from 'lucide-react'
+import { ArrowLeft, Music, Home, Users, FileText, DollarSign, User, Settings, Edit, Save, X } from 'lucide-react'
 import Link from 'next/link'
 import UserMenu from '@/components/user-menu'
 import QuoteHeader from '@/components/quotes/QuoteHeader'
@@ -680,27 +680,6 @@ export default function QuoteDetailPage() {
 
         {/* Action Buttons */}
         <div style={{display: 'flex', gap: '1rem', marginBottom: '2rem', flexWrap: 'wrap'}}>
-          {quote.status === 'draft' && (
-            <Link
-              href={`/quotes/${quote.id}/edit`}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                padding: '0.75rem 1.5rem',
-                background: 'linear-gradient(to right, #9333ea, #3b82f6)',
-                border: 'none',
-                borderRadius: '0.5rem',
-                color: 'white',
-                cursor: 'pointer',
-                fontWeight: '500',
-                textDecoration: 'none'
-              }}
-            >
-              <Edit2 style={{height: '1rem', width: '1rem'}} />
-              Edit Quote
-            </Link>
-          )}
           {!isEditing ? (
             <button
               onClick={handleEditClick}
@@ -760,27 +739,25 @@ export default function QuoteDetailPage() {
               </button>
             </>
           )}
-          {quote.status === 'draft' && (
-            <button
-              onClick={() => setShowEmailModal(true)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                padding: '0.75rem 1.5rem',
-                backgroundColor: 'linear-gradient(to right, #3b82f6, #6366f1)',
-                background: 'linear-gradient(to right, #3b82f6, #6366f1)',
-                border: 'none',
-                borderRadius: '0.5rem',
-                color: 'white',
-                cursor: 'pointer',
-                fontWeight: '500'
-              }}
-            >
-              <FileText style={{height: '1rem', width: '1rem'}} />
-              Send Quote
-            </button>
-          )}
+          <button
+            onClick={() => setShowEmailModal(true)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              padding: '0.75rem 1.5rem',
+              backgroundColor: 'linear-gradient(to right, #3b82f6, #6366f1)',
+              background: 'linear-gradient(to right, #3b82f6, #6366f1)',
+              border: 'none',
+              borderRadius: '0.5rem',
+              color: 'white',
+              cursor: 'pointer',
+              fontWeight: '500'
+            }}
+          >
+            <FileText style={{height: '1rem', width: '1rem'}} />
+            Send via Email
+          </button>
           <button
             onClick={handleConvertToInvoice}
             disabled={converting}
