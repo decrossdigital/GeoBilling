@@ -28,8 +28,8 @@ interface Client {
 interface Invoice {
   id: string
   invoiceNumber: string
-  title: string
-  description: string
+  project: string
+  projectDescription: string
   status: string
   issueDate: string
   dueDate: string
@@ -165,8 +165,8 @@ export default function EditInvoicePage() {
 
       const updatedInvoice = {
         ...invoiceData,
-        title: invoiceData.title,
-        description: invoiceData.description,
+        project: invoiceData.project,
+        projectDescription: invoiceData.projectDescription,
         status: "draft",
         dueDate: dueDate,
         subtotal: subtotal,

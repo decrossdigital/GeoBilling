@@ -93,8 +93,8 @@ export async function PUT(
 
     const body = await request.json()
     const { 
-      title, 
-      description, 
+      project, 
+      projectDescription, 
       status, 
       dueDate, 
       subtotal, 
@@ -127,28 +127,33 @@ export async function PUT(
       return NextResponse.json({ error: 'Invoice not found' }, { status: 404 })
     }
 
-    // Update invoice
+    // Update invoice - only update fields that are provided
+    const updateData: any = {}
+    if (project !== undefined) updateData.project = project
+    if (projectDescription !== undefined) updateData.projectDescription = projectDescription
+    if (status !== undefined) updateData.status = status
+    if (dueDate !== undefined) updateData.dueDate = new Date(dueDate)
+    if (subtotal !== undefined) updateData.subtotal = parseFloat(subtotal)
+    if (taxRate !== undefined) updateData.taxRate = parseFloat(taxRate)
+    if (taxAmount !== undefined) updateData.taxAmount = parseFloat(taxAmount)
+    if (total !== undefined) updateData.total = parseFloat(total)
+    if (notes !== undefined) updateData.notes = notes
+    if (terms !== undefined) updateData.terms = terms
+    if (paymentMethod !== undefined) updateData.paymentMethod = paymentMethod
+    if (paymentReference !== undefined) updateData.paymentReference = paymentReference
+    if (clientId !== undefined) updateData.clientId = clientId
+    if (clientName !== undefined) updateData.clientName = clientName
+    if (clientEmail !== undefined) updateData.clientEmail = clientEmail
+    if (clientPhone !== undefined) updateData.clientPhone = clientPhone
+    if (clientAddress !== undefined) updateData.clientAddress = clientAddress
+    if (quoteId !== undefined) updateData.quoteId = quoteId || null
+
     const updatedInvoice = await prisma.invoice.update({
       where: { id: resolvedParams.id },
-      data: {
-        title,
-        description,
-        status,
-        dueDate: new Date(dueDate),
-        subtotal: parseFloat(subtotal),
-        taxRate: parseFloat(taxRate),
-        taxAmount: parseFloat(taxAmount),
-        total: parseFloat(total),
-        notes,
-        terms,
-        paymentMethod,
-        paymentReference,
-        clientId,
-        clientName,
-        clientEmail,
-        clientPhone,
-        clientAddress,
-        quoteId: quoteId || null
+      data: updateData,
+      include: {
+        client: true,
+        items: true
       }
     })
 

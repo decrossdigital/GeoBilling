@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useParams, useRouter } from 'next/navigation'
-import { ArrowLeft, Music, Home, Users, FileText, DollarSign, User, Settings, CreditCard, Send, Download, Edit, Trash2, CheckCircle, Clock, XCircle } from 'lucide-react'
+import { ArrowLeft, Music, Home, Users, FileText, DollarSign, User, Settings, CreditCard, Send, Download, Edit, Trash2, CheckCircle, Clock, XCircle, Save, X } from 'lucide-react'
 import Link from 'next/link'
 
 interface Client {
@@ -72,6 +72,14 @@ export default function InvoiceDetailPage() {
   const [sendingEmail, setSendingEmail] = useState(false)
   const [showPaymentModal, setShowPaymentModal] = useState(false)
   const [processingPayment, setProcessingPayment] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
+  const [editData, setEditData] = useState({
+    project: '',
+    projectDescription: '',
+    notes: '',
+    terms: '',
+    dueDate: ''
+  })
   const [emailData, setEmailData] = useState({
     to: '',
     subject: '',
@@ -206,6 +214,60 @@ export default function InvoiceDetailPage() {
         console.error('Error deleting invoice:', error)
         alert('Error deleting invoice')
       }
+    }
+  }
+
+  const handleEditClick = () => {
+    if (invoice) {
+      setEditData({
+        project: invoice.project || '',
+        projectDescription: invoice.projectDescription || '',
+        notes: invoice.notes || '',
+        terms: invoice.terms || '',
+        dueDate: invoice.dueDate ? new Date(invoice.dueDate).toISOString().split('T')[0] : ''
+      })
+      setIsEditing(true)
+    }
+  }
+
+  const handleCancelEdit = () => {
+    setIsEditing(false)
+  }
+
+  const handleEditDataChange = (field: keyof typeof editData, value: string) => {
+    setEditData(prev => ({
+      ...prev,
+      [field]: value
+    }))
+  }
+
+  const handleSaveEdit = async () => {
+    try {
+      const response = await fetch(`/api/invoices/${invoiceId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          project: editData.project,
+          projectDescription: editData.projectDescription,
+          notes: editData.notes,
+          terms: editData.terms,
+          dueDate: editData.dueDate
+        })
+      })
+
+      if (response.ok) {
+        const updatedInvoice = await response.json()
+        setInvoice(updatedInvoice)
+        setIsEditing(false)
+        alert('Invoice details updated successfully!')
+      } else {
+        alert('Failed to update invoice details')
+      }
+    } catch (error) {
+      console.error('Error updating invoice:', error)
+      alert('Error updating invoice details')
     }
   }
 
@@ -348,7 +410,67 @@ export default function InvoiceDetailPage() {
             Back to Invoices
           </button>
 
-          <div style={{display: 'flex', gap: '0.5rem'}}>
+          <div style={{display: 'flex', gap: '0.5rem', flexWrap: 'wrap'}}>
+            {invoice.status === 'draft' && !isEditing && (
+              <button
+                onClick={handleEditClick}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.75rem 1.5rem',
+                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                  border: '1px solid rgba(255, 255, 255, 0.3)',
+                  borderRadius: '0.5rem',
+                  color: 'white',
+                  cursor: 'pointer',
+                  fontWeight: '500'
+                }}
+              >
+                <Edit style={{height: '1rem', width: '1rem'}} />
+                Edit Details
+              </button>
+            )}
+            {isEditing && (
+              <>
+                <button
+                  onClick={handleSaveEdit}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    padding: '0.75rem 1.5rem',
+                    background: 'linear-gradient(to right, #10b981, #14b8a6)',
+                    border: 'none',
+                    borderRadius: '0.5rem',
+                    color: 'white',
+                    cursor: 'pointer',
+                    fontWeight: '500'
+                  }}
+                >
+                  <Save style={{height: '1rem', width: '1rem'}} />
+                  Save Changes
+                </button>
+                <button
+                  onClick={handleCancelEdit}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    padding: '0.75rem 1.5rem',
+                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                    borderRadius: '0.5rem',
+                    color: 'white',
+                    cursor: 'pointer',
+                    fontWeight: '500'
+                  }}
+                >
+                  <X style={{height: '1rem', width: '1rem'}} />
+                  Cancel
+                </button>
+              </>
+            )}
             {invoice.status === 'sent' && (
               <button
                 onClick={() => setShowPaymentModal(true)}
@@ -426,57 +548,105 @@ export default function InvoiceDetailPage() {
           </div>
         </div>
 
-        {/* Invoice Title and Status */}
+        {/* Invoice Header with Client and Project Information */}
         <div style={{backgroundColor: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.75rem', padding: '2rem', marginBottom: '2rem'}}>
-          <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem'}}>
-            <div>
-              <h1 style={{fontSize: '2.25rem', fontWeight: 'bold', color: 'white', marginBottom: '0.5rem'}}>{invoice.project}</h1>
-              <p style={{fontSize: '1.125rem', color: '#cbd5e1'}}>Invoice #{invoice.invoiceNumber}</p>
+          <div style={{display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '1.5rem'}}>
+            <div style={{flex: 1}}>
+              <h1 style={{fontSize: '2.25rem', fontWeight: 'bold', color: 'white', marginBottom: '1rem'}}>
+                Invoice #{invoice.invoiceNumber}
+              </h1>
+              
+              {/* Client and Project Information */}
+              <div style={{marginBottom: '1.5rem'}}>
+                <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem'}}>
+                  <div>
+                    <span style={{color: '#cbd5e1', fontSize: '0.875rem'}}>Name:</span>
+                    <p style={{color: 'white', margin: '0', fontWeight: '500'}}>{invoice.client.name}</p>
+                  </div>
+                  <div>
+                    <span style={{color: '#cbd5e1', fontSize: '0.875rem'}}>Email:</span>
+                    <p style={{color: 'white', margin: '0', fontWeight: '500'}}>{invoice.client.email}</p>
+                  </div>
+                  <div>
+                    <span style={{color: '#cbd5e1', fontSize: '0.875rem'}}>Phone:</span>
+                    <p style={{color: 'white', margin: '0', fontWeight: '500'}}>{invoice.client.phone || 'Not provided'}</p>
+                  </div>
+                  <div>
+                    <span style={{color: '#cbd5e1', fontSize: '0.875rem'}}>Address:</span>
+                    <p style={{color: 'white', margin: '0', fontWeight: '500'}}>{invoice.client.address || 'Not provided'}</p>
+                  </div>
+                  <div>
+                    <span style={{color: '#cbd5e1', fontSize: '0.875rem'}}>Project:</span>
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        value={editData.project}
+                        onChange={(e) => handleEditDataChange('project', e.target.value)}
+                        style={{
+                          width: '100%',
+                          padding: '0.5rem',
+                          backgroundColor: 'rgba(59, 130, 246, 0.15)',
+                          border: '2px solid rgba(59, 130, 246, 0.5)',
+                          borderRadius: '0.25rem',
+                          color: 'white',
+                          outline: 'none',
+                          marginTop: '0.25rem',
+                          boxShadow: '0 0 0 3px rgba(59, 130, 246, 0.1)',
+                          transition: 'all 0.2s'
+                        }}
+                        placeholder="Enter project name..."
+                      />
+                    ) : (
+                      <p style={{color: 'white', margin: '0', fontWeight: '500'}}>{invoice.project}</p>
+                    )}
+                  </div>
+                  <div>
+                    <span style={{color: '#cbd5e1', fontSize: '0.875rem'}}>Project Description:</span>
+                    {isEditing ? (
+                      <textarea
+                        value={editData.projectDescription}
+                        onChange={(e) => handleEditDataChange('projectDescription', e.target.value)}
+                        rows={3}
+                        style={{
+                          width: '100%',
+                          padding: '0.5rem',
+                          backgroundColor: 'rgba(59, 130, 246, 0.15)',
+                          border: '2px solid rgba(59, 130, 246, 0.5)',
+                          borderRadius: '0.25rem',
+                          color: 'white',
+                          outline: 'none',
+                          resize: 'vertical',
+                          marginTop: '0.25rem',
+                          boxShadow: '0 0 0 3px rgba(59, 130, 246, 0.1)',
+                          transition: 'all 0.2s'
+                        }}
+                        placeholder="Describe the project details..."
+                      />
+                    ) : (
+                      <p style={{color: 'white', margin: '0', fontWeight: '500'}}>{invoice.projectDescription || 'Not provided'}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
-            <div style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              padding: '0.75rem 1rem',
-              borderRadius: '0.5rem',
-              fontSize: '0.875rem',
-              fontWeight: '500',
-              backgroundColor: getStatusBgColor(invoice.status),
-              color: getStatusColor(invoice.status)
-            }}>
-              {getStatusIcon(invoice.status)}
-              {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
+            
+            {/* Status Badge */}
+            <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', backgroundColor: 'rgba(255, 255, 255, 0.1)', borderRadius: '0.5rem', border: '1px solid rgba(255, 255, 255, 0.2)'}}>
+              <div style={{
+                width: '0.5rem',
+                height: '0.5rem',
+                borderRadius: '50%',
+                backgroundColor: getStatusColor(invoice.status)
+              }} />
+              <span style={{color: 'white', fontWeight: '500', textTransform: 'capitalize'}}>{invoice.status}</span>
             </div>
           </div>
         </div>
 
         {/* Two Column Layout */}
         <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem'}}>
-          {/* Left Column - Client Info and Invoice Details */}
+          {/* Left Column - Invoice Details */}
           <div>
-            {/* Client Information */}
-            <div style={{backgroundColor: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.75rem', padding: '1.5rem', marginBottom: '2rem'}}>
-              <h2 style={{fontSize: '1.25rem', fontWeight: 'bold', color: 'white', marginBottom: '1rem'}}>Client Information</h2>
-              <div style={{display: 'flex', flexDirection: 'column', gap: '0.75rem'}}>
-                <div>
-                  <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>Name</label>
-                  <div style={{fontWeight: '500', color: 'white'}}>{invoice.client.name}</div>
-                </div>
-                <div>
-                  <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>Email</label>
-                  <div style={{color: 'white'}}>{invoice.client.email}</div>
-                </div>
-                <div>
-                  <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>Phone</label>
-                  <div style={{color: 'white'}}>{invoice.client.phone}</div>
-                </div>
-                <div>
-                  <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>Address</label>
-                  <div style={{color: 'white'}}>{invoice.client.address}</div>
-                </div>
-              </div>
-            </div>
-
             {/* Invoice Details */}
             <div style={{backgroundColor: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.75rem', padding: '1.5rem', marginBottom: '2rem'}}>
               <h2 style={{fontSize: '1.25rem', fontWeight: 'bold', color: 'white', marginBottom: '1rem'}}>Invoice Details</h2>
@@ -593,22 +763,61 @@ export default function InvoiceDetailPage() {
         </div>
 
         {/* Terms and Notes */}
-        {(invoice.terms || invoice.notes) && (
-          <div style={{backgroundColor: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.75rem', padding: '1.5rem', marginTop: '2rem'}}>
-            {invoice.terms && (
-              <div style={{marginBottom: '1.5rem'}}>
-                <h3 style={{fontSize: '1.125rem', fontWeight: 'bold', color: 'white', marginBottom: '0.75rem'}}>Terms & Conditions</h3>
-                <div style={{color: '#cbd5e1', lineHeight: '1.6'}}>{invoice.terms}</div>
-              </div>
-            )}
-            {invoice.notes && (
-              <div>
-                <h3 style={{fontSize: '1.125rem', fontWeight: 'bold', color: 'white', marginBottom: '0.75rem'}}>Notes</h3>
-                <div style={{color: '#cbd5e1', lineHeight: '1.6'}}>{invoice.notes}</div>
-              </div>
+        <div style={{backgroundColor: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.75rem', padding: '1.5rem', marginTop: '2rem'}}>
+          <div style={{marginBottom: '1.5rem'}}>
+            <h2 style={{fontSize: '1.25rem', fontWeight: 'bold', color: 'white', marginBottom: '1rem'}}>Terms & Conditions</h2>
+            {isEditing ? (
+              <textarea
+                value={editData.terms}
+                onChange={(e) => handleEditDataChange('terms', e.target.value)}
+                rows={4}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  backgroundColor: 'rgba(59, 130, 246, 0.15)',
+                  border: '2px solid rgba(59, 130, 246, 0.5)',
+                  borderRadius: '0.25rem',
+                  color: 'white',
+                  outline: 'none',
+                  resize: 'vertical',
+                  fontSize: '0.875rem',
+                  lineHeight: '1.6',
+                  boxShadow: '0 0 0 3px rgba(59, 130, 246, 0.1)',
+                  transition: 'all 0.2s'
+                }}
+                placeholder="Enter terms and conditions..."
+              />
+            ) : (
+              <p style={{fontSize: '0.875rem', color: '#cbd5e1', lineHeight: '1.6', margin: 0}}>{invoice.terms || 'No terms specified'}</p>
             )}
           </div>
-        )}
+          <div>
+            <h2 style={{fontSize: '1.25rem', fontWeight: 'bold', color: 'white', marginBottom: '1rem'}}>Notes</h2>
+            {isEditing ? (
+              <textarea
+                value={editData.notes}
+                onChange={(e) => handleEditDataChange('notes', e.target.value)}
+                rows={3}
+                style={{
+                  width: '100%',
+                  padding: '0.5rem',
+                  backgroundColor: 'rgba(59, 130, 246, 0.15)',
+                  border: '2px solid rgba(59, 130, 246, 0.5)',
+                  borderRadius: '0.25rem',
+                  color: 'white',
+                  outline: 'none',
+                  resize: 'vertical',
+                  marginTop: '0.25rem',
+                  boxShadow: '0 0 0 3px rgba(59, 130, 246, 0.1)',
+                  transition: 'all 0.2s'
+                }}
+                placeholder="Enter notes..."
+              />
+            ) : (
+              <p style={{fontSize: '0.875rem', color: '#cbd5e1', lineHeight: '1.6', margin: 0}}>{invoice.notes || 'No notes specified'}</p>
+            )}
+          </div>
+        </div>
 
         {/* Email Modal */}
         {showEmailModal && (
