@@ -6,7 +6,7 @@ services:
     plan: free
     region: oregon
     buildCommand: npm install && npx prisma generate && npm run build
-    startCommand: npx prisma db push && npm start
+    startCommand: npx prisma db push --accept-data-loss && npm start
     envVars:
       - key: NEXTAUTH_URL
         value: https://geobilling-app.onrender.com
