@@ -99,12 +99,24 @@ export default function ClientsPage() {
     }
 
     try {
+      // Only send non-empty fields
+      const clientData: any = {
+        email: newClient.email
+      }
+      if (newClient.firstName) clientData.firstName = newClient.firstName
+      if (newClient.lastName) clientData.lastName = newClient.lastName
+      if (newClient.company) clientData.company = newClient.company
+      if (newClient.phone) clientData.phone = newClient.phone
+      if (newClient.address) clientData.address = newClient.address
+      if (newClient.website) clientData.website = newClient.website
+      if (newClient.notes) clientData.notes = newClient.notes
+
       const response = await fetch('/api/clients', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(newClient),
+        body: JSON.stringify(clientData),
       })
 
       if (response.ok) {
