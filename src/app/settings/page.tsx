@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
 import { 
-  Settings, Building, Save, Music, Mail, Phone, Globe, MapPin, CheckCircle, AlertCircle, Percent, MessageSquare
+  Settings, Building, Save, Music, Mail, Phone, Globe, MapPin, CheckCircle, AlertCircle, Percent, MessageSquare, Briefcase, Plus, X
 } from "lucide-react"
 import Navigation from "@/components/navigation"
 import Link from "next/link"
@@ -40,16 +40,34 @@ export default function SettingsPage() {
     quoteBody: "Dear {{clientName}},\n\nThank you for your interest in our services. We're pleased to present our quote for \"{{project}}\".\n\nQUOTE DETAILS\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nQuote Number: {{quoteNumber}}\nValid Until: {{validUntil}}\nTotal Amount: ${{total}}\n\n{{servicesSection}}\n\n{{contractorsSection}}\n\nNOTES\n{{notes}}\n\nTERMS & CONDITIONS\n{{terms}}\n\nYou can view the complete quote details and accept online at:\n{{quoteUrl}}\n\nIf you have any questions about this quote, please contact us at:\n{{companyEmail}} | {{companyPhone}}\n\nBest regards,\n{{companyName}}"
   })
 
+  const DEFAULT_SKILLS = [
+    'Vocals', 'Guitar', 'Bass', 'Piano', 'Keyboard', 'Organ',
+    'Drums', 'Percussion', 'Saxophone', 'Trumpet', 'Violin',
+    'Mixing', 'Mastering', 'Production', 'Recording Engineer',
+    'Sound Design', 'Songwriting', 'Arranging', 'Audio Editing'
+  ]
+
+  const [availableSkills, setAvailableSkills] = useState<string[]>(DEFAULT_SKILLS)
+  const [newSkill, setNewSkill] = useState('')
   const [savedStatus, setSavedStatus] = useState<"idle" | "saving" | "success" | "error">("idle")
 
-  // Load email templates from localStorage on mount
+  // Load email templates and skills from localStorage on mount
   useEffect(() => {
-    const saved = localStorage.getItem('emailTemplates')
-    if (saved) {
+    const savedTemplates = localStorage.getItem('emailTemplates')
+    if (savedTemplates) {
       try {
-        setEmailTemplates(JSON.parse(saved))
+        setEmailTemplates(JSON.parse(savedTemplates))
       } catch (error) {
         console.error('Failed to load email templates:', error)
+      }
+    }
+
+    const savedSkills = localStorage.getItem('availableSkills')
+    if (savedSkills) {
+      try {
+        setAvailableSkills(JSON.parse(savedSkills))
+      } catch (error) {
+        console.error('Failed to load skills:', error)
       }
     }
   }, [])
@@ -57,8 +75,9 @@ export default function SettingsPage() {
   const handleSave = async () => {
     setSavedStatus("saving")
     try {
-      // Save email templates to localStorage
+      // Save email templates and skills to localStorage
       localStorage.setItem('emailTemplates', JSON.stringify(emailTemplates))
+      localStorage.setItem('availableSkills', JSON.stringify(availableSkills))
       
       // In a real app, this would also save company settings to the database
       await new Promise(resolve => setTimeout(resolve, 500))
@@ -68,6 +87,17 @@ export default function SettingsPage() {
       setSavedStatus("error")
       setTimeout(() => setSavedStatus("idle"), 3000)
     }
+  }
+
+  const handleAddSkill = () => {
+    if (newSkill.trim() && !availableSkills.includes(newSkill.trim())) {
+      setAvailableSkills([...availableSkills, newSkill.trim()])
+      setNewSkill('')
+    }
+  }
+
+  const handleRemoveSkill = (skill: string) => {
+    setAvailableSkills(availableSkills.filter(s => s !== skill))
   }
 
   const updateField = (field: keyof CompanySettings, value: string | number) => {
@@ -263,6 +293,93 @@ export default function SettingsPage() {
               </p>
             </div>
           </div>
+        </div>
+
+        {/* Skills Management */}
+        <div style={{backgroundColor: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.75rem', padding: '1.5rem', marginTop: '2rem'}}>
+          <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem'}}>
+            <Briefcase style={{height: '1.5rem', width: '1.5rem', color: '#a78bfa'}} />
+            <h2 style={{fontSize: '1.25rem', fontWeight: 'bold', color: 'white'}}>Contractor Skills</h2>
+          </div>
+
+          <p style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '1rem'}}>
+            Manage the available skills for contractors. These skills will be used to filter and assign contractors to quotes.
+          </p>
+
+          {/* Add New Skill */}
+          <div style={{display: 'flex', gap: '0.5rem', marginBottom: '1.5rem'}}>
+            <input
+              type="text"
+              value={newSkill}
+              onChange={(e) => setNewSkill(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleAddSkill()}
+              style={{flex: 1, padding: '0.5rem', backgroundColor: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.25rem', color: 'white', outline: 'none'}}
+              placeholder="Enter new skill..."
+            />
+            <button
+              onClick={handleAddSkill}
+              disabled={!newSkill.trim()}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                padding: '0.5rem 1rem',
+                background: newSkill.trim() ? 'linear-gradient(to right, #10b981, #059669)' : 'rgba(255, 255, 255, 0.1)',
+                color: newSkill.trim() ? 'white' : '#94a3b8',
+                border: 'none',
+                borderRadius: '0.25rem',
+                cursor: newSkill.trim() ? 'pointer' : 'not-allowed',
+                fontWeight: '500',
+                fontSize: '0.875rem'
+              }}
+            >
+              <Plus style={{height: '1rem', width: '1rem'}} />
+              Add
+            </button>
+          </div>
+
+          {/* Skills Grid */}
+          <div style={{display: 'flex', flexWrap: 'wrap', gap: '0.5rem'}}>
+            {availableSkills.map(skill => (
+              <div
+                key={skill}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.5rem 0.75rem',
+                  backgroundColor: 'rgba(147, 51, 234, 0.2)',
+                  border: '1px solid rgba(147, 51, 234, 0.3)',
+                  borderRadius: '9999px',
+                  fontSize: '0.875rem',
+                  color: '#e9d5ff'
+                }}
+              >
+                <span>{skill}</span>
+                <button
+                  onClick={() => handleRemoveSkill(skill)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    background: 'none',
+                    border: 'none',
+                    color: '#e9d5ff',
+                    cursor: 'pointer',
+                    padding: 0
+                  }}
+                  title={`Remove ${skill}`}
+                >
+                  <X style={{height: '0.875rem', width: '0.875rem'}} />
+                </button>
+              </div>
+            ))}
+          </div>
+
+          {availableSkills.length === 0 && (
+            <p style={{fontSize: '0.875rem', color: '#94a3b8', fontStyle: 'italic', marginTop: '1rem'}}>
+              No skills added yet. Add your first skill above.
+            </p>
+          )}
         </div>
 
         {/* Email Templates */}
