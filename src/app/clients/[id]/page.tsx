@@ -34,11 +34,15 @@ import {
 
 interface Client {
   id: string
+  firstName?: string
+  lastName?: string
   name: string
   company: string
   email: string
   phone: string
   address?: string
+  website?: string
+  notes?: string
   status: string
   createdAt: string
   updatedAt: string
@@ -92,11 +96,14 @@ export default function ClientDetailPage() {
   })
   const [sendingEmail, setSendingEmail] = useState(false)
   const [editForm, setEditForm] = useState({
-    name: "",
+    firstName: "",
+    lastName: "",
     company: "",
     email: "",
     phone: "",
     address: "",
+    website: "",
+    notes: "",
     status: ""
   })
 
@@ -113,11 +120,14 @@ export default function ClientDetailPage() {
           const clientData = await clientResponse.json()
           setClient(clientData)
           setEditForm({
-            name: clientData.name,
-            company: clientData.company,
+            firstName: clientData.firstName || "",
+            lastName: clientData.lastName || "",
+            company: clientData.company || "",
             email: clientData.email,
-            phone: clientData.phone,
+            phone: clientData.phone || "",
             address: clientData.address || "",
+            website: clientData.website || "",
+            notes: clientData.notes || "",
             status: clientData.status
           })
         }
@@ -157,13 +167,13 @@ export default function ClientDetailPage() {
     if (!client) return
 
     // Basic validation
-    if (!editForm.name.trim()) {
-      alert('Client name is required')
+    if (!editForm.email.trim()) {
+      alert('Email is required')
       return
     }
 
-    if (!editForm.email.trim()) {
-      alert('Email is required')
+    if (!editForm.firstName.trim() && !editForm.company.trim()) {
+      alert('Either first name or company is required')
       return
     }
 
@@ -430,22 +440,40 @@ export default function ClientDetailPage() {
             <div style={{flex: 1}}>
               <h1 style={{fontSize: '2.25rem', fontWeight: 'bold', color: 'white', marginBottom: '0.5rem'}}>
                 {editing ? (
-                  <input
-                    type="text"
-                    value={editForm.name}
-                    onChange={(e) => setEditForm({...editForm, name: e.target.value})}
-                    style={{
-                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                      border: '1px solid rgba(255, 255, 255, 0.2)',
-                      borderRadius: '0.5rem',
-                      padding: '0.5rem',
-                      color: 'white',
-                      fontSize: '2.25rem',
-                      fontWeight: 'bold',
-                      width: '300px'
-                    }}
-                    placeholder="Enter client name"
-                  />
+                  <div style={{display: 'flex', gap: '0.5rem'}}>
+                    <input
+                      type="text"
+                      value={editForm.firstName}
+                      onChange={(e) => setEditForm({...editForm, firstName: e.target.value})}
+                      style={{
+                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                        border: '1px solid rgba(255, 255, 255, 0.2)',
+                        borderRadius: '0.5rem',
+                        padding: '0.5rem',
+                        color: 'white',
+                        fontSize: '2.25rem',
+                        fontWeight: 'bold',
+                        width: '200px'
+                      }}
+                      placeholder="First name"
+                    />
+                    <input
+                      type="text"
+                      value={editForm.lastName}
+                      onChange={(e) => setEditForm({...editForm, lastName: e.target.value})}
+                      style={{
+                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                        border: '1px solid rgba(255, 255, 255, 0.2)',
+                        borderRadius: '0.5rem',
+                        padding: '0.5rem',
+                        color: 'white',
+                        fontSize: '2.25rem',
+                        fontWeight: 'bold',
+                        width: '200px'
+                      }}
+                      placeholder="Last name"
+                    />
+                  </div>
                 ) : (
                   client.name
                 )}
@@ -612,11 +640,14 @@ export default function ClientDetailPage() {
                         setEditing(false)
                         // Reset form to original values
                         setEditForm({
-                          name: client.name,
-                          company: client.company,
+                          firstName: client.firstName || "",
+                          lastName: client.lastName || "",
+                          company: client.company || "",
                           email: client.email,
-                          phone: client.phone,
+                          phone: client.phone || "",
                           address: client.address || "",
+                          website: client.website || "",
+                          notes: client.notes || "",
                           status: client.status
                         })
                       }}
