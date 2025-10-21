@@ -101,15 +101,17 @@ export default function ClientsPage() {
     try {
       // Only send non-empty fields
       const clientData: any = {
-        email: newClient.email
+        email: newClient.email.trim()
       }
-      if (newClient.firstName) clientData.firstName = newClient.firstName
-      if (newClient.lastName) clientData.lastName = newClient.lastName
-      if (newClient.company) clientData.company = newClient.company
-      if (newClient.phone) clientData.phone = newClient.phone
-      if (newClient.address) clientData.address = newClient.address
-      if (newClient.website) clientData.website = newClient.website
-      if (newClient.notes) clientData.notes = newClient.notes
+      if (newClient.firstName?.trim()) clientData.firstName = newClient.firstName.trim()
+      if (newClient.lastName?.trim()) clientData.lastName = newClient.lastName.trim()
+      if (newClient.company?.trim()) clientData.company = newClient.company.trim()
+      if (newClient.phone?.trim()) clientData.phone = newClient.phone.trim()
+      if (newClient.address?.trim()) clientData.address = newClient.address.trim()
+      if (newClient.website?.trim()) clientData.website = newClient.website.trim()
+      if (newClient.notes?.trim()) clientData.notes = newClient.notes.trim()
+
+      console.log('Sending client data:', clientData)
 
       const response = await fetch('/api/clients', {
         method: 'POST',
