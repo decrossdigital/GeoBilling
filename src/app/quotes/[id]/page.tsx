@@ -11,13 +11,17 @@ import QuoteDetails from '@/components/quotes/QuoteDetails'
 import QuoteServices from '@/components/quotes/QuoteServices'
 import QuoteContractors from '@/components/quotes/QuoteContractors'
 import QuoteModals from '@/components/quotes/QuoteModals'
+import { processQuoteTemplate, getClientName } from '@/lib/template-processor'
 
 interface Client {
   id: string
+  firstName?: string
+  lastName?: string
   name: string
   email: string
   phone: string
   address: string
+  company?: string
 }
 
 interface Contractor {
@@ -87,6 +91,11 @@ export default function QuoteDetailPage() {
     subject: '',
     message: ''
   })
+  const [originalTemplate, setOriginalTemplate] = useState({
+    subject: '',
+    message: ''
+  })
+  const [showPreview, setShowPreview] = useState(false)
   const [serviceForm, setServiceForm] = useState({
     serviceName: '',
     description: '',
@@ -229,6 +238,53 @@ export default function QuoteDetailPage() {
     } finally {
       setConverting(false)
     }
+  }
+
+  const handleOpenEmailModal = () => {
+    if (!quote) return
+
+    // Load email templates from localStorage
+    const savedTemplates = localStorage.getItem('emailTemplates')
+    const templates = savedTemplates ? JSON.parse(savedTemplates) : {
+      quoteSubject: "Quote {{quoteNumber}} - {{project}}",
+      quoteBody: "Dear {{clientName}},\n\nThank you for your interest in our services. We're pleased to present our quote for \"{{project}}\".\n\nQUOTE DETAILS\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nQuote Number: {{quoteNumber}}\nValid Until: {{validUntil}}\nTotal Amount: ${{total}}\n\n{{servicesSection}}\n\n{{contractorsSection}}\n\nNOTES\n{{notes}}\n\nTERMS & CONDITIONS\n{{terms}}\n\nYou can view the complete quote details and accept online at:\n{{quoteUrl}}\n\nIf you have any questions about this quote, please contact us at:\n{{companyEmail}} | {{companyPhone}}\n\nBest regards,\n{{companyName}}"
+    }
+
+    // Company settings (would come from settings in real app)
+    const companySettings = {
+      name: "Uniquitous Music",
+      email: "george@uniquitousmusic.com",
+      phone: "(609) 316-8080",
+      address: "123 Music Studio Lane, NJ 08540"
+    }
+
+    const quoteUrl = `${window.location.origin}/quotes/${quoteId}`
+
+    // Process templates
+    const processedSubject = processQuoteTemplate(templates.quoteSubject, quote, companySettings, quoteUrl)
+    const processedBody = processQuoteTemplate(templates.quoteBody, quote, companySettings, quoteUrl)
+
+    // Save original for reset functionality
+    setOriginalTemplate({
+      subject: processedSubject,
+      message: processedBody
+    })
+
+    setEmailData({
+      to: quote.client.email,
+      subject: processedSubject,
+      message: processedBody
+    })
+
+    setShowEmailModal(true)
+  }
+
+  const handleResetToTemplate = () => {
+    setEmailData({
+      ...emailData,
+      subject: originalTemplate.subject,
+      message: originalTemplate.message
+    })
   }
 
   const handleDeleteQuote = async () => {
@@ -768,7 +824,7 @@ export default function QuoteDetailPage() {
             </>
           )}
           <button
-            onClick={() => setShowEmailModal(true)}
+            onClick={handleOpenEmailModal}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -1014,6 +1070,9 @@ export default function QuoteDetailPage() {
           onEmailDataChange={handleEmailDataChange}
           onServiceFormChange={handleServiceFormChange}
           onSelectedContractorChange={setSelectedContractor}
+          onResetTemplate={handleResetToTemplate}
+          showPreview={showPreview}
+          onTogglePreview={() => setShowPreview(!showPreview)}
         />
       </div>
     </div>

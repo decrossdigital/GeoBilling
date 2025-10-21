@@ -42,15 +42,14 @@ export async function POST(request: NextRequest) {
 
 
 
-    // Send the actual email using Resend
+    // Send the actual email using Resend with custom subject and message
     try {
-      await sendQuoteEmail(
+      const { sendEmail } = await import('@/lib/email')
+      await sendEmail({
         to,
-        quote.clientName,
-        quote.quoteNumber,
-        Number(quote.total),
-        `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/quotes/${quoteId}`
-      )
+        subject,
+        html: message.replace(/\n/g, '<br>')  // Convert newlines to HTML breaks
+      })
 
       // Update quote status to 'sent'
       await prisma.quote.update({

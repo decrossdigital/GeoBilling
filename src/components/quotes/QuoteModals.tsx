@@ -56,6 +56,9 @@ interface QuoteModalsProps {
   onEmailDataChange: (field: string, value: string) => void
   onServiceFormChange: (field: string, value: string | number) => void
   onSelectedContractorChange: (value: string) => void
+  onResetTemplate?: () => void
+  showPreview?: boolean
+  onTogglePreview?: () => void
 }
 
 export default function QuoteModals({
@@ -82,7 +85,10 @@ export default function QuoteModals({
   onEditContractor,
   onEmailDataChange,
   onServiceFormChange,
-  onSelectedContractorChange
+  onSelectedContractorChange,
+  onResetTemplate,
+  showPreview = false,
+  onTogglePreview
 }: QuoteModalsProps) {
   return (
     <>
@@ -150,53 +156,108 @@ export default function QuoteModals({
               <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#374151' }}>
                 Message:
               </label>
-              <textarea
-                value={emailData.message}
-                onChange={(e) => onEmailDataChange('message', e.target.value)}
-                rows={6}
-                style={{
+              {showPreview ? (
+                <div style={{
                   width: '100%',
                   padding: '12px',
-                  border: '1px solid #d1d5db',
+                  border: '1px solid rgba(59, 130, 246, 0.3)',
                   borderRadius: '8px',
+                  backgroundColor: '#f8f9fa',
+                  color: '#1f2937',
+                  minHeight: '150px',
+                  whiteSpace: 'pre-wrap',
                   fontSize: '16px',
-                  resize: 'vertical'
-                }}
-              />
+                  lineHeight: '1.6'
+                }}>
+                  {emailData.message}
+                </div>
+              ) : (
+                <textarea
+                  value={emailData.message}
+                  onChange={(e) => onEmailDataChange('message', e.target.value)}
+                  rows={6}
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '8px',
+                    fontSize: '16px',
+                    resize: 'vertical'
+                  }}
+                />
+              )}
             </div>
-            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-              <button
-                onClick={onCloseEmailModal}
-                style={{
-                  padding: '10px 20px',
-                  backgroundColor: '#6b7280',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: '500'
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={onSendEmail}
-                disabled={sendingEmail}
-                style={{
-                  padding: '10px 20px',
-                  backgroundColor: '#3b82f6',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  opacity: sendingEmail ? 0.5 : 1
-                }}
-              >
-                {sendingEmail ? 'Sending...' : 'Send Email'}
-              </button>
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'space-between' }}>
+              <div style={{display: 'flex', gap: '10px'}}>
+                {onResetTemplate && (
+                  <button
+                    onClick={onResetTemplate}
+                    style={{
+                      padding: '10px 20px',
+                      backgroundColor: 'rgba(147, 51, 234, 0.2)',
+                      color: '#a78bfa',
+                      border: '1px solid rgba(147, 51, 234, 0.3)',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                      fontWeight: '500'
+                    }}
+                  >
+                    🔄 Reset to Template
+                  </button>
+                )}
+                {onTogglePreview && (
+                  <button
+                    onClick={onTogglePreview}
+                    style={{
+                      padding: '10px 20px',
+                      backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                      color: '#60a5fa',
+                      border: '1px solid rgba(59, 130, 246, 0.3)',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                      fontWeight: '500'
+                    }}
+                  >
+                    👁️ {showPreview ? 'Edit' : 'Preview'}
+                  </button>
+                )}
+              </div>
+              <div style={{display: 'flex', gap: '10px'}}>
+                <button
+                  onClick={onCloseEmailModal}
+                  style={{
+                    padding: '10px 20px',
+                    backgroundColor: '#6b7280',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: '500'
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={onSendEmail}
+                  disabled={sendingEmail}
+                  style={{
+                    padding: '10px 20px',
+                    backgroundColor: '#3b82f6',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    opacity: sendingEmail ? 0.5 : 1
+                  }}
+                >
+                  {sendingEmail ? 'Sending...' : 'Send Email'}
+                </button>
+              </div>
             </div>
           </div>
         </div>

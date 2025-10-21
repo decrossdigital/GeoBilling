@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
 import { 
   Settings, Building, Save, Music, Mail, Phone, Globe, MapPin, CheckCircle, AlertCircle, Percent, MessageSquare
@@ -37,43 +37,31 @@ export default function SettingsPage() {
 
   const [emailTemplates, setEmailTemplates] = useState({
     quoteSubject: "Quote {{quoteNumber}} - {{project}}",
-    quoteBody: `Dear {{clientName}},
-
-Thank you for your interest in our services. We're pleased to present our quote for "{{project}}".
-
-QUOTE DETAILS
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Quote Number: {{quoteNumber}}
-Valid Until: {{validUntil}}
-Total Amount: ${{total}}
-
-{{servicesSection}}
-
-{{contractorsSection}}
-
-NOTES
-{{notes}}
-
-TERMS & CONDITIONS
-{{terms}}
-
-You can view the complete quote details and accept online at:
-{{quoteUrl}}
-
-If you have any questions about this quote, please contact us at:
-{{companyEmail}} | {{companyPhone}}
-
-Best regards,
-{{companyName}}`
+    quoteBody: "Dear {{clientName}},\n\nThank you for your interest in our services. We're pleased to present our quote for \"{{project}}\".\n\nQUOTE DETAILS\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nQuote Number: {{quoteNumber}}\nValid Until: {{validUntil}}\nTotal Amount: ${{total}}\n\n{{servicesSection}}\n\n{{contractorsSection}}\n\nNOTES\n{{notes}}\n\nTERMS & CONDITIONS\n{{terms}}\n\nYou can view the complete quote details and accept online at:\n{{quoteUrl}}\n\nIf you have any questions about this quote, please contact us at:\n{{companyEmail}} | {{companyPhone}}\n\nBest regards,\n{{companyName}}"
   })
 
   const [savedStatus, setSavedStatus] = useState<"idle" | "saving" | "success" | "error">("idle")
 
+  // Load email templates from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('emailTemplates')
+    if (saved) {
+      try {
+        setEmailTemplates(JSON.parse(saved))
+      } catch (error) {
+        console.error('Failed to load email templates:', error)
+      }
+    }
+  }, [])
+
   const handleSave = async () => {
     setSavedStatus("saving")
     try {
-      // In a real app, this would save to the database
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      // Save email templates to localStorage
+      localStorage.setItem('emailTemplates', JSON.stringify(emailTemplates))
+      
+      // In a real app, this would also save company settings to the database
+      await new Promise(resolve => setTimeout(resolve, 500))
       setSavedStatus("success")
       setTimeout(() => setSavedStatus("idle"), 3000)
     } catch (error) {
