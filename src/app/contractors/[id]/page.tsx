@@ -103,7 +103,19 @@ export default function ContractorDetailPage() {
     notes: "",
     status: "active" as "active" | "inactive"
   })
-  const [skillsInput, setSkillsInput] = useState("")
+  const [availableSkills, setAvailableSkills] = useState<string[]>([])
+
+  useEffect(() => {
+    // Load available skills from localStorage
+    const savedSkills = localStorage.getItem('availableSkills')
+    if (savedSkills) {
+      try {
+        setAvailableSkills(JSON.parse(savedSkills))
+      } catch (error) {
+        console.error('Failed to load skills:', error)
+      }
+    }
+  }, [])
 
   useEffect(() => {
     const fetchContractorData = async () => {
@@ -129,7 +141,6 @@ export default function ContractorDetailPage() {
             notes: contractorData.notes || "",
             status: contractorData.status
           })
-          setSkillsInput(contractorData.skills?.join(', ') || "")
         }
 
         // Fetch contractor statistics (placeholder for now)
@@ -169,6 +180,15 @@ export default function ContractorDetailPage() {
     fetchContractorData()
   }, [session, contractorId])
 
+  const toggleSkill = (skill: string) => {
+    setEditForm(prev => ({
+      ...prev,
+      skills: prev.skills.includes(skill)
+        ? prev.skills.filter(s => s !== skill)
+        : [...prev.skills, skill]
+    }))
+  }
+
   const handleSaveEdit = async () => {
     if (!contractor) return
 
@@ -189,10 +209,7 @@ export default function ContractorDetailPage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          ...editForm,
-          skills: skillsInput.split(',').map(skill => skill.trim()).filter(skill => skill.length > 0)
-        }),
+        body: JSON.stringify(editForm),
       })
 
       if (response.ok) {
@@ -477,28 +494,67 @@ export default function ContractorDetailPage() {
                     )}
                   </span>
                 </div>
-                <div style={{display: 'flex', alignItems: 'center', gap: '0.75rem'}}>
-                  <Wrench style={{height: '1rem', width: '1rem', color: '#cbd5e1'}} />
-                  <span style={{color: 'white'}}>
-                    {editing ? (
-                      <input
-                        type="text"
-                        value={skillsInput}
-                        onChange={(e) => setSkillsInput(e.target.value)}
-                        style={{
-                          backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                          border: '1px solid rgba(255, 255, 255, 0.2)',
-                          borderRadius: '0.25rem',
-                          padding: '0.25rem',
-                          color: 'white',
-                          width: '250px'
-                        }}
-                        placeholder="Enter skills (comma separated)"
-                      />
-                    ) : (
-                      contractor.skills?.join(', ') || <span style={{color: '#94a3b8', fontStyle: 'italic'}}>No skills listed</span>
-                    )}
-                  </span>
+                <div style={{display: 'flex', flexDirection: 'column', gap: '0.5rem', width: '100%'}}>
+                  <div style={{display: 'flex', alignItems: 'center', gap: '0.75rem'}}>
+                    <Wrench style={{height: '1rem', width: '1rem', color: '#cbd5e1'}} />
+                    <span style={{color: 'white', fontWeight: '500'}}>Skills:</span>
+                  </div>
+                  {editing ? (
+                    <div style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
+                      gap: '0.5rem',
+                      padding: '0.75rem',
+                      backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                      borderRadius: '0.5rem',
+                      border: '1px solid rgba(255, 255, 255, 0.1)'
+                    }}>
+                      {availableSkills.map(skill => (
+                        <label
+                          key={skill}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.5rem',
+                            cursor: 'pointer',
+                            padding: '0.25rem',
+                            color: '#cbd5e1',
+                            fontSize: '0.875rem'
+                          }}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={editForm.skills.includes(skill)}
+                            onChange={() => toggleSkill(skill)}
+                            style={{cursor: 'pointer'}}
+                          />
+                          <span>{skill}</span>
+                        </label>
+                      ))}
+                    </div>
+                  ) : (
+                    <div style={{display: 'flex', flexWrap: 'wrap', gap: '0.5rem', paddingLeft: '1.75rem'}}>
+                      {contractor.skills && contractor.skills.length > 0 ? (
+                        contractor.skills.map(skill => (
+                          <span
+                            key={skill}
+                            style={{
+                              padding: '0.25rem 0.75rem',
+                              backgroundColor: 'rgba(147, 51, 234, 0.2)',
+                              border: '1px solid rgba(147, 51, 234, 0.3)',
+                              borderRadius: '9999px',
+                              fontSize: '0.875rem',
+                              color: '#e9d5ff'
+                            }}
+                          >
+                            {skill}
+                          </span>
+                        ))
+                      ) : (
+                        <span style={{color: '#94a3b8', fontStyle: 'italic'}}>No skills listed</span>
+                      )}
+                    </div>
+                  )}
                 </div>
                 <div style={{display: 'flex', alignItems: 'center', gap: '0.75rem'}}>
                   <DollarSign style={{height: '1rem', width: '1rem', color: '#cbd5e1'}} />
@@ -612,12 +668,11 @@ export default function ContractorDetailPage() {
                           address: contractor.address,
                           skills: contractor.skills || [],
                           pricingType: contractor.pricingType,
-                          rate: contractor.rate,
-                          currency: contractor.currency,
-                          notes: contractor.notes || "",
-                          status: contractor.status
-                        })
-                        setSkillsInput(contractor.skills?.join(', ') || "")
+                        rate: contractor.rate,
+                        currency: contractor.currency,
+                        notes: contractor.notes || "",
+                        status: contractor.status
+                      })
                       }}
                       style={{
                         display: 'flex',
