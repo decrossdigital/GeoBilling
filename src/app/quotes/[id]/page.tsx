@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useParams, useRouter } from 'next/navigation'
-import { ArrowLeft, Music, Home, Users, FileText, DollarSign, User, Settings, Edit, Save, X } from 'lucide-react'
+import { ArrowLeft, Music, Home, Users, FileText, DollarSign, User, Settings, Edit, Save, X, Trash2 } from 'lucide-react'
 import Link from 'next/link'
 import UserMenu from '@/components/user-menu'
 import QuoteHeader from '@/components/quotes/QuoteHeader'
@@ -228,6 +228,28 @@ export default function QuoteDetailPage() {
       alert('Error converting quote to invoice')
     } finally {
       setConverting(false)
+    }
+  }
+
+  const handleDeleteQuote = async () => {
+    if (!confirm('Are you sure you want to delete this quote? This action cannot be undone.')) {
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/quotes/${quoteId}`, {
+        method: 'DELETE'
+      })
+
+      if (response.ok) {
+        alert('Quote deleted successfully!')
+        router.push('/quotes')
+      } else {
+        alert('Failed to delete quote')
+      }
+    } catch (error) {
+      console.error('Error deleting quote:', error)
+      alert('Error deleting quote')
     }
   }
 
@@ -928,6 +950,28 @@ export default function QuoteDetailPage() {
               <p style={{fontSize: '0.875rem', color: '#cbd5e1', lineHeight: '1.6', margin: 0}}>{new Date(quote.validUntil).toLocaleDateString()}</p>
             )}
           </div>
+        </div>
+
+        {/* Delete Quote Button */}
+        <div style={{marginTop: '2rem', paddingTop: '2rem', borderTop: '1px solid rgba(255, 255, 255, 0.1)'}}>
+          <button
+            onClick={handleDeleteQuote}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              padding: '0.75rem 1.5rem',
+              backgroundColor: 'rgba(239, 68, 68, 0.2)',
+              border: '1px solid rgba(239, 68, 68, 0.3)',
+              borderRadius: '0.5rem',
+              color: '#f87171',
+              cursor: 'pointer',
+              fontWeight: '500'
+            }}
+          >
+            <Trash2 style={{height: '1rem', width: '1rem'}} />
+            Delete Quote
+          </button>
         </div>
 
         {/* Quote Modals Component */}
