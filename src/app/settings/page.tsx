@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { useSession } from "next-auth/react"
 import { 
-  Settings, Building, Save, Music, Mail, Phone, Globe, MapPin, CheckCircle, AlertCircle, Percent
+  Settings, Building, Save, Music, Mail, Phone, Globe, MapPin, CheckCircle, AlertCircle, Percent, MessageSquare
 } from "lucide-react"
 import Navigation from "@/components/navigation"
 import Link from "next/link"
@@ -33,6 +33,38 @@ export default function SettingsPage() {
     industry: "Music Production & Audio Engineering",
     taxId: "12-3456789",
     taxRate: 8
+  })
+
+  const [emailTemplates, setEmailTemplates] = useState({
+    quoteSubject: "Quote {{quoteNumber}} - {{project}}",
+    quoteBody: `Dear {{clientName}},
+
+Thank you for your interest in our services. We're pleased to present our quote for "{{project}}".
+
+QUOTE DETAILS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Quote Number: {{quoteNumber}}
+Valid Until: {{validUntil}}
+Total Amount: ${{total}}
+
+{{servicesSection}}
+
+{{contractorsSection}}
+
+NOTES
+{{notes}}
+
+TERMS & CONDITIONS
+{{terms}}
+
+You can view the complete quote details and accept online at:
+{{quoteUrl}}
+
+If you have any questions about this quote, please contact us at:
+{{companyEmail}} | {{companyPhone}}
+
+Best regards,
+{{companyName}}`
   })
 
   const [savedStatus, setSavedStatus] = useState<"idle" | "saving" | "success" | "error">("idle")
@@ -243,6 +275,66 @@ export default function SettingsPage() {
               </p>
             </div>
           </div>
+        </div>
+
+        {/* Email Templates */}
+        <div style={{backgroundColor: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.75rem', padding: '1.5rem', marginTop: '2rem'}}>
+          <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem'}}>
+            <MessageSquare style={{height: '1.5rem', width: '1.5rem', color: '#a78bfa'}} />
+            <h2 style={{fontSize: '1.25rem', fontWeight: 'bold', color: 'white'}}>Quote Email Template</h2>
+          </div>
+
+          <div style={{marginBottom: '1rem'}}>
+            <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>Email Subject</label>
+            <input
+              type="text"
+              value={emailTemplates.quoteSubject}
+              onChange={(e) => setEmailTemplates({...emailTemplates, quoteSubject: e.target.value})}
+              style={{width: '100%', padding: '0.5rem', backgroundColor: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.25rem', color: 'white', outline: 'none'}}
+              placeholder="Enter email subject template..."
+            />
+          </div>
+
+          <div style={{marginBottom: '1rem'}}>
+            <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>Email Body</label>
+            <textarea
+              value={emailTemplates.quoteBody}
+              onChange={(e) => setEmailTemplates({...emailTemplates, quoteBody: e.target.value})}
+              rows={15}
+              style={{width: '100%', padding: '0.75rem', backgroundColor: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.25rem', color: 'white', outline: 'none', resize: 'vertical', fontFamily: 'monospace', fontSize: '0.875rem', lineHeight: '1.5'}}
+              placeholder="Enter email body template..."
+            />
+          </div>
+
+          <details style={{marginBottom: '1rem'}}>
+            <summary style={{cursor: 'pointer', color: '#a78bfa', fontSize: '0.875rem', fontWeight: '500', marginBottom: '0.5rem'}}>
+              📋 Available Merge Fields (click to expand)
+            </summary>
+            <div style={{backgroundColor: 'rgba(147, 51, 234, 0.1)', border: '1px solid rgba(147, 51, 234, 0.2)', borderRadius: '0.5rem', padding: '1rem', marginTop: '0.5rem'}}>
+              <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.75rem', fontSize: '0.75rem', fontFamily: 'monospace'}}>
+                <div><span style={{color: '#fbbf24'}}>{'{{clientName}}'}</span> <span style={{color: '#94a3b8'}}>- Client full name</span></div>
+                <div><span style={{color: '#fbbf24'}}>{'{{clientFirstName}}'}</span> <span style={{color: '#94a3b8'}}>- First name</span></div>
+                <div><span style={{color: '#fbbf24'}}>{'{{clientLastName}}'}</span> <span style={{color: '#94a3b8'}}>- Last name</span></div>
+                <div><span style={{color: '#fbbf24'}}>{'{{clientEmail}}'}</span> <span style={{color: '#94a3b8'}}>- Email</span></div>
+                <div><span style={{color: '#fbbf24'}}>{'{{clientPhone}}'}</span> <span style={{color: '#94a3b8'}}>- Phone</span></div>
+                <div><span style={{color: '#fbbf24'}}>{'{{clientAddress}}'}</span> <span style={{color: '#94a3b8'}}>- Address</span></div>
+                <div><span style={{color: '#fbbf24'}}>{'{{clientCompany}}'}</span> <span style={{color: '#94a3b8'}}>- Company</span></div>
+                <div><span style={{color: '#fbbf24'}}>{'{{quoteNumber}}'}</span> <span style={{color: '#94a3b8'}}>- Quote number</span></div>
+                <div><span style={{color: '#fbbf24'}}>{'{{project}}'}</span> <span style={{color: '#94a3b8'}}>- Project name</span></div>
+                <div><span style={{color: '#fbbf24'}}>{'{{projectDescription}}'}</span> <span style={{color: '#94a3b8'}}>- Project desc</span></div>
+                <div><span style={{color: '#fbbf24'}}>{'{{total}}'}</span> <span style={{color: '#94a3b8'}}>- Total amount</span></div>
+                <div><span style={{color: '#fbbf24'}}>{'{{validUntil}}'}</span> <span style={{color: '#94a3b8'}}>- Valid until date</span></div>
+                <div><span style={{color: '#fbbf24'}}>{'{{notes}}'}</span> <span style={{color: '#94a3b8'}}>- Quote notes</span></div>
+                <div><span style={{color: '#fbbf24'}}>{'{{terms}}'}</span> <span style={{color: '#94a3b8'}}>- Terms & conditions</span></div>
+                <div><span style={{color: '#fbbf24'}}>{'{{servicesSection}}'}</span> <span style={{color: '#94a3b8'}}>- Services list</span></div>
+                <div><span style={{color: '#fbbf24'}}>{'{{contractorsSection}}'}</span> <span style={{color: '#94a3b8'}}>- Contractors list</span></div>
+                <div><span style={{color: '#fbbf24'}}>{'{{quoteUrl}}'}</span> <span style={{color: '#94a3b8'}}>- View quote link</span></div>
+                <div><span style={{color: '#fbbf24'}}>{'{{companyName}}'}</span> <span style={{color: '#94a3b8'}}>- Your company</span></div>
+                <div><span style={{color: '#fbbf24'}}>{'{{companyEmail}}'}</span> <span style={{color: '#94a3b8'}}>- Your email</span></div>
+                <div><span style={{color: '#fbbf24'}}>{'{{companyPhone}}'}</span> <span style={{color: '#94a3b8'}}>- Your phone</span></div>
+              </div>
+            </div>
+          </details>
         </div>
       </div>
     </div>
