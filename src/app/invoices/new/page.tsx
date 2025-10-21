@@ -8,11 +8,20 @@ import { ArrowLeft, Save, Send, ChevronRight, ChevronLeft, Plus, Trash2, Music, 
 
 interface Client {
   id: string
-  name: string
+  firstName?: string
+  lastName?: string
   email: string
   company: string
   phone?: string
   address?: string
+}
+
+// Helper function to get display name
+const getClientName = (client: Client) => {
+  if (client.firstName && client.lastName) {
+    return `${client.firstName} ${client.lastName}`
+  }
+  return client.firstName || client.company || 'Unnamed Client'
 }
 
 interface Quote {
@@ -297,7 +306,7 @@ export default function NewInvoicePage() {
       }))
 
       const invoiceData = {
-        project: project || `Invoice for ${selectedClient.name}`,
+        project: project || `Invoice for ${getClientName(selectedClient)}`,
         projectDescription: projectDescription || "Professional music production services",
         status: "draft",
         dueDate: defaultDueDate,
@@ -308,7 +317,7 @@ export default function NewInvoicePage() {
         notes: notes,
         terms: `Payment due within ${paymentTerms}`,
         clientId: selectedClient.id,
-        clientName: selectedClient.name,
+        clientName: getClientName(selectedClient),
         clientEmail: selectedClient.email,
         clientPhone: selectedClient.phone || "",
         clientAddress: selectedClient.address || "",
@@ -367,7 +376,7 @@ export default function NewInvoicePage() {
       }))
 
       const invoiceData = {
-        project: project || `Invoice for ${selectedClient.name}`,
+        project: project || `Invoice for ${getClientName(selectedClient)}`,
         projectDescription: projectDescription || "Professional music production services",
         status: "sent",
         dueDate: defaultDueDate,
@@ -378,7 +387,7 @@ export default function NewInvoicePage() {
         notes: notes,
         terms: `Payment due within ${paymentTerms}`,
         clientId: selectedClient.id,
-        clientName: selectedClient.name,
+        clientName: getClientName(selectedClient),
         clientEmail: selectedClient.email,
         clientPhone: selectedClient.phone || "",
         clientAddress: selectedClient.address || "",
@@ -639,7 +648,7 @@ export default function NewInvoicePage() {
                           transition: 'all 0.2s'
                         }}
                       >
-                        <div style={{fontWeight: '500', color: 'white', marginBottom: '0.25rem'}}>{client.name}</div>
+                        <div style={{fontWeight: '500', color: 'white', marginBottom: '0.25rem'}}>{getClientName(client)}</div>
                         <div style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem'}}>{client.company}</div>
                         <div style={{fontSize: '0.875rem', color: '#94a3b8'}}>{client.email}</div>
                       </div>

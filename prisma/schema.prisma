@@ -101,7 +101,6 @@ model Client {
   id          String   @id @default(cuid())
   firstName   String?
   lastName    String?
-  name        String?  // Computed field for backward compatibility
   email       String
   phone       String?
   address     String?

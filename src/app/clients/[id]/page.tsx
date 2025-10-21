@@ -36,7 +36,6 @@ interface Client {
   id: string
   firstName?: string
   lastName?: string
-  name: string
   company: string
   email: string
   phone: string
@@ -46,6 +45,14 @@ interface Client {
   status: string
   createdAt: string
   updatedAt: string
+}
+
+// Helper function to get display name
+const getClientName = (client: Client) => {
+  if (client.firstName && client.lastName) {
+    return `${client.firstName} ${client.lastName}`
+  }
+  return client.firstName || client.company || 'Unnamed Client'
 }
 
 interface ClientStats {
@@ -475,7 +482,7 @@ export default function ClientDetailPage() {
                     />
                   </div>
                 ) : (
-                  client.name
+                  getClientName(client)
                 )}
               </h1>
               <p style={{color: '#cbd5e1', fontSize: '1.125rem', marginBottom: '1rem'}}>
@@ -1119,7 +1126,7 @@ export default function ClientDetailPage() {
             }}>
               <h3 style={{color: 'white', fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem'}}>Delete Client</h3>
               <p style={{color: '#cbd5e1', marginBottom: '2rem'}}>
-                Are you sure you want to delete {client.name}? This action cannot be undone.
+                Are you sure you want to delete {getClientName(client)}? This action cannot be undone.
               </p>
               <div style={{display: 'flex', gap: '1rem', justifyContent: 'flex-end'}}>
                 <button

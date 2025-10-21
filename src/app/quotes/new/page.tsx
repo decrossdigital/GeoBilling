@@ -8,11 +8,20 @@ import { ArrowLeft, Save, Send, ChevronRight, ChevronLeft, Plus, Trash2, Music, 
 
 interface Client {
   id: string
-  name: string
+  firstName?: string
+  lastName?: string
   email: string
   company: string
   phone?: string
   address?: string
+}
+
+// Helper function to get display name
+const getClientName = (client: Client) => {
+  if (client.firstName && client.lastName) {
+    return `${client.firstName} ${client.lastName}`
+  }
+  return client.firstName || client.company || 'Unnamed Client'
 }
 
 interface ServiceTemplate {
@@ -251,7 +260,7 @@ export default function NewQuotePage() {
       }))
       
       const quoteData = {
-        title: `Quote for ${selectedClient.name}`,
+        title: `Quote for ${getClientName(selectedClient)}`,
         description: "Professional music production services",
         project: project,
         projectDescription: projectDescription,
@@ -264,7 +273,7 @@ export default function NewQuotePage() {
         notes: quoteNotes,
         terms: "Payment due within 30 days",
         clientId: selectedClient.id,
-        clientName: selectedClient.name,
+        clientName: getClientName(selectedClient),
         clientEmail: selectedClient.email,
         clientPhone: selectedClient.phone || "",
         clientAddress: selectedClient.address || "",
@@ -324,7 +333,7 @@ export default function NewQuotePage() {
       }))
       
       const quoteData = {
-        title: `Quote for ${selectedClient.name}`,
+        title: `Quote for ${getClientName(selectedClient)}`,
         description: "Professional music production services",
         project: project,
         projectDescription: projectDescription,
@@ -337,7 +346,7 @@ export default function NewQuotePage() {
         notes: quoteNotes,
         terms: "Payment due within 30 days",
         clientId: selectedClient.id,
-        clientName: selectedClient.name,
+        clientName: getClientName(selectedClient),
         clientEmail: selectedClient.email,
         clientPhone: selectedClient.phone || "",
         clientAddress: selectedClient.address || "",
@@ -509,7 +518,7 @@ export default function NewQuotePage() {
                         <Users style={{height: '1.25rem', width: '1.25rem', color: '#a78bfa'}} />
                       </div>
                       <div>
-                        <div style={{fontWeight: '500', color: 'white'}}>{client.name}</div>
+                        <div style={{fontWeight: '500', color: 'white'}}>{getClientName(client)}</div>
                         <div style={{fontSize: '0.875rem', color: '#cbd5e1'}}>{client.company}</div>
                         <div style={{fontSize: '0.875rem', color: '#94a3b8'}}>{client.email}</div>
                       </div>

@@ -88,21 +88,17 @@ export async function PUT(
       return NextResponse.json({ error: 'Client not found' }, { status: 404 })
     }
 
-    // Compute full name for backward compatibility
-    const fullName = firstName && lastName ? `${firstName} ${lastName}` : firstName || company || ''
-
     const updatedClient = await prisma.client.update({
       where: { id: resolvedParams.id },
       data: {
-        firstName: firstName || '',
-        lastName: lastName || '',
-        name: fullName,
+        firstName: firstName || null,
+        lastName: lastName || null,
         email,
-        company: company || '',
-        phone: phone || '',
-        address: address || '',
-        website: website || '',
-        notes: notes || '',
+        company: company || null,
+        phone: phone || null,
+        address: address || null,
+        website: website || null,
+        notes: notes || null,
         status: status || 'active'
       }
     })

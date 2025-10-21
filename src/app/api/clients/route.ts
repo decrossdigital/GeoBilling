@@ -61,20 +61,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Either first name or company is required' }, { status: 400 })
     }
 
-    // Compute full name for backward compatibility
-    const fullName = firstName && lastName ? `${firstName} ${lastName}` : firstName || company || ''
-
     const client = await prisma.client.create({
       data: {
-        firstName: firstName || '',
-        lastName: lastName || '',
-        name: fullName,
+        firstName: firstName || null,
+        lastName: lastName || null,
         email,
-        company: company || '',
-        phone: phone || '',
-        address: address || '',
-        website: website || '',
-        notes: notes || '',
+        company: company || null,
+        phone: phone || null,
+        address: address || null,
+        website: website || null,
+        notes: notes || null,
         userId: user.id
       }
     })

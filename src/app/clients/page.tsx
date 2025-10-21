@@ -11,7 +11,6 @@ interface Client {
   id: string
   firstName?: string
   lastName?: string
-  name: string
   company: string
   email: string
   phone: string
@@ -21,6 +20,14 @@ interface Client {
   status: string
   createdAt: string
   updatedAt: string
+}
+
+// Helper function to get display name
+const getClientName = (client: Client) => {
+  if (client.firstName && client.lastName) {
+    return `${client.firstName} ${client.lastName}`
+  }
+  return client.firstName || client.company || 'Unnamed Client'
 }
 
 export default function ClientsPage() {
@@ -65,11 +72,15 @@ export default function ClientsPage() {
     }
   }, [session])
 
-  const filteredClients = clients.filter(client =>
-    client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    client.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    client.email.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  const filteredClients = clients.filter(client => {
+    const searchLower = searchTerm.toLowerCase()
+    return (
+      (client.firstName?.toLowerCase().includes(searchLower)) ||
+      (client.lastName?.toLowerCase().includes(searchLower)) ||
+      (client.company?.toLowerCase().includes(searchLower)) ||
+      (client.email?.toLowerCase().includes(searchLower))
+    )
+  })
 
   const totalClients = clients.length
   const activeClients = clients.filter(client => client.status === 'active').length
@@ -310,7 +321,7 @@ export default function ClientsPage() {
                   filteredClients.map((client) => (
                     <tr key={client.id} style={{borderTop: '1px solid rgba(255, 255, 255, 0.1)'}}>
                       <td style={{padding: '1rem'}}>
-                        <div style={{fontWeight: '500', color: 'white'}}>{client.name}</div>
+                        <div style={{fontWeight: '500', color: 'white'}}>{getClientName(client)}</div>
                       </td>
                       <td style={{padding: '1rem'}}>
                         <div style={{fontSize: '0.875rem', color: '#cbd5e1'}}>{client.company}</div>
