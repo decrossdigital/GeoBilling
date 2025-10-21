@@ -111,8 +111,6 @@ export default function ClientsPage() {
       if (newClient.website?.trim()) clientData.website = newClient.website.trim()
       if (newClient.notes?.trim()) clientData.notes = newClient.notes.trim()
 
-      console.log('Sending client data:', clientData)
-
       const response = await fetch('/api/clients', {
         method: 'POST',
         headers: {
