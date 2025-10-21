@@ -529,16 +529,16 @@ export default function ClientsPage() {
                 </button>
                 <button
                   onClick={handleAddClient}
-                  disabled={!newClient.name || !newClient.email}
+                  disabled={!newClient.email || (!newClient.firstName && !newClient.company)}
                   style={{
                     padding: '0.75rem 1.5rem',
                     background: 'linear-gradient(to right, #2563eb, #4f46e5)',
                     color: 'white',
                     borderRadius: '0.5rem',
                     border: 'none',
-                    cursor: (!newClient.name || !newClient.email) ? 'not-allowed' : 'pointer',
+                    cursor: (!newClient.email || (!newClient.firstName && !newClient.company)) ? 'not-allowed' : 'pointer',
                     flex: 1,
-                    opacity: (!newClient.name || !newClient.email) ? 0.5 : 1,
+                    opacity: (!newClient.email || (!newClient.firstName && !newClient.company)) ? 0.5 : 1,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
