@@ -99,7 +99,9 @@ model Setting {
 
 model Client {
   id          String   @id @default(cuid())
-  name        String
+  firstName   String?
+  lastName    String?
+  name        String?  // Computed field for backward compatibility
   email       String
   phone       String?
   address     String?

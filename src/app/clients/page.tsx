@@ -9,11 +9,15 @@ import Navigation from "@/components/navigation"
 
 interface Client {
   id: string
+  firstName?: string
+  lastName?: string
   name: string
   company: string
   email: string
   phone: string
   address?: string
+  website?: string
+  notes?: string
   status: string
   createdAt: string
   updatedAt: string
@@ -28,11 +32,14 @@ export default function ClientsPage() {
   const [loading, setLoading] = useState(true)
 
   const [newClient, setNewClient] = useState({
-    name: "",
+    firstName: "",
+    lastName: "",
     company: "",
     email: "",
     phone: "",
-    address: ""
+    address: "",
+    website: "",
+    notes: ""
   })
 
   // Fetch clients from API
@@ -70,27 +77,37 @@ export default function ClientsPage() {
   const avgRevenue = totalClients > 0 ? totalRevenue / totalClients : 0
 
   const handleAddClient = async () => {
-    if (newClient.name && newClient.email) {
-      try {
-        const response = await fetch('/api/clients', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(newClient),
-        })
+    // Validate: email is required, and either firstName or company is required
+    if (!newClient.email) {
+      alert('Email is required')
+      return
+    }
+    if (!newClient.firstName && !newClient.company) {
+      alert('Either first name or company is required')
+      return
+    }
 
-        if (response.ok) {
-          const createdClient = await response.json()
-          setClients([createdClient, ...clients])
-          setNewClient({ name: "", company: "", email: "", phone: "", address: "" })
-          setShowAddModal(false)
-        } else {
-          console.error('Failed to create client')
-        }
-      } catch (error) {
-        console.error('Error creating client:', error)
+    try {
+      const response = await fetch('/api/clients', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newClient),
+      })
+
+      if (response.ok) {
+        const createdClient = await response.json()
+        setClients([createdClient, ...clients])
+        setNewClient({ firstName: "", lastName: "", company: "", email: "", phone: "", address: "", website: "", notes: "" })
+        setShowAddModal(false)
+      } else {
+        const errorData = await response.json()
+        alert(errorData.error || 'Failed to create client')
       }
+    } catch (error) {
+      console.error('Error creating client:', error)
+      alert('Error creating client')
     }
   }
 
@@ -416,19 +433,31 @@ export default function ClientsPage() {
               </div>
               
               <div style={{display: 'flex', flexDirection: 'column', gap: '1rem'}}>
-                <div>
-                  <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>Name *</label>
-                  <input
-                    type="text"
-                    value={newClient.name}
-                    onChange={(e) => setNewClient({...newClient, name: e.target.value})}
-                    style={{width: '100%', padding: '0.75rem', backgroundColor: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.5rem', color: 'white', outline: 'none'}}
-                    placeholder="Enter client name"
-                  />
+                <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem'}}>
+                  <div>
+                    <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>First Name *</label>
+                    <input
+                      type="text"
+                      value={newClient.firstName}
+                      onChange={(e) => setNewClient({...newClient, firstName: e.target.value})}
+                      style={{width: '100%', padding: '0.75rem', backgroundColor: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.5rem', color: 'white', outline: 'none'}}
+                      placeholder="Enter first name"
+                    />
+                  </div>
+                  <div>
+                    <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>Last Name</label>
+                    <input
+                      type="text"
+                      value={newClient.lastName}
+                      onChange={(e) => setNewClient({...newClient, lastName: e.target.value})}
+                      style={{width: '100%', padding: '0.75rem', backgroundColor: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.5rem', color: 'white', outline: 'none'}}
+                      placeholder="Enter last name"
+                    />
+                  </div>
                 </div>
                 
                 <div>
-                  <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>Company</label>
+                  <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>Company *</label>
                   <input
                     type="text"
                     value={newClient.company}
@@ -436,6 +465,7 @@ export default function ClientsPage() {
                     style={{width: '100%', padding: '0.75rem', backgroundColor: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.5rem', color: 'white', outline: 'none'}}
                     placeholder="Enter company name"
                   />
+                  <p style={{fontSize: '0.75rem', color: '#94a3b8', marginTop: '0.25rem'}}>* Either first name or company is required</p>
                 </div>
                 
                 <div>

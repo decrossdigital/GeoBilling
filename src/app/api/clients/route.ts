@@ -50,19 +50,31 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { name, email, company, phone, address } = body
+    const { firstName, lastName, email, company, phone, address, website, notes } = body
 
-    if (!name || !email) {
-      return NextResponse.json({ error: 'Name and email are required' }, { status: 400 })
+    if (!email) {
+      return NextResponse.json({ error: 'Email is required' }, { status: 400 })
     }
+
+    // Validate: either firstName or company is required
+    if (!firstName && !company) {
+      return NextResponse.json({ error: 'Either first name or company is required' }, { status: 400 })
+    }
+
+    // Compute full name for backward compatibility
+    const fullName = firstName && lastName ? `${firstName} ${lastName}` : firstName || company || ''
 
     const client = await prisma.client.create({
       data: {
-        name,
+        firstName: firstName || '',
+        lastName: lastName || '',
+        name: fullName,
         email,
         company: company || '',
         phone: phone || '',
         address: address || '',
+        website: website || '',
+        notes: notes || '',
         userId: user.id
       }
     })
