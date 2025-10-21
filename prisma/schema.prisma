@@ -80,13 +80,14 @@ model VerificationToken {
 // ========================================
 
 model Setting {
-  id        String   @id @default(cuid())
-  key       String   @unique
-  value     String   @db.Text
-  category  String   // "company", "authentication", "payments", "email", "database"
-  userId    String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id              String   @id @default(cuid())
+  key             String   @unique
+  value           String   @db.Text
+  category        String   // "company", "authentication", "payments", "email", "database"
+  availableSkills String[] @default([]) // Array of available contractor skills
+  userId          String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -132,7 +133,9 @@ model Contractor {
   address     String?
   skills      String[] // Array of skills (e.g., ["mixing", "mastering", "recording"])
   pricingType String   @default("hourly") // "hourly" or "flat"
-  rate        Decimal  @db.Decimal(10, 2) // Rate (hourly or flat)
+  hourlyRate  Decimal? @db.Decimal(10, 2) // Hourly rate
+  flatRate    Decimal? @db.Decimal(10, 2) // Flat rate
+  rate        Decimal  @db.Decimal(10, 2) // Deprecated - kept for backward compatibility
   currency    String   @default("USD")
   status      String   @default("active") // "active", "inactive", "archived"
   notes       String?  @db.Text
@@ -141,9 +144,10 @@ model Contractor {
   updatedAt   DateTime @updatedAt
 
   // Relations
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  quoteItems  QuoteItem[]
-  invoiceItems InvoiceItem[]
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quoteItems       QuoteItem[]
+  invoiceItems     InvoiceItem[]
+  quoteContractors QuoteContractor[]
 
   @@map("contractors")
 }
@@ -212,9 +216,10 @@ model Quote {
   updatedAt   DateTime @updatedAt
 
   // Relations
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  client      Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  client      Client            @relation(fields: [clientId], references: [id], onDelete: Cascade)
   items       QuoteItem[]
+  contractors QuoteContractor[]
   invoices    Invoice[]
 
   @@map("quotes")
@@ -241,6 +246,27 @@ model QuoteItem {
   serviceTemplate ServiceTemplate? @relation(fields: [serviceTemplateId], references: [id])
 
   @@map("quote_items")
+}
+
+model QuoteContractor {
+  id             String   @id @default(cuid())
+  quoteId        String
+  contractorId   String
+  assignedSkills String[] // Skills for THIS specific assignment
+  rateType       String   // 'hourly' or 'flat'
+  hours          Decimal? @db.Decimal(10, 2) // null if flat rate
+  cost           Decimal  @db.Decimal(10, 2) // calculated cost
+  includeInTotal Boolean  @default(true) // whether to include in quote total
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  quote      Quote      @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  contractor Contractor @relation(fields: [contractorId], references: [id], onDelete: Cascade)
+
+  @@index([quoteId])
+  @@index([contractorId])
+  @@map("quote_contractors")
 }
 
 // ========================================
