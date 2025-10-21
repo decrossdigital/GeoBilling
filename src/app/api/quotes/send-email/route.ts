@@ -62,10 +62,25 @@ export async function POST(request: NextRequest) {
         quoteId,
         quoteNumber: quote.quoteNumber
       })
-    } catch (emailError) {
+    } catch (emailError: any) {
       console.error('Failed to send quote email:', emailError)
+      
+      // Check if it's a Resend validation error (email restriction)
+      if (emailError?.statusCode === 403 && emailError?.name === 'validation_error') {
+        return NextResponse.json(
+          { 
+            error: 'Email sending restricted. In testing mode, you can only send to george@uniquitousmusic.com. To send to other addresses, verify a domain at resend.com/domains.',
+            details: emailError.message 
+          },
+          { status: 403 }
+        )
+      }
+      
       return NextResponse.json(
-        { error: 'Failed to send email. Please try again.' },
+        { 
+          error: 'Failed to send email. Please try again.',
+          details: emailError?.message || 'Unknown error'
+        },
         { status: 500 }
       )
     }

@@ -174,7 +174,9 @@ export default function QuoteDetailPage() {
         setShowEmailModal(false)
         setQuote(prev => prev ? { ...prev, status: 'sent' } : null)
       } else {
-        alert('Failed to send quote')
+        const errorData = await response.json()
+        const errorMessage = errorData.error || 'Failed to send quote'
+        alert(`Failed to send quote: ${errorMessage}`)
       }
     } catch (error) {
       console.error('Error sending quote:', error)
