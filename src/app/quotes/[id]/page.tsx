@@ -899,7 +899,7 @@ export default function QuoteDetailPage() {
           {/* Left Column - Services */}
           <div>
             <QuoteServices
-              services={regularServices}
+              services={quote.items}
               onAddService={() => setShowAddServiceModal(true)}
               onEditService={handleEditServiceClick}
               onDeleteService={handleDeleteService}

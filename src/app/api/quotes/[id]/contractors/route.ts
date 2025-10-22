@@ -6,7 +6,7 @@ import { prisma } from '@/lib/prisma'
 // GET /api/quotes/[id]/contractors - Get all contractors for a quote
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -14,7 +14,7 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const quoteId = params.id
+    const { id: quoteId } = await params
 
     const contractors = await prisma.quoteContractor.findMany({
       where: { quoteId },
@@ -50,7 +50,7 @@ export async function GET(
 // POST /api/quotes/[id]/contractors - Assign contractor to quote
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -58,7 +58,7 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const quoteId = params.id
+    const { id: quoteId } = await params
     const body = await request.json()
     const { contractorId, assignedSkills, rateType, hours, cost, includeInTotal } = body
 

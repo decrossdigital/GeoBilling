@@ -6,7 +6,7 @@ import { prisma } from '@/lib/prisma'
 // PUT /api/quotes/[id]/contractors/[contractorId] - Update contractor assignment
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string; contractorId: string } }
+  { params }: { params: Promise<{ id: string; contractorId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -14,7 +14,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { contractorId } = params
+    const { contractorId } = await params
     const body = await request.json()
     const { assignedSkills, rateType, hours, cost, includeInTotal } = body
 
@@ -58,7 +58,7 @@ export async function PUT(
 // DELETE /api/quotes/[id]/contractors/[contractorId] - Remove contractor from quote
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string; contractorId: string } }
+  { params }: { params: Promise<{ id: string; contractorId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -66,7 +66,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { contractorId } = params
+    const { contractorId } = await params
 
     await prisma.quoteContractor.delete({
       where: { id: contractorId }
