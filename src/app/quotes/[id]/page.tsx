@@ -666,6 +666,13 @@ export default function QuoteDetailPage() {
     )
   }
 
+  // Calculate total with included contractor costs
+  const contractorCostsTotal = assignedContractors
+    .filter(c => c.includeInTotal)
+    .reduce((sum, c) => sum + Number(c.cost), 0)
+  
+  const grandTotal = Number(quote.total) + contractorCostsTotal
+
   return (
     <div style={{minHeight: '100vh', background: 'linear-gradient(to bottom right, #0f172a, #581c87, #0f172a)', color: 'white'}}>
       <div style={{maxWidth: '1200px', margin: '0 auto', padding: '2rem 1.5rem'}}>
@@ -986,11 +993,17 @@ export default function QuoteDetailPage() {
 
             {/* Right Column */}
             <div>
-              <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem'}}>
+              <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap'}}>
                 <div>
                   <span style={{color: '#cbd5e1', fontSize: '0.875rem'}}>Subtotal:</span>
                   <p style={{color: 'white', margin: '0', fontWeight: '500'}}>${quote.subtotal.toFixed(2)}</p>
                 </div>
+                {contractorCostsTotal > 0 && (
+                  <div>
+                    <span style={{color: '#cbd5e1', fontSize: '0.875rem'}}>Contractors:</span>
+                    <p style={{color: 'white', margin: '0', fontWeight: '500'}}>${contractorCostsTotal.toFixed(2)}</p>
+                  </div>
+                )}
                 <div>
                   <span style={{color: '#cbd5e1', fontSize: '0.875rem'}}>Tax Rate:</span>
                   <p style={{color: 'white', margin: '0', fontWeight: '500'}}>{quote.taxRate}%</p>
@@ -1001,7 +1014,7 @@ export default function QuoteDetailPage() {
                 </div>
                 <div>
                   <span style={{color: '#cbd5e1', fontSize: '0.875rem'}}>Total:</span>
-                  <p style={{color: 'white', margin: '0', fontSize: '1.25rem', fontWeight: '600'}}>${quote.total.toFixed(2)}</p>
+                  <p style={{color: 'white', margin: '0', fontSize: '1.25rem', fontWeight: '600'}}>${grandTotal.toFixed(2)}</p>
                 </div>
               </div>
             </div>

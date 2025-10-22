@@ -185,24 +185,6 @@ export default function QuoteContractors({
               </div>
             ))}
           </div>
-
-          {/* Total Contractor Costs */}
-          {contractors.length > 0 && (
-            <div style={{
-              borderTop: '1px solid rgba(255, 255, 255, 0.1)',
-              paddingTop: '0.75rem',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center'
-            }}>
-              <span style={{color: '#cbd5e1', fontSize: '0.875rem'}}>
-                Total Contractor Costs:
-              </span>
-              <span style={{color: 'white', fontWeight: 'bold', fontSize: '1rem'}}>
-                ${totalContractorCost.toFixed(2)}
-              </span>
-            </div>
-          )}
         </>
       )}
     </div>
