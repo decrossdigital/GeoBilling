@@ -50,7 +50,8 @@ export function processQuoteTemplate(
   companySettings: CompanySettings,
   quoteUrl: string,
   assignedContractors: any[] = [],
-  grandTotal?: number
+  grandTotal?: number,
+  approvalToken?: string
 ): string {
   const clientName = getClientName(quote.client)
   
@@ -94,6 +95,7 @@ export function processQuoteTemplate(
     
     // System fields
     .replace(/\{\{quoteUrl\}\}/g, quoteUrl)
+    .replace(/\{\{approvalUrl\}\}/g, approvalToken ? `${quoteUrl.replace('/quotes/', '/quote/')}/approve?token=${approvalToken}` : '')
     
     // Company fields
     .replace(/\{\{companyName\}\}/g, companySettings.name)

@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { quoteId, to, subject, message } = await request.json()
+    const { quoteId, to, subject, message, approvalToken } = await request.json()
 
     if (!quoteId || !to || !subject || !message) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -52,6 +52,9 @@ export async function POST(request: NextRequest) {
         html: message.replace(/\n/g, '<br>')  // Convert newlines to HTML breaks
       })
 
+      // Use provided approval token or generate one
+      const finalApprovalToken = approvalToken || `token_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`
+      
       // Update quote status to 'sent' and add activity log
       const updatedActivityLog = addActivityLog(quote.activityLog, ACTIVITY_ACTIONS.QUOTE_SENT, user.name || user.email)
       
@@ -59,6 +62,7 @@ export async function POST(request: NextRequest) {
         where: { id: quoteId },
         data: { 
           status: 'sent',
+          approvalToken: finalApprovalToken,
           activityLog: updatedActivityLog
         }
       })

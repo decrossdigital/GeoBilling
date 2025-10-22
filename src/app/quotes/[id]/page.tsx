@@ -229,6 +229,9 @@ export default function QuoteDetailPage() {
   const handleSendEmail = async () => {
     setSendingEmail(true)
     try {
+      // Generate approval token for this email
+      const approvalToken = `token_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`
+      
       const response = await fetch('/api/quotes/send-email', {
         method: 'POST',
         headers: {
@@ -238,7 +241,8 @@ export default function QuoteDetailPage() {
           quoteId: quoteId,
           to: emailData.to,
           subject: emailData.subject,
-          message: emailData.message
+          message: emailData.message,
+          approvalToken
         })
       })
 
@@ -341,9 +345,12 @@ export default function QuoteDetailPage() {
       .reduce((sum, c) => sum + Number(c.cost), 0)
     const calculatedGrandTotal = Number(quote.total) + contractorCostsTotal
 
-    // Process templates
-    const processedSubject = processQuoteTemplate(templates.quoteSubject, quote as any, companySettings, quoteUrl, assignedContractors, calculatedGrandTotal)
-    const processedBody = processQuoteTemplate(templates.quoteBody, quote as any, companySettings, quoteUrl, assignedContractors, calculatedGrandTotal)
+    // Generate approval token for this email
+    const approvalToken = `token_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`
+
+    // Process templates with approval token
+    const processedSubject = processQuoteTemplate(templates.quoteSubject, quote as any, companySettings, quoteUrl, assignedContractors, calculatedGrandTotal, approvalToken)
+    const processedBody = processQuoteTemplate(templates.quoteBody, quote as any, companySettings, quoteUrl, assignedContractors, calculatedGrandTotal, approvalToken)
 
     // Save original for reset functionality
     setOriginalTemplate({
