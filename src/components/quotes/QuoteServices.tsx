@@ -29,13 +29,15 @@ interface QuoteServicesProps {
   onAddService: () => void
   onEditService: (item: QuoteItem) => void
   onDeleteService: (itemId: string) => void
+  isEditable?: boolean
 }
 
 export default function QuoteServices({ 
   services, 
   onAddService, 
   onEditService,
-  onDeleteService 
+  onDeleteService,
+  isEditable = true
 }: QuoteServicesProps) {
   return (
     <div style={{
@@ -48,25 +50,27 @@ export default function QuoteServices({
     }}>
       <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem'}}>
         <h2 style={{fontSize: '1.25rem', fontWeight: 'bold', color: 'white', margin: 0}}>Services</h2>
-        <button
-          onClick={onAddService}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.25rem',
-            padding: '0.5rem 0.75rem',
-            background: 'rgba(255, 255, 255, 0.1)',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
-            borderRadius: '0.25rem',
-            color: 'white',
-            cursor: 'pointer',
-            fontSize: '0.75rem',
-            fontWeight: '500'
-          }}
-        >
-          <Plus style={{height: '0.875rem', width: '0.875rem'}} />
-          Add Service
-        </button>
+        {isEditable && (
+          <button
+            onClick={onAddService}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.25rem',
+              padding: '0.5rem 0.75rem',
+              background: 'rgba(255, 255, 255, 0.1)',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
+              borderRadius: '0.25rem',
+              color: 'white',
+              cursor: 'pointer',
+              fontSize: '0.75rem',
+              fontWeight: '500'
+            }}
+          >
+            <Plus style={{height: '0.875rem', width: '0.875rem'}} />
+            Add Service
+          </button>
+        )}
       </div>
       
       {services.length === 0 ? (
@@ -100,46 +104,48 @@ export default function QuoteServices({
                   </p>
                 </div>
               </div>
-              <div style={{display: 'flex', gap: '0.5rem', justifyContent: 'flex-end'}}>
-                <button
-                  onClick={() => onEditService(item)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.25rem',
-                    padding: '0.25rem 0.5rem',
-                    background: 'rgba(59, 130, 246, 0.2)',
-                    border: '1px solid rgba(59, 130, 246, 0.3)',
-                    borderRadius: '0.25rem',
-                    color: '#60a5fa',
-                    cursor: 'pointer',
-                    fontSize: '0.75rem',
-                    fontWeight: '500'
-                  }}
-                >
-                  <Edit style={{height: '0.75rem', width: '0.75rem'}} />
-                  Edit
-                </button>
-                <button
-                  onClick={() => onDeleteService(item.id)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.25rem',
-                    padding: '0.25rem 0.5rem',
-                    background: 'rgba(239, 68, 68, 0.2)',
-                    border: '1px solid rgba(239, 68, 68, 0.3)',
-                    borderRadius: '0.25rem',
-                    color: '#f87171',
-                    cursor: 'pointer',
-                    fontSize: '0.75rem',
-                    fontWeight: '500'
-                  }}
-                >
-                  <Trash2 style={{height: '0.75rem', width: '0.75rem'}} />
-                  Delete
-                </button>
-              </div>
+              {isEditable && (
+                <div style={{display: 'flex', gap: '0.5rem', justifyContent: 'flex-end'}}>
+                  <button
+                    onClick={() => onEditService(item)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.25rem',
+                      padding: '0.25rem 0.5rem',
+                      background: 'rgba(59, 130, 246, 0.2)',
+                      border: '1px solid rgba(59, 130, 246, 0.3)',
+                      borderRadius: '0.25rem',
+                      color: '#60a5fa',
+                      cursor: 'pointer',
+                      fontSize: '0.75rem',
+                      fontWeight: '500'
+                    }}
+                  >
+                    <Edit style={{height: '0.75rem', width: '0.75rem'}} />
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => onDeleteService(item.id)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.25rem',
+                      padding: '0.25rem 0.5rem',
+                      background: 'rgba(239, 68, 68, 0.2)',
+                      border: '1px solid rgba(239, 68, 68, 0.3)',
+                      borderRadius: '0.25rem',
+                      color: '#f87171',
+                      cursor: 'pointer',
+                      fontSize: '0.75rem',
+                      fontWeight: '500'
+                    }}
+                  >
+                    <Trash2 style={{height: '0.75rem', width: '0.75rem'}} />
+                    Delete
+                  </button>
+                </div>
+              )}
             </div>
           ))}
         </div>

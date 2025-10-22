@@ -838,7 +838,7 @@ export default function QuoteDetailPage() {
 
         {/* Action Buttons */}
         <div style={{display: 'flex', gap: '1rem', marginBottom: '2rem', flexWrap: 'wrap'}}>
-          {!isEditing ? (
+          {quote.status === 'draft' && !isEditing ? (
             <button
               onClick={handleEditClick}
               style={{
@@ -857,7 +857,7 @@ export default function QuoteDetailPage() {
               <Edit style={{height: '1rem', width: '1rem'}} />
               Edit Details
             </button>
-          ) : (
+          ) : quote.status === 'draft' && isEditing ? (
             <>
               <button
                 onClick={handleSaveEdit}
@@ -896,46 +896,50 @@ export default function QuoteDetailPage() {
                 Cancel
               </button>
             </>
+          ) : null}
+          {quote.status === 'draft' && (
+            <>
+              <button
+                onClick={handleOpenEmailModal}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.75rem 1.5rem',
+                  backgroundColor: 'linear-gradient(to right, #3b82f6, #6366f1)',
+                  background: 'linear-gradient(to right, #3b82f6, #6366f1)',
+                  border: 'none',
+                  borderRadius: '0.5rem',
+                  color: 'white',
+                  cursor: 'pointer',
+                  fontWeight: '500'
+                }}
+              >
+                <FileText style={{height: '1rem', width: '1rem'}} />
+                Send via Email
+              </button>
+              <button
+                onClick={handleConvertToInvoice}
+                disabled={converting}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.75rem 1.5rem',
+                  backgroundColor: converting ? 'rgba(255, 255, 255, 0.1)' : 'linear-gradient(to right, #10b981, #14b8a6)',
+                  background: converting ? 'rgba(255, 255, 255, 0.1)' : 'linear-gradient(to right, #10b981, #14b8a6)',
+                  border: 'none',
+                  borderRadius: '0.5rem',
+                  color: 'white',
+                  cursor: converting ? 'not-allowed' : 'pointer',
+                  fontWeight: '500'
+                }}
+              >
+                <DollarSign style={{height: '1rem', width: '1rem'}} />
+                {converting ? 'Converting...' : 'Convert to Invoice'}
+              </button>
+            </>
           )}
-          <button
-            onClick={handleOpenEmailModal}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              padding: '0.75rem 1.5rem',
-              backgroundColor: 'linear-gradient(to right, #3b82f6, #6366f1)',
-              background: 'linear-gradient(to right, #3b82f6, #6366f1)',
-              border: 'none',
-              borderRadius: '0.5rem',
-              color: 'white',
-              cursor: 'pointer',
-              fontWeight: '500'
-            }}
-          >
-            <FileText style={{height: '1rem', width: '1rem'}} />
-            Send via Email
-          </button>
-          <button
-            onClick={handleConvertToInvoice}
-            disabled={converting}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              padding: '0.75rem 1.5rem',
-              backgroundColor: converting ? 'rgba(255, 255, 255, 0.1)' : 'linear-gradient(to right, #10b981, #14b8a6)',
-              background: converting ? 'rgba(255, 255, 255, 0.1)' : 'linear-gradient(to right, #10b981, #14b8a6)',
-              border: 'none',
-              borderRadius: '0.5rem',
-              color: 'white',
-              cursor: converting ? 'not-allowed' : 'pointer',
-              fontWeight: '500'
-            }}
-          >
-            <DollarSign style={{height: '1rem', width: '1rem'}} />
-            {converting ? 'Converting...' : 'Convert to Invoice'}
-          </button>
         </div>
 
         {/* Two Column Layout */}
@@ -947,6 +951,7 @@ export default function QuoteDetailPage() {
               onAddService={() => setShowAddServiceModal(true)}
               onEditService={handleEditServiceClick as any}
               onDeleteService={handleDeleteService}
+              isEditable={quote.status === 'draft'}
             />
           </div>
 
@@ -957,7 +962,7 @@ export default function QuoteDetailPage() {
               onAddContractor={() => setShowAddContractorModal(true)}
               onRemoveContractor={handleRemoveContractor}
               onToggleIncludeInTotal={handleToggleIncludeInTotal}
-              isDraft={quote?.status === 'draft'}
+              isDraft={quote.status === 'draft'}
             />
           </div>
         </div>
