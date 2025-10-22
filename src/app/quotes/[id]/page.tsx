@@ -29,8 +29,10 @@ interface Contractor {
   name: string
   email: string
   phone: string
+  skills: string[]
   hourlyRate: number
   flatRate: number
+  rate: number
 }
 
 interface QuoteItem {
@@ -78,6 +80,13 @@ export default function QuoteDetailPage() {
   const [loading, setLoading] = useState(true)
   const [contractors, setContractors] = useState<Contractor[]>([])
   const [selectedContractor, setSelectedContractor] = useState('')
+  const [availableSkills, setAvailableSkills] = useState<string[]>([])
+  const [selectedSkills, setSelectedSkills] = useState<string[]>([])
+  const [filteredContractors, setFilteredContractors] = useState<Contractor[]>([])
+  const [contractorRateType, setContractorRateType] = useState<'hourly' | 'flat'>('hourly')
+  const [contractorHours, setContractorHours] = useState(1)
+  const [contractorCost, setContractorCost] = useState(0)
+  const [assignedContractors, setAssignedContractors] = useState<any[]>([])
   const [showEmailModal, setShowEmailModal] = useState(false)
   const [sendingEmail, setSendingEmail] = useState(false)
   const [converting, setConverting] = useState(false)
@@ -152,6 +161,69 @@ export default function QuoteDetailPage() {
       fetchContractors()
     }
   }, [session, quoteId])
+
+  // Load available skills from localStorage
+  useEffect(() => {
+    const savedSkills = localStorage.getItem('availableSkills')
+    if (savedSkills) {
+      try {
+        setAvailableSkills(JSON.parse(savedSkills))
+      } catch (error) {
+        console.error('Failed to load skills:', error)
+      }
+    }
+  }, [])
+
+  // Load assigned contractors
+  useEffect(() => {
+    const fetchAssignedContractors = async () => {
+      if (!quoteId) return
+      
+      try {
+        const response = await fetch(`/api/quotes/${quoteId}/contractors`)
+        if (response.ok) {
+          const data = await response.json()
+          setAssignedContractors(data)
+        }
+      } catch (error) {
+        console.error('Error fetching assigned contractors:', error)
+      }
+    }
+    
+    if (session && quoteId) {
+      fetchAssignedContractors()
+    }
+  }, [session, quoteId])
+
+  // Filter contractors by selected skills
+  useEffect(() => {
+    if (selectedSkills.length === 0) {
+      setFilteredContractors(contractors)
+    } else {
+      const filtered = contractors.filter(contractor =>
+        selectedSkills.every(skill => contractor.skills.includes(skill))
+      )
+      setFilteredContractors(filtered)
+    }
+  }, [selectedSkills, contractors])
+
+  // Calculate contractor cost
+  useEffect(() => {
+    if (!selectedContractor) {
+      setContractorCost(0)
+      return
+    }
+    
+    const contractor = contractors.find(c => c.id === selectedContractor)
+    if (!contractor) return
+    
+    if (contractorRateType === 'hourly') {
+      const rate = contractor.hourlyRate || contractor.rate
+      setContractorCost(contractorHours * Number(rate))
+    } else {
+      setContractorCost(Number(contractor.flatRate || contractor.rate))
+    }
+  }, [selectedContractor, contractorRateType, contractorHours, contractors])
 
   const handleSendEmail = async () => {
     setSendingEmail(true)
@@ -308,6 +380,74 @@ export default function QuoteDetailPage() {
     } catch (error) {
       console.error('Error deleting quote:', error)
       alert('Error deleting quote')
+    }
+  }
+
+  const toggleSkillFilter = (skill: string) => {
+    setSelectedSkills(prev =>
+      prev.includes(skill)
+        ? prev.filter(s => s !== skill)
+        : [...prev, skill]
+    )
+  }
+
+  const handleAssignContractor = async () => {
+    if (!selectedContractor || selectedSkills.length === 0) {
+      alert('Please select skills and a contractor')
+      return
+    }
+    
+    try {
+      const response = await fetch(`/api/quotes/${quoteId}/contractors`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contractorId: selectedContractor,
+          assignedSkills: selectedSkills,
+          rateType: contractorRateType,
+          hours: contractorRateType === 'hourly' ? contractorHours : null,
+          cost: contractorCost,
+          includeInTotal: true
+        })
+      })
+      
+      if (response.ok) {
+        const newAssignment = await response.json()
+        setAssignedContractors([...assignedContractors, newAssignment])
+        // Reset form
+        setSelectedSkills([])
+        setSelectedContractor('')
+        setContractorHours(1)
+        setContractorRateType('hourly')
+        setShowAddContractorModal(false)
+        alert('Contractor assigned successfully!')
+      } else {
+        const errorData = await response.json()
+        alert(`Failed to assign contractor: ${errorData.error}`)
+      }
+    } catch (error) {
+      console.error('Error assigning contractor:', error)
+      alert('Error assigning contractor')
+    }
+  }
+
+  const handleRemoveContractor = async (contractorId: string) => {
+    if (!confirm('Remove this contractor from the quote?')) return
+    
+    try {
+      const response = await fetch(`/api/quotes/${quoteId}/contractors/${contractorId}`, {
+        method: 'DELETE'
+      })
+      
+      if (response.ok) {
+        setAssignedContractors(assignedContractors.filter(c => c.id !== contractorId))
+        alert('Contractor removed successfully!')
+      } else {
+        alert('Failed to remove contractor')
+      }
+    } catch (error) {
+      console.error('Error removing contractor:', error)
+      alert('Error removing contractor')
     }
   }
 
@@ -1058,6 +1198,9 @@ export default function QuoteDetailPage() {
           onCloseAddContractorModal={() => {
             setShowAddContractorModal(false)
             setSelectedContractor('')
+            setSelectedSkills([])
+            setContractorHours(1)
+            setContractorRateType('hourly')
           }}
           onCloseEditContractorModal={() => {
             setShowEditContractorModal(false)
@@ -1075,6 +1218,15 @@ export default function QuoteDetailPage() {
           onResetTemplate={handleResetToTemplate}
           showPreview={showPreview}
           onTogglePreview={() => setShowPreview(!showPreview)}
+          availableSkills={availableSkills}
+          selectedSkills={selectedSkills}
+          filteredContractors={filteredContractors}
+          contractorRateType={contractorRateType}
+          contractorHours={contractorHours}
+          contractorCost={contractorCost}
+          onToggleSkillFilter={toggleSkillFilter}
+          onRateTypeChange={setContractorRateType}
+          onHoursChange={setContractorHours}
         />
       </div>
     </div>

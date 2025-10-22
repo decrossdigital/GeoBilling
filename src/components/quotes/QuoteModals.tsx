@@ -5,8 +5,10 @@ interface Contractor {
   name: string
   email: string
   phone: string
+  skills: string[]
   hourlyRate: number
   flatRate: number
+  rate: number
 }
 
 interface QuoteItem {
@@ -59,6 +61,15 @@ interface QuoteModalsProps {
   onResetTemplate?: () => void
   showPreview?: boolean
   onTogglePreview?: () => void
+  availableSkills?: string[]
+  selectedSkills?: string[]
+  filteredContractors?: Contractor[]
+  contractorRateType?: 'hourly' | 'flat'
+  contractorHours?: number
+  contractorCost?: number
+  onToggleSkillFilter?: (skill: string) => void
+  onRateTypeChange?: (type: 'hourly' | 'flat') => void
+  onHoursChange?: (hours: number) => void
 }
 
 export default function QuoteModals({
@@ -88,7 +99,16 @@ export default function QuoteModals({
   onSelectedContractorChange,
   onResetTemplate,
   showPreview = false,
-  onTogglePreview
+  onTogglePreview,
+  availableSkills = [],
+  selectedSkills = [],
+  filteredContractors = [],
+  contractorRateType = 'hourly',
+  contractorHours = 1,
+  contractorCost = 0,
+  onToggleSkillFilter,
+  onRateTypeChange,
+  onHoursChange
 }: QuoteModalsProps) {
   return (
     <>
@@ -542,52 +562,224 @@ export default function QuoteModals({
           zIndex: 1000
         }}>
           <div style={{
-            backgroundColor: 'white',
+            backgroundColor: '#1e293b',
             borderRadius: '12px',
             padding: '30px',
             width: '90%',
-            maxWidth: '400px'
+            maxWidth: '650px',
+            maxHeight: '90vh',
+            overflowY: 'auto',
+            border: '1px solid rgba(255, 255, 255, 0.1)'
           }}>
-            <h3 style={{ fontSize: '20px', fontWeight: 'bold', color: '#1e293b', margin: '0 0 20px 0' }}>
+            <h3 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'white', margin: '0 0 1rem 0' }}>
               Assign Contractor
             </h3>
-            <p style={{ color: '#64748b', marginBottom: '20px', fontSize: '14px' }}>
-              Assign a contractor to this quote
+            <p style={{ color: '#cbd5e1', marginBottom: '1.5rem', fontSize: '0.875rem' }}>
+              Select skills needed and choose a contractor for this quote
             </p>
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#374151' }}>
-                Select Contractor:
+
+            {/* Skills Filter */}
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem', color: '#cbd5e1', fontSize: '0.875rem', fontWeight: '500' }}>
+                Skills Needed:
               </label>
-              <select
-                value={selectedContractor}
-                onChange={(e) => onSelectedContractorChange(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '8px',
-                  fontSize: '16px'
-                }}
-              >
-                <option value="">Choose a contractor...</option>
-                {contractors.map((contractor) => (
-                  <option key={contractor.id} value={contractor.id}>
-                    {contractor.name} - {contractor.email}
-                  </option>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))',
+                gap: '0.5rem',
+                padding: '0.75rem',
+                backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                borderRadius: '0.5rem',
+                border: '1px solid rgba(255, 255, 255, 0.1)'
+              }}>
+                {availableSkills.map(skill => (
+                  <label
+                    key={skill}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      cursor: 'pointer',
+                      color: '#cbd5e1',
+                      fontSize: '0.875rem'
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedSkills?.includes(skill) || false}
+                      onChange={() => onToggleSkillFilter && onToggleSkillFilter(skill)}
+                      style={{ cursor: 'pointer' }}
+                    />
+                    <span>{skill}</span>
+                  </label>
                 ))}
-              </select>
+              </div>
+              {selectedSkills && selectedSkills.length > 0 && (
+                <p style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '0.5rem' }}>
+                  Showing contractors with: {selectedSkills.join(', ')}
+                </p>
+              )}
             </div>
-            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+
+            {/* Contractor Selection */}
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem', color: '#cbd5e1', fontSize: '0.875rem', fontWeight: '500' }}>
+                Available Contractors ({filteredContractors?.length || 0}):
+              </label>
+              <div style={{
+                maxHeight: '220px',
+                overflowY: 'auto',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                borderRadius: '0.5rem',
+                backgroundColor: 'rgba(255, 255, 255, 0.05)'
+              }}>
+                {filteredContractors && filteredContractors.length > 0 ? (
+                  filteredContractors.map(contractor => (
+                    <label
+                      key={contractor.id}
+                      style={{
+                        display: 'block',
+                        padding: '0.75rem',
+                        cursor: 'pointer',
+                        borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+                        backgroundColor: selectedContractor === contractor.id ? 'rgba(147, 51, 234, 0.2)' : 'transparent',
+                        transition: 'background-color 0.2s'
+                      }}
+                      onMouseEnter={(e) => {
+                        if (selectedContractor !== contractor.id) {
+                          e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)'
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (selectedContractor !== contractor.id) {
+                          e.currentTarget.style.backgroundColor = 'transparent'
+                        }
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <input
+                          type="radio"
+                          name="contractor"
+                          value={contractor.id}
+                          checked={selectedContractor === contractor.id}
+                          onChange={(e) => onSelectedContractorChange(e.target.value)}
+                          style={{ cursor: 'pointer' }}
+                        />
+                        <div style={{ flex: 1 }}>
+                          <div style={{ color: 'white', fontWeight: '500', marginBottom: '0.25rem' }}>
+                            {contractor.name}
+                          </div>
+                          <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+                            Skills: {contractor.skills.join(', ')}
+                          </div>
+                          <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+                            ${Number(contractor.hourlyRate || contractor.rate).toFixed(2)}/hr | ${Number(contractor.flatRate || contractor.rate).toFixed(2)} flat
+                          </div>
+                        </div>
+                      </div>
+                    </label>
+                  ))
+                ) : (
+                  <p style={{ padding: '1rem', color: '#94a3b8', textAlign: 'center', fontStyle: 'italic', fontSize: '0.875rem' }}>
+                    {selectedSkills && selectedSkills.length > 0 
+                      ? 'No contractors match selected skills' 
+                      : 'Select skills to filter contractors'}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Rate Type and Hours */}
+            {selectedContractor && (
+              <>
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', color: '#cbd5e1', fontSize: '0.875rem', fontWeight: '500' }}>
+                    Rate Type:
+                  </label>
+                  <div style={{ display: 'flex', gap: '1rem' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#cbd5e1', cursor: 'pointer' }}>
+                      <input
+                        type="radio"
+                        value="hourly"
+                        checked={contractorRateType === 'hourly'}
+                        onChange={(e) => onRateTypeChange && onRateTypeChange(e.target.value as 'hourly' | 'flat')}
+                        style={{ cursor: 'pointer' }}
+                      />
+                      Hourly Rate
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#cbd5e1', cursor: 'pointer' }}>
+                      <input
+                        type="radio"
+                        value="flat"
+                        checked={contractorRateType === 'flat'}
+                        onChange={(e) => onRateTypeChange && onRateTypeChange(e.target.value as 'hourly' | 'flat')}
+                        style={{ cursor: 'pointer' }}
+                      />
+                      Flat Rate
+                    </label>
+                  </div>
+                </div>
+
+                {contractorRateType === 'hourly' && (
+                  <div style={{ marginBottom: '1.5rem' }}>
+                    <label style={{ display: 'block', marginBottom: '0.5rem', color: '#cbd5e1', fontSize: '0.875rem', fontWeight: '500' }}>
+                      Hours:
+                    </label>
+                    <input
+                      type="number"
+                      value={contractorHours}
+                      onChange={(e) => onHoursChange && onHoursChange(Number(e.target.value))}
+                      min="0.5"
+                      step="0.5"
+                      style={{
+                        width: '100%',
+                        padding: '0.5rem',
+                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                        border: '1px solid rgba(255, 255, 255, 0.2)',
+                        borderRadius: '0.5rem',
+                        color: 'white',
+                        fontSize: '1rem'
+                      }}
+                    />
+                  </div>
+                )}
+
+                {/* Cost Summary */}
+                <div style={{
+                  padding: '1rem',
+                  backgroundColor: 'rgba(147, 51, 234, 0.1)',
+                  border: '1px solid rgba(147, 51, 234, 0.3)',
+                  borderRadius: '0.5rem',
+                  marginBottom: '1.5rem'
+                }}>
+                  <p style={{ color: '#e9d5ff', fontSize: '0.875rem', marginBottom: '0.25rem' }}>
+                    Assignment Summary:
+                  </p>
+                  <p style={{ color: 'white', fontSize: '1.125rem', fontWeight: 'bold', marginBottom: '0.25rem' }}>
+                    {selectedSkills && selectedSkills.join(', ')} - ${contractorCost.toFixed(2)}
+                  </p>
+                  <p style={{ color: '#cbd5e1', fontSize: '0.75rem' }}>
+                    {contractorRateType === 'hourly' 
+                      ? `${contractorHours} hrs @ $${contractorHours > 0 ? (contractorCost / contractorHours).toFixed(2) : '0.00'}/hr`
+                      : 'Flat rate'
+                    }
+                  </p>
+                </div>
+              </>
+            )}
+
+            {/* Buttons */}
+            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
               <button
                 onClick={onCloseAddContractorModal}
                 style={{
-                  padding: '10px 20px',
+                  padding: '0.5rem 1rem',
                   backgroundColor: '#6b7280',
                   color: 'white',
                   border: 'none',
-                  borderRadius: '8px',
+                  borderRadius: '0.5rem',
                   cursor: 'pointer',
-                  fontSize: '14px',
+                  fontSize: '0.875rem',
                   fontWeight: '500'
                 }}
               >
@@ -595,15 +787,17 @@ export default function QuoteModals({
               </button>
               <button
                 onClick={onAssignContractor}
+                disabled={!selectedContractor || !selectedSkills || selectedSkills.length === 0}
                 style={{
-                  padding: '10px 20px',
-                  backgroundColor: '#3b82f6',
+                  padding: '0.5rem 1rem',
+                  backgroundColor: selectedContractor && selectedSkills && selectedSkills.length > 0 ? '#9333ea' : '#6b7280',
                   color: 'white',
                   border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: '500'
+                  borderRadius: '0.5rem',
+                  cursor: selectedContractor && selectedSkills && selectedSkills.length > 0 ? 'pointer' : 'not-allowed',
+                  fontSize: '0.875rem',
+                  fontWeight: '500',
+                  opacity: selectedContractor && selectedSkills && selectedSkills.length > 0 ? 1 : 0.5
                 }}
               >
                 Assign Contractor
