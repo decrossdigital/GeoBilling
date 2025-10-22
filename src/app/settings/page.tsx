@@ -69,6 +69,9 @@ export default function SettingsPage() {
       } catch (error) {
         console.error('Failed to load skills:', error)
       }
+    } else {
+      // First time - save default skills to localStorage
+      localStorage.setItem('availableSkills', JSON.stringify(DEFAULT_SKILLS))
     }
   }, [])
 
