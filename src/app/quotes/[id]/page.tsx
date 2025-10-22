@@ -1023,8 +1023,8 @@ export default function QuoteDetailPage() {
             <QuoteContractors
               contractors={assignedContractors}
               onAddContractor={() => setShowAddContractorModal(true)}
-              onEditContractor={handleEditContractorClick}
               onRemoveContractor={handleRemoveContractor}
+              isDraft={quote?.status === 'draft'}
             />
           </div>
         </div>
