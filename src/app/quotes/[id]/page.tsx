@@ -335,8 +335,8 @@ export default function QuoteDetailPage() {
     const quoteUrl = `${window.location.origin}/quotes/${quoteId}`
 
     // Process templates
-    const processedSubject = processQuoteTemplate(templates.quoteSubject, quote, companySettings, quoteUrl)
-    const processedBody = processQuoteTemplate(templates.quoteBody, quote, companySettings, quoteUrl)
+    const processedSubject = processQuoteTemplate(templates.quoteSubject, quote as any, companySettings, quoteUrl)
+    const processedBody = processQuoteTemplate(templates.quoteBody, quote as any, companySettings, quoteUrl)
 
     // Save original for reset functionality
     setOriginalTemplate({
@@ -448,6 +448,37 @@ export default function QuoteDetailPage() {
     } catch (error) {
       console.error('Error removing contractor:', error)
       alert('Error removing contractor')
+    }
+  }
+
+  const handleToggleIncludeInTotal = async (contractorId: string, include: boolean) => {
+    try {
+      const contractor = assignedContractors.find(c => c.id === contractorId)
+      if (!contractor) return
+
+      const response = await fetch(`/api/quotes/${quoteId}/contractors/${contractorId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          assignedSkills: contractor.assignedSkills,
+          rateType: contractor.rateType,
+          hours: contractor.hours,
+          cost: contractor.cost,
+          includeInTotal: include
+        })
+      })
+      
+      if (response.ok) {
+        const updated = await response.json()
+        setAssignedContractors(assignedContractors.map(c => 
+          c.id === contractorId ? updated : c
+        ))
+      } else {
+        alert('Failed to update contractor')
+      }
+    } catch (error) {
+      console.error('Error updating contractor:', error)
+      alert('Error updating contractor')
     }
   }
 
@@ -899,9 +930,9 @@ export default function QuoteDetailPage() {
           {/* Left Column - Services */}
           <div>
             <QuoteServices
-              services={quote.items}
+              services={quote.items as any}
               onAddService={() => setShowAddServiceModal(true)}
-              onEditService={handleEditServiceClick}
+              onEditService={handleEditServiceClick as any}
               onDeleteService={handleDeleteService}
             />
           </div>
@@ -912,6 +943,7 @@ export default function QuoteDetailPage() {
               contractors={assignedContractors}
               onAddContractor={() => setShowAddContractorModal(true)}
               onRemoveContractor={handleRemoveContractor}
+              onToggleIncludeInTotal={handleToggleIncludeInTotal}
               isDraft={quote?.status === 'draft'}
             />
           </div>

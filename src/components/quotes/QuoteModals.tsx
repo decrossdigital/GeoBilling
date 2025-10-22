@@ -108,7 +108,9 @@ export default function QuoteModals({
   contractorCost = 0,
   onToggleSkillFilter,
   onRateTypeChange,
-  onHoursChange
+  onHoursChange,
+  includeInTotal = true,
+  onIncludeInTotalChange
 }: QuoteModalsProps) {
   return (
     <>

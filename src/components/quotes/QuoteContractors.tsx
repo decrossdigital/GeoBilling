@@ -28,6 +28,7 @@ interface QuoteContractorsProps {
   contractors: QuoteContractor[]
   onAddContractor: () => void
   onRemoveContractor: (contractorId: string) => void
+  onToggleIncludeInTotal?: (contractorId: string, include: boolean) => void
   isDraft?: boolean
 }
 
@@ -35,6 +36,7 @@ export default function QuoteContractors({
   contractors, 
   onAddContractor,
   onRemoveContractor,
+  onToggleIncludeInTotal,
   isDraft = true
 }: QuoteContractorsProps) {
   const totalContractorCost = contractors
@@ -139,27 +141,45 @@ export default function QuoteContractors({
                     <p style={{color: 'white', fontWeight: 'bold', fontSize: '1rem', margin: 0}}>
                       ${Number(qc.cost).toFixed(2)}
                     </p>
-                    {isDraft && (
-                      <button
-                        onClick={() => onRemoveContractor(qc.id)}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.25rem',
-                          padding: '0.25rem 0.5rem',
-                          backgroundColor: 'rgba(239, 68, 68, 0.2)',
-                          color: '#fca5a5',
-                          border: '1px solid rgba(239, 68, 68, 0.3)',
-                          borderRadius: '0.25rem',
-                          cursor: 'pointer',
-                          fontSize: '0.75rem',
-                          fontWeight: '500'
-                        }}
-                      >
-                        <Trash2 style={{height: '0.75rem', width: '0.75rem'}} />
-                        Remove
-                      </button>
-                    )}
+                    <div style={{display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem'}}>
+                      <label style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.25rem',
+                        cursor: 'pointer',
+                        fontSize: '0.75rem',
+                        color: '#cbd5e1'
+                      }}>
+                        <input
+                          type="checkbox"
+                          checked={qc.includeInTotal}
+                          onChange={(e) => onToggleIncludeInTotal && onToggleIncludeInTotal(qc.id, e.target.checked)}
+                          style={{ cursor: 'pointer' }}
+                        />
+                        <span>Include in total</span>
+                      </label>
+                      {isDraft && (
+                        <button
+                          onClick={() => onRemoveContractor(qc.id)}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.25rem',
+                            padding: '0.25rem 0.5rem',
+                            backgroundColor: 'rgba(239, 68, 68, 0.2)',
+                            color: '#fca5a5',
+                            border: '1px solid rgba(239, 68, 68, 0.3)',
+                            borderRadius: '0.25rem',
+                            cursor: 'pointer',
+                            fontSize: '0.75rem',
+                            fontWeight: '500'
+                          }}
+                        >
+                          <Trash2 style={{height: '0.75rem', width: '0.75rem'}} />
+                          Remove
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>

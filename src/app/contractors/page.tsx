@@ -62,12 +62,17 @@ export default function ContractorsPage() {
   // Load available skills from localStorage (managed in Settings)
   useEffect(() => {
     const savedSkills = localStorage.getItem('availableSkills')
+    console.log('Loading skills from localStorage:', savedSkills)
     if (savedSkills) {
       try {
-        setAvailableSkills(JSON.parse(savedSkills))
+        const parsed = JSON.parse(savedSkills)
+        console.log('Parsed skills:', parsed)
+        setAvailableSkills(parsed)
       } catch (error) {
         console.error('Failed to load skills:', error)
       }
+    } else {
+      console.log('No skills found in localStorage')
     }
   }, [])
 
@@ -570,44 +575,61 @@ export default function ContractorsPage() {
                   />
                 </div>
                 <div style={{display: 'flex', flexDirection: 'column'}}>
-                  <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.5rem'}}>Skills</label>
-                  <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
-                    gap: '0.5rem',
-                    padding: '0.75rem',
-                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                    borderRadius: '0.5rem',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                    maxHeight: '250px',
-                    overflowY: 'auto'
-                  }}>
-                    {availableSkills.map(skill => (
-                      <label
-                        key={skill}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.5rem',
-                          cursor: 'pointer',
-                          color: '#cbd5e1',
-                          fontSize: '0.875rem'
-                        }}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={newContractor.skills.includes(skill)}
-                          onChange={() => toggleSkill(skill)}
-                          style={{cursor: 'pointer'}}
-                        />
-                        <span>{skill}</span>
-                      </label>
-                    ))}
-                  </div>
-                  {newContractor.skills.length === 0 && (
-                    <p style={{fontSize: '0.75rem', color: '#94a3b8', marginTop: '0.5rem', fontStyle: 'italic'}}>
-                      No skills selected
-                    </p>
+                  <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.5rem'}}>
+                    Skills ({availableSkills.length} available)
+                  </label>
+                  {availableSkills.length === 0 ? (
+                    <div style={{
+                      padding: '1rem',
+                      backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                      border: '1px solid rgba(245, 158, 11, 0.3)',
+                      borderRadius: '0.5rem',
+                      color: '#fbbf24',
+                      fontSize: '0.875rem'
+                    }}>
+                      ⚠️ No skills configured. Please visit <Link href="/settings" style={{color: '#fbbf24', textDecoration: 'underline'}}>Settings</Link> to add contractor skills first.
+                    </div>
+                  ) : (
+                    <>
+                      <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
+                        gap: '0.5rem',
+                        padding: '0.75rem',
+                        backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                        borderRadius: '0.5rem',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        maxHeight: '250px',
+                        overflowY: 'auto'
+                      }}>
+                        {availableSkills.map(skill => (
+                          <label
+                            key={skill}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '0.5rem',
+                              cursor: 'pointer',
+                              color: '#cbd5e1',
+                              fontSize: '0.875rem'
+                            }}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={newContractor.skills.includes(skill)}
+                              onChange={() => toggleSkill(skill)}
+                              style={{cursor: 'pointer'}}
+                            />
+                            <span>{skill}</span>
+                          </label>
+                        ))}
+                      </div>
+                      {newContractor.skills.length === 0 && (
+                        <p style={{fontSize: '0.75rem', color: '#94a3b8', marginTop: '0.5rem', fontStyle: 'italic'}}>
+                          No skills selected
+                        </p>
+                      )}
+                    </>
                   )}
                 </div>
                 <div style={{display: 'flex', flexDirection: 'column'}}>
