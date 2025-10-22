@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { sendQuoteEmail } from '@/lib/email'
+import { addActivityLog, ACTIVITY_ACTIONS } from '@/lib/activity-logger'
 
 export async function POST(request: NextRequest) {
   try {
@@ -51,10 +52,15 @@ export async function POST(request: NextRequest) {
         html: message.replace(/\n/g, '<br>')  // Convert newlines to HTML breaks
       })
 
-      // Update quote status to 'sent'
+      // Update quote status to 'sent' and add activity log
+      const updatedActivityLog = addActivityLog(quote.activityLog, ACTIVITY_ACTIONS.QUOTE_SENT, user.name || user.email)
+      
       await prisma.quote.update({
         where: { id: quoteId },
-        data: { status: 'sent' }
+        data: { 
+          status: 'sent',
+          activityLog: updatedActivityLog
+        }
       })
 
       console.log('Quote email sent successfully:', {

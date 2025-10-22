@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { prisma } from '@/lib/prisma'
 import { authOptions } from '@/lib/auth'
+import { addActivityLog, ACTIVITY_ACTIONS } from '@/lib/activity-logger'
 
 // GET /api/quotes - Get all quotes for the current user
 export async function GET() {
@@ -106,6 +107,9 @@ export async function POST(request: NextRequest) {
     // Set default validUntil if not provided (30 days from now)
     const validUntilDate = validUntil ? new Date(validUntil) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
 
+    // Create initial activity log
+    const initialActivityLog = addActivityLog(null, ACTIVITY_ACTIONS.QUOTE_CREATED, user.name || user.email)
+
     const quote = await prisma.quote.create({
       data: {
         quoteNumber,
@@ -130,7 +134,8 @@ export async function POST(request: NextRequest) {
         userName: user.name || '',
         userEmail: user.email,
         userPhone: '',
-        userAddress: ''
+        userAddress: '',
+        activityLog: initialActivityLog
       }
     })
 

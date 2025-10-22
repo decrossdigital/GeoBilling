@@ -66,6 +66,7 @@ interface Quote {
   depositAmount: number
   createdAt: string
   updatedAt: string
+  activityLog?: string
   client: Client
   items: QuoteItem[]
 }
@@ -838,7 +839,7 @@ export default function QuoteDetailPage() {
 
         {/* Action Buttons */}
         <div style={{display: 'flex', gap: '1rem', marginBottom: '2rem', flexWrap: 'wrap'}}>
-          {quote.status === 'draft' && !isEditing ? (
+          {(quote.status === 'draft' || quote.status === 'sent' || quote.status === 'rejected') && !isEditing ? (
             <button
               onClick={handleEditClick}
               style={{
@@ -857,7 +858,7 @@ export default function QuoteDetailPage() {
               <Edit style={{height: '1rem', width: '1rem'}} />
               Edit Details
             </button>
-          ) : quote.status === 'draft' && isEditing ? (
+          ) : (quote.status === 'draft' || quote.status === 'sent' || quote.status === 'rejected') && isEditing ? (
             <>
               <button
                 onClick={handleSaveEdit}
@@ -897,7 +898,7 @@ export default function QuoteDetailPage() {
               </button>
             </>
           ) : null}
-          {quote.status === 'draft' && (
+          {(quote.status === 'draft' || quote.status === 'rejected') && (
             <>
               <button
                 onClick={handleOpenEmailModal}
@@ -951,7 +952,7 @@ export default function QuoteDetailPage() {
               onAddService={() => setShowAddServiceModal(true)}
               onEditService={handleEditServiceClick as any}
               onDeleteService={handleDeleteService}
-              isEditable={quote.status === 'draft'}
+              isEditable={quote.status === 'draft' || quote.status === 'sent' || quote.status === 'rejected'}
             />
           </div>
 
@@ -962,7 +963,7 @@ export default function QuoteDetailPage() {
               onAddContractor={() => setShowAddContractorModal(true)}
               onRemoveContractor={handleRemoveContractor}
               onToggleIncludeInTotal={handleToggleIncludeInTotal}
-              isDraft={quote.status === 'draft'}
+              isDraft={quote.status === 'draft' || quote.status === 'sent' || quote.status === 'rejected'}
             />
           </div>
         </div>
@@ -1093,6 +1094,35 @@ export default function QuoteDetailPage() {
             )}
           </div>
         </div>
+
+        {/* Activity Log Section (Admin Only) */}
+        {quote.activityLog && (
+          <div style={{
+            background: 'rgba(255, 255, 255, 0.1)',
+            backdropFilter: 'blur(8px)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            borderRadius: '0.75rem',
+            padding: '1.5rem',
+            marginBottom: '2rem'
+          }}>
+            <h3 style={{color: 'white', fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem'}}>
+              Activity Log (Admin Only)
+            </h3>
+            <div style={{
+              backgroundColor: 'rgba(0, 0, 0, 0.2)',
+              borderRadius: '0.5rem',
+              padding: '1rem',
+              fontFamily: 'monospace',
+              fontSize: '0.875rem',
+              color: '#cbd5e1',
+              whiteSpace: 'pre-wrap',
+              maxHeight: '200px',
+              overflowY: 'auto'
+            }}>
+              {quote.activityLog}
+            </div>
+          </div>
+        )}
 
         {/* Delete Quote Button */}
         <div style={{marginTop: '2rem', paddingTop: '2rem', borderTop: '1px solid rgba(255, 255, 255, 0.1)'}}>

@@ -188,7 +188,10 @@ model Quote {
   description String?  @db.Text
   project     String?
   projectDescription String? @db.Text
-  status      String   @default("draft") // "draft", "sent", "accepted", "rejected", "expired"
+  status      String   @default("draft") // "draft", "sent", "approved", "rejected", "expired"
+  approvalToken String? // For client approval links
+  approvedAt   DateTime?
+  activityLog String? @db.Text // Admin-only activity tracking
   validUntil  DateTime
   subtotal    Decimal  @db.Decimal(10, 2)
   taxRate     Decimal  @db.Decimal(5, 2) @default(0)
@@ -282,6 +285,7 @@ model Invoice {
   issueDate     DateTime @default(now())
   dueDate       DateTime
   paidDate      DateTime?
+  activityLog   String? @db.Text // Admin-only activity tracking
   subtotal      Decimal  @db.Decimal(10, 2)
   taxRate       Decimal  @db.Decimal(5, 2) @default(0)
   taxAmount     Decimal  @db.Decimal(10, 2) @default(0)
