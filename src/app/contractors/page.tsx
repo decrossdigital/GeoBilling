@@ -57,8 +57,19 @@ export default function ContractorsPage() {
     status: "active" as "active" | "inactive"
   })
 
-  // Separate state for skills input to allow free typing
-  const [skillsInput, setSkillsInput] = useState("")
+  const [availableSkills, setAvailableSkills] = useState<string[]>([])
+
+  // Load available skills from localStorage
+  useEffect(() => {
+    const savedSkills = localStorage.getItem('availableSkills')
+    if (savedSkills) {
+      try {
+        setAvailableSkills(JSON.parse(savedSkills))
+      } catch (error) {
+        console.error('Failed to load skills:', error)
+      }
+    }
+  }, [])
 
   // Fetch contractors from API
   useEffect(() => {
@@ -94,27 +105,24 @@ export default function ContractorsPage() {
   const totalHourlyRate = contractors.reduce((sum, c) => sum + parseFloat(c.rate.toString()), 0)
   const avgHourlyRate = totalContractors > 0 ? totalHourlyRate / totalContractors : 0
 
+  const toggleSkill = (skill: string) => {
+    setNewContractor(prev => ({
+      ...prev,
+      skills: prev.skills.includes(skill)
+        ? prev.skills.filter(s => s !== skill)
+        : [...prev.skills, skill]
+    }))
+  }
+
   const handleAddContractor = async () => {
     if (newContractor.name && newContractor.email) {
-      // Parse skills from input
-      const skills = skillsInput
-        .split(',')
-        .map(skill => skill.trim())
-        .filter(skill => skill.length > 0)
-      
-      const contractorData = {
-        ...newContractor,
-        skills
-      }
-      
-      console.log('Submitting contractor:', contractorData)
       try {
         const response = await fetch('/api/contractors', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify(contractorData),
+          body: JSON.stringify(newContractor),
         })
 
         if (response.ok) {
@@ -132,56 +140,72 @@ export default function ContractorsPage() {
             notes: "",
             status: "active"
           })
-          setSkillsInput("")
           setShowAddModal(false)
+          alert('Contractor added successfully!')
         } else {
           console.error('Failed to create contractor')
+          alert('Failed to add contractor')
         }
       } catch (error) {
         console.error('Error creating contractor:', error)
+        alert('Error creating contractor')
       }
     }
   }
 
   const handleEditContractor = (contractor: Contractor) => {
     setEditingContractor(contractor)
-    setSkillsInput((contractor.skills || []).join(', '))
+    setNewContractor({
+      name: contractor.name,
+      email: contractor.email,
+      phone: contractor.phone,
+      address: contractor.address,
+      skills: contractor.skills || [],
+      pricingType: contractor.pricingType,
+      rate: contractor.rate,
+      currency: contractor.currency,
+      notes: contractor.notes || "",
+      status: contractor.status
+    })
     setShowAddModal(true)
   }
 
   const handleSaveEdit = async () => {
-    if (editingContractor && editingContractor.name && editingContractor.email) {
-      // Parse skills from input
-      const skills = skillsInput
-        .split(',')
-        .map(skill => skill.trim())
-        .filter(skill => skill.length > 0)
-      
-      const contractorData = {
-        ...editingContractor,
-        skills
-      }
-      
+    if (editingContractor && newContractor.name && newContractor.email) {
       try {
-        console.log('Submitting edited contractor data:', contractorData)
         const response = await fetch(`/api/contractors/${editingContractor.id}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify(contractorData),
+          body: JSON.stringify(newContractor),
         })
 
         if (response.ok) {
           const updatedContractor = await response.json()
           setContractors(contractors.map(c => c.id === updatedContractor.id ? updatedContractor : c))
           setEditingContractor(null)
+          setNewContractor({
+            name: "",
+            email: "",
+            phone: "",
+            address: "",
+            skills: [],
+            pricingType: "hourly",
+            rate: 0,
+            currency: "USD",
+            notes: "",
+            status: "active"
+          })
           setShowAddModal(false)
+          alert('Contractor updated successfully!')
         } else {
           console.error('Failed to update contractor')
+          alert('Failed to update contractor')
         }
       } catch (error) {
         console.error('Error updating contractor:', error)
+        alert('Error updating contractor')
       }
     }
   }
@@ -499,8 +523,8 @@ export default function ContractorsPage() {
                   <input
                     type="text"
                     placeholder="Enter contractor name"
-                    value={editingContractor?.name || newContractor.name}
-                    onChange={(e) => editingContractor ? setEditingContractor({...editingContractor, name: e.target.value}) : setNewContractor({...newContractor, name: e.target.value})}
+                    value={newContractor.name}
+                    onChange={(e) => setNewContractor({...newContractor, name: e.target.value})}
                     style={{
                       padding: '0.75rem',
                       backgroundColor: 'rgba(255, 255, 255, 0.1)',
@@ -516,8 +540,8 @@ export default function ContractorsPage() {
                   <input
                     type="email"
                     placeholder="Enter contractor email"
-                    value={editingContractor?.email || newContractor.email}
-                    onChange={(e) => editingContractor ? setEditingContractor({...editingContractor, email: e.target.value}) : setNewContractor({...newContractor, email: e.target.value})}
+                    value={newContractor.email}
+                    onChange={(e) => setNewContractor({...newContractor, email: e.target.value})}
                     style={{
                       padding: '0.75rem',
                       backgroundColor: 'rgba(255, 255, 255, 0.1)',
@@ -533,8 +557,8 @@ export default function ContractorsPage() {
                   <input
                     type="tel"
                     placeholder="Enter contractor phone (optional)"
-                    value={editingContractor?.phone || newContractor.phone}
-                    onChange={(e) => editingContractor ? setEditingContractor({...editingContractor, phone: e.target.value}) : setNewContractor({...newContractor, phone: e.target.value})}
+                    value={newContractor.phone}
+                    onChange={(e) => setNewContractor({...newContractor, phone: e.target.value})}
                     style={{
                       padding: '0.75rem',
                       backgroundColor: 'rgba(255, 255, 255, 0.1)',
@@ -547,41 +571,50 @@ export default function ContractorsPage() {
                 </div>
                 <div style={{display: 'flex', flexDirection: 'column'}}>
                   <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.5rem'}}>Skills</label>
-                  <input
-                    type="text"
-                    placeholder="e.g., mixing, mastering, recording, production"
-                    value={editingContractor ? (editingContractor.skills || []).join(', ') : skillsInput}
-                    onChange={(e) => {
-                      console.log('Skills input changed:', e.target.value)
-                      if (editingContractor) {
-                        // For editing, just update the input state to allow free typing
-                        setSkillsInput(e.target.value)
-                      } else {
-                        // For new contractor, just update the input state
-                        setSkillsInput(e.target.value)
-                      }
-                    }}
-                    style={{
-                      padding: '0.75rem',
-                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                      border: '1px solid rgba(255, 255, 255, 0.2)',
-                      borderRadius: '0.5rem',
-                      color: 'white',
-                      outline: 'none'
-                    }}
-                  />
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
+                    gap: '0.5rem',
+                    padding: '0.75rem',
+                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                    borderRadius: '0.5rem',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    maxHeight: '250px',
+                    overflowY: 'auto'
+                  }}>
+                    {availableSkills.map(skill => (
+                      <label
+                        key={skill}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.5rem',
+                          cursor: 'pointer',
+                          color: '#cbd5e1',
+                          fontSize: '0.875rem'
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={newContractor.skills.includes(skill)}
+                          onChange={() => toggleSkill(skill)}
+                          style={{cursor: 'pointer'}}
+                        />
+                        <span>{skill}</span>
+                      </label>
+                    ))}
+                  </div>
+                  {newContractor.skills.length === 0 && (
+                    <p style={{fontSize: '0.75rem', color: '#94a3b8', marginTop: '0.5rem', fontStyle: 'italic'}}>
+                      No skills selected
+                    </p>
+                  )}
                 </div>
                 <div style={{display: 'flex', flexDirection: 'column'}}>
                   <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.5rem'}}>Pricing Type</label>
                   <select
-                    value={editingContractor ? editingContractor.pricingType : newContractor.pricingType}
-                    onChange={(e) => {
-                      if (editingContractor) {
-                        setEditingContractor({...editingContractor, pricingType: e.target.value as "hourly" | "flat"})
-                      } else {
-                        setNewContractor({...newContractor, pricingType: e.target.value as "hourly" | "flat"})
-                      }
-                    }}
+                    value={newContractor.pricingType}
+                    onChange={(e) => setNewContractor({...newContractor, pricingType: e.target.value as "hourly" | "flat"})}
                     style={{
                       padding: '0.75rem',
                       backgroundColor: 'rgba(255, 255, 255, 0.1)',
@@ -597,19 +630,13 @@ export default function ContractorsPage() {
                 </div>
                 <div style={{display: 'flex', flexDirection: 'column'}}>
                   <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.5rem'}}>
-                    {(editingContractor ? editingContractor.pricingType : newContractor.pricingType) === 'hourly' ? 'Hourly Rate' : 'Flat Rate'}
+                    {newContractor.pricingType === 'hourly' ? 'Hourly Rate' : 'Flat Rate'}
                   </label>
                   <input
                     type="number"
-                    placeholder={(editingContractor ? editingContractor.pricingType : newContractor.pricingType) === 'hourly' ? "Enter hourly rate" : "Enter flat rate"}
-                    value={editingContractor ? editingContractor.rate : newContractor.rate}
-                    onChange={(e) => {
-                      if (editingContractor) {
-                        setEditingContractor({...editingContractor, rate: parseFloat(e.target.value)})
-                      } else {
-                        setNewContractor({...newContractor, rate: parseFloat(e.target.value)})
-                      }
-                    }}
+                    placeholder={newContractor.pricingType === 'hourly' ? "Enter hourly rate" : "Enter flat rate"}
+                    value={newContractor.rate}
+                    onChange={(e) => setNewContractor({...newContractor, rate: parseFloat(e.target.value) || 0})}
                     style={{
                       padding: '0.75rem',
                       backgroundColor: 'rgba(255, 255, 255, 0.1)',
@@ -623,14 +650,8 @@ export default function ContractorsPage() {
                 <div style={{display: 'flex', flexDirection: 'column'}}>
                   <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.5rem'}}>Status</label>
                   <select
-                    value={editingContractor ? editingContractor.status : newContractor.status || "active"}
-                    onChange={(e) => {
-                      if (editingContractor) {
-                        setEditingContractor({...editingContractor, status: e.target.value as "active" | "inactive"})
-                      } else {
-                        setNewContractor({...newContractor, status: e.target.value as "active" | "inactive"})
-                      }
-                    }}
+                    value={newContractor.status}
+                    onChange={(e) => setNewContractor({...newContractor, status: e.target.value as "active" | "inactive"})}
                     style={{
                       padding: '0.75rem',
                       backgroundColor: 'rgba(255, 255, 255, 0.1)',
@@ -648,14 +669,8 @@ export default function ContractorsPage() {
                   <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.5rem'}}>Notes</label>
                   <textarea
                     placeholder="Enter contractor notes (optional)"
-                    value={editingContractor?.notes || newContractor.notes}
-                    onChange={(e) => {
-                      if (editingContractor) {
-                        setEditingContractor({...editingContractor, notes: e.target.value})
-                      } else {
-                        setNewContractor({...newContractor, notes: e.target.value})
-                      }
-                    }}
+                    value={newContractor.notes}
+                    onChange={(e) => setNewContractor({...newContractor, notes: e.target.value})}
                     rows={3}
                     style={{
                       padding: '0.75rem',
