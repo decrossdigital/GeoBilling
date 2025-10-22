@@ -546,109 +546,6 @@ export default function QuoteDetailPage() {
     }
   }
 
-  const handleAssignContractor = async () => {
-    if (!selectedContractor) {
-      alert('Please select a contractor')
-      return
-    }
-
-    try {
-      const response = await fetch(`/api/quotes/${quoteId}/items`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          serviceName: "Contractor Assignment",
-          description: "Contractor assigned to this quote",
-          quantity: 1,
-          unitPrice: 0,
-          total: 0,
-          contractorId: selectedContractor
-        })
-      })
-
-      if (response.ok) {
-        const quoteResponse = await fetch(`/api/quotes/${quoteId}`)
-        if (quoteResponse.ok) {
-          const updatedQuote = await quoteResponse.json()
-          setQuote(updatedQuote)
-        }
-        alert('Contractor assigned successfully!')
-        setShowAddContractorModal(false)
-        setSelectedContractor('')
-      } else {
-        alert('Failed to assign contractor')
-      }
-    } catch (error) {
-      console.error('Error assigning contractor:', error)
-      alert('Error assigning contractor')
-    }
-  }
-
-  const handleEditContractor = async () => {
-    if (!editingItem || !selectedContractor) return
-
-    try {
-      const response = await fetch(`/api/quotes/${quoteId}/items/${editingItem.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          contractorId: selectedContractor
-        })
-      })
-
-      if (response.ok) {
-        const quoteResponse = await fetch(`/api/quotes/${quoteId}`)
-        if (quoteResponse.ok) {
-          const updatedQuote = await quoteResponse.json()
-          setQuote(updatedQuote)
-        }
-        alert('Contractor updated successfully!')
-        setShowEditContractorModal(false)
-        setEditingItem(null)
-        setSelectedContractor('')
-      } else {
-        alert('Failed to update contractor')
-      }
-    } catch (error) {
-      console.error('Error updating contractor:', error)
-      alert('Error updating contractor')
-    }
-  }
-
-  const handleRemoveContractor = async (itemId: string) => {
-    if (!confirm('Are you sure you want to remove this contractor?')) return
-
-    try {
-      const response = await fetch(`/api/quotes/${quoteId}/items/${itemId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          contractorId: null
-        })
-      })
-
-      if (response.ok) {
-        const quoteResponse = await fetch(`/api/quotes/${quoteId}`)
-        if (quoteResponse.ok) {
-          const updatedQuote = await quoteResponse.json()
-          setQuote(updatedQuote)
-        }
-        alert('Contractor removed successfully!')
-      } else {
-        alert('Failed to remove contractor')
-      }
-    } catch (error) {
-      console.error('Error removing contractor:', error)
-      alert('Error removing contractor')
-    }
-  }
-
   const handleEditServiceClick = (item: QuoteItem) => {
     setEditingItem(item)
     setServiceForm({
@@ -658,12 +555,6 @@ export default function QuoteDetailPage() {
       unitPrice: item.unitPrice
     })
     setShowEditServiceModal(true)
-  }
-
-  const handleEditContractorClick = (item: QuoteItem) => {
-    setEditingItem(item)
-    setSelectedContractor(item.contractorId || '')
-    setShowEditContractorModal(true)
   }
 
   const handleEmailDataChange = (field: string, value: string) => {
@@ -1208,7 +1099,7 @@ export default function QuoteDetailPage() {
           onAddService={handleAddService}
           onEditService={handleEditService}
           onAssignContractor={handleAssignContractor}
-          onEditContractor={handleEditContractor}
+          onEditContractor={() => {}}
           onEmailDataChange={handleEmailDataChange}
           onServiceFormChange={handleServiceFormChange}
           onSelectedContractorChange={setSelectedContractor}
