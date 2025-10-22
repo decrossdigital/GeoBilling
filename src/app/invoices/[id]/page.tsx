@@ -3,15 +3,19 @@
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useParams, useRouter } from 'next/navigation'
-import { ArrowLeft, Music, Home, Users, FileText, DollarSign, User, Settings, CreditCard, Send, Download, Edit, Trash2, CheckCircle, Clock, XCircle, Save, X } from 'lucide-react'
+import { ArrowLeft, Music, Home, Users, FileText, DollarSign, User, Settings, Edit, Save, X, Trash2, CreditCard } from 'lucide-react'
 import Link from 'next/link'
+import UserMenu from '@/components/user-menu'
 
 interface Client {
   id: string
+  firstName?: string
+  lastName?: string
   name: string
   email: string
   phone: string
   address: string
+  company?: string
 }
 
 interface Contractor {
@@ -19,8 +23,10 @@ interface Contractor {
   name: string
   email: string
   phone: string
+  skills: string[]
   hourlyRate: number
   flatRate: number
+  rate: number
 }
 
 interface InvoiceItem {
@@ -30,10 +36,22 @@ interface InvoiceItem {
   quantity: number
   unitPrice: number
   total: number
+  taxable: boolean
   contractorId: string | null
   contractor?: Contractor
   serviceTemplateId: string | null
   sortOrder: number
+}
+
+interface InvoiceContractor {
+  id: string
+  contractorId: string
+  assignedSkills: string[]
+  rateType: string
+  hours: number | null
+  cost: number
+  includeInTotal: boolean
+  contractor: Contractor
 }
 
 interface Invoice {
@@ -41,23 +59,20 @@ interface Invoice {
   invoiceNumber: string
   project: string
   projectDescription: string
-  status: "draft" | "sent" | "paid" | "overdue" | "cancelled"
+  status: string
+  issueDate: string
+  dueDate: string
+  paidDate: string | null
   subtotal: number
   taxRate: number
   taxAmount: number
   total: number
-  issueDate: string
-  dueDate: string
-  paidDate?: string
-  paymentMethod?: string
-  paymentReference?: string
-  terms: string
   notes: string
-  createdAt: string
-  updatedAt: string
+  terms: string
+  activityLog?: string
   client: Client
   items: InvoiceItem[]
-  quoteId?: string
+  contractors: InvoiceContractor[]
 }
 
 export default function InvoiceDetailPage() {
@@ -68,467 +83,502 @@ export default function InvoiceDetailPage() {
 
   const [invoice, setInvoice] = useState<Invoice | null>(null)
   const [loading, setLoading] = useState(true)
-  const [showEmailModal, setShowEmailModal] = useState(false)
-  const [sendingEmail, setSendingEmail] = useState(false)
-  const [showPaymentModal, setShowPaymentModal] = useState(false)
-  const [processingPayment, setProcessingPayment] = useState(false)
-  const [isEditing, setIsEditing] = useState(false)
-  const [editData, setEditData] = useState({
-    project: '',
-    projectDescription: '',
-    notes: '',
-    terms: '',
-    dueDate: ''
-  })
-  const [emailData, setEmailData] = useState({
-    to: '',
-    subject: '',
-    message: ''
-  })
+  const [error, setError] = useState<string>('')
+  const [processing, setProcessing] = useState(false)
 
   useEffect(() => {
-    const fetchInvoice = async () => {
-      try {
-        const response = await fetch(`/api/invoices/${invoiceId}`)
-        if (response.ok) {
-          const data = await response.json()
-          setInvoice(data)
-          setEmailData({
-            to: data.client.email,
-            subject: `Invoice ${data.invoiceNumber} from ${data.userName || 'GeoBilling'}`,
-            message: `Dear ${data.client.name},\n\nPlease find attached invoice ${data.invoiceNumber} for ${data.project}.\n\nTotal Amount: $${(data.total || 0).toFixed(2)}\nDue Date: ${new Date(data.dueDate).toLocaleDateString()}\n\nThank you for your business.\n\nBest regards,\n${data.userName || 'GeoBilling Team'}`
-          })
-        } else {
-          console.error('Error fetching invoice details')
-        }
-      } catch (error) {
-        console.error('Error:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    if (session && invoiceId) {
+    if (invoiceId) {
       fetchInvoice()
     }
-  }, [session, invoiceId])
+  }, [invoiceId])
 
-  const handleSendEmail = async () => {
+  const fetchInvoice = async () => {
+    try {
+      const response = await fetch(`/api/invoices/${invoiceId}`)
+      if (response.ok) {
+        const data = await response.json()
+        setInvoice(data)
+      } else {
+        const errorData = await response.json()
+        setError(errorData.error || 'Failed to load invoice')
+      }
+    } catch (err) {
+      setError('Failed to load invoice')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handlePayInvoice = async () => {
     if (!invoice) return
     
-    setSendingEmail(true)
+    setProcessing(true)
     try {
-      const response = await fetch('/api/invoices/send-email', {
+      const response = await fetch(`/api/invoices/${invoiceId}/pay`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          invoiceId: invoiceId,
-          to: emailData.to,
-          subject: emailData.subject,
-          message: emailData.message
+          amount: invoice.total
         })
       })
 
       if (response.ok) {
-        alert('Invoice sent successfully!')
-        setShowEmailModal(false)
-        // Refresh invoice data
-        const refreshResponse = await fetch(`/api/invoices/${invoiceId}`)
-        if (refreshResponse.ok) {
-          const data = await refreshResponse.json()
-          setInvoice(data)
-        }
+        const { sessionId } = await response.json()
+        
+        // Redirect to Stripe Checkout
+        const { redirectToCheckout } = await import('@/lib/stripe-client')
+        await redirectToCheckout(sessionId)
       } else {
-        alert('Failed to send invoice')
+        const errorData = await response.json()
+        alert(errorData.error || 'Failed to create payment session')
       }
-    } catch (error) {
-      console.error('Error sending invoice:', error)
-      alert('Error sending invoice')
+    } catch (err) {
+      console.error('Payment error:', err)
+      alert('Failed to process payment')
     } finally {
-      setSendingEmail(false)
+      setProcessing(false)
     }
   }
 
-  const handlePayment = async () => {
-    if (!invoice) return
-    
-    setProcessingPayment(true)
-    try {
-      // TODO: Implement actual payment processing
-      // For now, just update the status to paid
-      const response = await fetch(`/api/invoices/${invoiceId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...invoice,
-          status: 'paid',
-          paidDate: new Date().toISOString(),
-          paymentMethod: 'Manual',
-          paymentReference: `PAY-${Date.now()}`
-        })
-      })
-
-      if (response.ok) {
-        alert('Payment processed successfully!')
-        setShowPaymentModal(false)
-        // Refresh invoice data
-        const refreshResponse = await fetch(`/api/invoices/${invoiceId}`)
-        if (refreshResponse.ok) {
-          const data = await refreshResponse.json()
-          setInvoice(data)
-        }
-      } else {
-        alert('Failed to process payment')
-      }
-    } catch (error) {
-      console.error('Error processing payment:', error)
-      alert('Error processing payment')
-    } finally {
-      setProcessingPayment(false)
+  const handleDeleteInvoice = async () => {
+    if (!confirm('Are you sure you want to delete this invoice? This action cannot be undone.')) {
+      return
     }
-  }
 
-  const handleDownload = () => {
-    // TODO: Implement PDF generation and download
-    alert('PDF download functionality will be implemented')
-  }
-
-  const handleDelete = async () => {
-    if (confirm('Are you sure you want to delete this invoice? This action cannot be undone.')) {
-      try {
-        const response = await fetch(`/api/invoices/${invoiceId}`, {
-          method: 'DELETE'
-        })
-
-        if (response.ok) {
-          alert('Invoice deleted successfully!')
-          router.push('/invoices')
-        } else {
-          alert('Failed to delete invoice')
-        }
-      } catch (error) {
-        console.error('Error deleting invoice:', error)
-        alert('Error deleting invoice')
-      }
-    }
-  }
-
-  const handleEditClick = () => {
-    if (invoice) {
-      setEditData({
-        project: invoice.project || '',
-        projectDescription: invoice.projectDescription || '',
-        notes: invoice.notes || '',
-        terms: invoice.terms || '',
-        dueDate: invoice.dueDate ? new Date(invoice.dueDate).toISOString().split('T')[0] : ''
-      })
-      setIsEditing(true)
-    }
-  }
-
-  const handleCancelEdit = () => {
-    setIsEditing(false)
-  }
-
-  const handleEditDataChange = (field: keyof typeof editData, value: string) => {
-    setEditData(prev => ({
-      ...prev,
-      [field]: value
-    }))
-  }
-
-  const handleSaveEdit = async () => {
     try {
       const response = await fetch(`/api/invoices/${invoiceId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          project: editData.project,
-          projectDescription: editData.projectDescription,
-          notes: editData.notes,
-          terms: editData.terms,
-          dueDate: editData.dueDate
-        })
+        method: 'DELETE'
       })
 
       if (response.ok) {
-        const updatedInvoice = await response.json()
-        setInvoice(updatedInvoice)
-        setIsEditing(false)
-        alert('Invoice details updated successfully!')
+        alert('Invoice deleted successfully!')
+        router.push('/invoices')
       } else {
-        alert('Failed to update invoice details')
+        const errorData = await response.json()
+        alert(`Failed to delete invoice: ${errorData.error}`)
       }
     } catch (error) {
-      console.error('Error updating invoice:', error)
-      alert('Error updating invoice details')
+      console.error('Error deleting invoice:', error)
+      alert('Error deleting invoice')
     }
+  }
+
+  const getClientName = (client: Client) => {
+    if (client.firstName && client.lastName) {
+      return `${client.firstName} ${client.lastName}`
+    }
+    if (client.firstName) {
+      return client.firstName
+    }
+    if (client.company) {
+      return client.company
+    }
+    return client.name
   }
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "draft":
-        return "#94a3b8"
-      case "sent":
-        return "#3b82f6"
-      case "paid":
-        return "#34d399"
-      case "overdue":
-        return "#f87171"
-      case "cancelled":
-        return "#f59e0b"
-      default:
-        return "#94a3b8"
+      case 'draft': return '#6b7280'
+      case 'sent': return '#3b82f6'
+      case 'paid': return '#10b981'
+      case 'overdue': return '#f59e0b'
+      case 'cancelled': return '#ef4444'
+      default: return '#6b7280'
     }
   }
 
-  const getStatusBgColor = (status: string) => {
+  const getStatusText = (status: string) => {
     switch (status) {
-      case "draft":
-        return "rgba(148, 163, 184, 0.1)"
-      case "sent":
-        return "rgba(59, 130, 246, 0.1)"
-      case "paid":
-        return "rgba(52, 211, 153, 0.1)"
-      case "overdue":
-        return "rgba(248, 113, 113, 0.1)"
-      case "cancelled":
-        return "rgba(245, 158, 11, 0.1)"
-      default:
-        return "rgba(148, 163, 184, 0.1)"
-    }
-  }
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "draft":
-        return <FileText style={{height: '1rem', width: '1rem'}} />
-      case "sent":
-        return <Clock style={{height: '1rem', width: '1rem'}} />
-      case "paid":
-        return <CheckCircle style={{height: '1rem', width: '1rem'}} />
-      case "overdue":
-        return <XCircle style={{height: '1rem', width: '1rem'}} />
-      case "cancelled":
-        return <XCircle style={{height: '1rem', width: '1rem'}} />
-      default:
-        return <FileText style={{height: '1rem', width: '1rem'}} />
+      case 'draft': return 'Draft'
+      case 'sent': return 'Sent'
+      case 'paid': return 'Paid'
+      case 'overdue': return 'Overdue'
+      case 'cancelled': return 'Cancelled'
+      default: return status
     }
   }
 
   if (loading) {
     return (
-      <div style={{minHeight: '100vh', background: 'linear-gradient(to bottom right, #0f172a, #581c87, #0f172a)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
-        <div>Loading invoice...</div>
+      <div style={{
+        minHeight: '100vh',
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        <div style={{color: 'white', textAlign: 'center'}}>
+          <h2>Loading invoice...</h2>
+        </div>
       </div>
     )
   }
 
-  if (!invoice) {
+  if (error || !invoice) {
     return (
-      <div style={{minHeight: '100vh', background: 'linear-gradient(to bottom right, #0f172a, #581c87, #0f172a)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
-        <div>Invoice not found</div>
+      <div style={{
+        minHeight: '100vh',
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        <div style={{color: 'white', textAlign: 'center'}}>
+          <h2>Error loading invoice</h2>
+          <p>{error}</p>
+        </div>
       </div>
     )
   }
 
-  const regularServices = invoice.items.filter(item => !item.contractorId)
-  const assignedContractors = invoice.items.filter(item => item.contractorId)
+  const contractorCostsTotal = invoice.contractors
+    .filter(c => c.includeInTotal)
+    .reduce((sum, c) => sum + Number(c.cost), 0)
+  const grandTotal = invoice.total + contractorCostsTotal
 
   return (
-    <div style={{minHeight: '100vh', background: 'linear-gradient(to bottom right, #0f172a, #581c87, #0f172a)', color: 'white'}}>
-      <div style={{maxWidth: '1200px', margin: '0 auto', padding: '2rem 1.5rem'}}>
-        {/* Header */}
-        <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2rem'}}>
-          <div style={{display: 'flex', alignItems: 'center', gap: '0.75rem'}}>
-            <div style={{padding: '0.75rem', background: 'linear-gradient(to right, #9333ea, #ec4899)', borderRadius: '1rem'}}>
-              <Music style={{height: '2rem', width: '2rem', color: 'white'}} />
+    <div style={{
+      minHeight: '100vh',
+      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+    }}>
+      {/* Navigation */}
+      <div style={{
+        background: 'rgba(255, 255, 255, 0.1)',
+        backdropFilter: 'blur(10px)',
+        borderBottom: '1px solid rgba(255, 255, 255, 0.2)',
+        padding: '1rem 0'
+      }}>
+        <div style={{
+          maxWidth: '1200px',
+          margin: '0 auto',
+          padding: '0 1rem',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between'
+        }}>
+          <div style={{display: 'flex', alignItems: 'center', gap: '2rem'}}>
+            <Link href="/invoices" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'white', textDecoration: 'none'}}>
+              <ArrowLeft style={{height: '1.25rem', width: '1.25rem'}} />
+              Back to Invoices
+            </Link>
+            
+            <div style={{display: 'flex', alignItems: 'center', gap: '1rem'}}>
+              <Link href="/" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'white', textDecoration: 'none', opacity: 0.7}}>
+                <Home style={{height: '1.25rem', width: '1.25rem'}} />
+                Dashboard
+              </Link>
+              <Link href="/clients" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'white', textDecoration: 'none', opacity: 0.7}}>
+                <Users style={{height: '1.25rem', width: '1.25rem'}} />
+                Clients
+              </Link>
+              <Link href="/quotes" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'white', textDecoration: 'none', opacity: 0.7}}>
+                <FileText style={{height: '1.25rem', width: '1.25rem'}} />
+                Quotes
+              </Link>
+              <Link href="/invoices" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'white', textDecoration: 'none', fontWeight: 'bold'}}>
+                <DollarSign style={{height: '1.25rem', width: '1.25rem'}} />
+                Invoices
+              </Link>
+              <Link href="/contractors" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'white', textDecoration: 'none', opacity: 0.7}}>
+                <User style={{height: '1.25rem', width: '1.25rem'}} />
+                Contractors
+              </Link>
+              <Link href="/settings" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'white', textDecoration: 'none', opacity: 0.7}}>
+                <Settings style={{height: '1.25rem', width: '1.25rem'}} />
+                Settings
+              </Link>
             </div>
+          </div>
+          
+          <UserMenu />
+        </div>
+      </div>
+
+      <div style={{maxWidth: '1200px', margin: '0 auto', padding: '2rem 1rem'}}>
+        <div style={{
+          background: 'rgba(255, 255, 255, 0.1)',
+          backdropFilter: 'blur(10px)',
+          borderRadius: '1rem',
+          padding: '2rem',
+          color: 'white'
+        }}>
+          {/* Header */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
+            marginBottom: '2rem'
+          }}>
             <div>
-              <h1 style={{fontSize: '1.875rem', fontWeight: 'bold', color: 'white'}}>GeoBilling</h1>
-              <p style={{fontSize: '0.875rem', color: '#cbd5e1'}}>Uniquitous Music - Professional Billing System</p>
+              <h1 style={{fontSize: '2rem', fontWeight: 'bold', marginBottom: '0.5rem'}}>
+                Invoice #{invoice.invoiceNumber}
+              </h1>
+              <p style={{fontSize: '1.25rem', opacity: 0.9}}>
+                {invoice.project}
+              </p>
+            </div>
+            <div style={{
+              padding: '0.5rem 1rem',
+              backgroundColor: `rgba(${getStatusColor(invoice.status).slice(1).match(/.{2}/g)?.map(hex => parseInt(hex, 16)).join(', ')}, 0.2)`,
+              border: `1px solid ${getStatusColor(invoice.status)}`,
+              borderRadius: '9999px',
+              color: getStatusColor(invoice.status),
+              fontWeight: 'bold',
+              fontSize: '0.875rem'
+            }}>
+              {getStatusText(invoice.status)}
             </div>
           </div>
-        </div>
 
-        {/* Navigation */}
-        <div style={{backgroundColor: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.75rem', padding: '1rem', marginBottom: '2rem'}}>
-          <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
-            <div style={{display: 'flex', gap: '0.5rem'}}>
-              <Link href="/" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', color: '#cbd5e1', textDecoration: 'none', fontWeight: '500'}}>
-                <Home style={{height: '1rem', width: '1rem'}} />
-                <span>Dashboard</span>
-              </Link>
-              <Link href="/clients" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', color: '#cbd5e1', textDecoration: 'none', fontWeight: '500'}}>
-                <Users style={{height: '1rem', width: '1rem'}} />
-                <span>Clients</span>
-              </Link>
-              <Link href="/quotes" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', color: '#cbd5e1', textDecoration: 'none', fontWeight: '500'}}>
-                <FileText style={{height: '1rem', width: '1rem'}} />
-                <span>Quotes</span>
-              </Link>
-              <Link href="/invoices" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', background: 'linear-gradient(to right, #9333ea, #3b82f6)', color: 'white', textDecoration: 'none', fontWeight: '500', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'}}>
-                <DollarSign style={{height: '1rem', width: '1rem'}} />
-                <span>Invoices</span>
-              </Link>
-              <Link href="/contractors" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', color: '#cbd5e1', textDecoration: 'none', fontWeight: '500'}}>
-                <User style={{height: '1rem', width: '1rem'}} />
-                <span>Contractors</span>
-              </Link>
-              <Link href="/settings" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', color: '#cbd5e1', textDecoration: 'none', fontWeight: '500'}}>
-                <Settings style={{height: '1rem', width: '1rem'}} />
-                <span>Settings</span>
-              </Link>
+          {/* Client and Invoice Info */}
+          <div style={{
+            background: 'rgba(255, 255, 255, 0.1)',
+            borderRadius: '0.75rem',
+            padding: '1.5rem',
+            marginBottom: '2rem'
+          }}>
+            <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem'}}>
+              <div>
+                <h3 style={{fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem'}}>
+                  Client Information
+                </h3>
+                <p style={{fontWeight: 'bold', marginBottom: '0.25rem'}}>{getClientName(invoice.client)}</p>
+                <p style={{color: '#cbd5e1', marginBottom: '0.25rem'}}>{invoice.client.email}</p>
+                {invoice.client.phone && <p style={{color: '#cbd5e1', marginBottom: '0.25rem'}}>{invoice.client.phone}</p>}
+                {invoice.client.address && <p style={{color: '#cbd5e1'}}>{invoice.client.address}</p>}
+              </div>
+              <div>
+                <h3 style={{fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem'}}>
+                  Invoice Details
+                </h3>
+                <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem'}}>
+                  <span>Issue Date:</span>
+                  <span>{new Date(invoice.issueDate).toLocaleDateString()}</span>
+                </div>
+                <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem'}}>
+                  <span>Due Date:</span>
+                  <span>{new Date(invoice.dueDate).toLocaleDateString()}</span>
+                </div>
+                {invoice.paidDate && (
+                  <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem'}}>
+                    <span>Paid Date:</span>
+                    <span>{new Date(invoice.paidDate).toLocaleDateString()}</span>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Back Button and Invoice Header */}
-        <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2rem'}}>
-          <button
-            onClick={() => router.push('/invoices')}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              padding: '0.75rem 1rem',
-              backgroundColor: 'rgba(255, 255, 255, 0.1)',
-              border: '1px solid rgba(255, 255, 255, 0.2)',
-              borderRadius: '0.5rem',
-              color: 'white',
-              cursor: 'pointer',
-              textDecoration: 'none'
-            }}
-          >
-            <ArrowLeft style={{height: '1rem', width: '1rem'}} />
-            Back to Invoices
-          </button>
-
-          <div style={{display: 'flex', gap: '0.5rem', flexWrap: 'wrap'}}>
-            {invoice.status === 'draft' && !isEditing && (
-              <button
-                onClick={handleEditClick}
-                style={{
+          {/* Services */}
+          {invoice.items.length > 0 && (
+            <div style={{
+              background: 'rgba(255, 255, 255, 0.1)',
+              borderRadius: '0.75rem',
+              padding: '1.5rem',
+              marginBottom: '2rem'
+            }}>
+              <h3 style={{fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem'}}>
+                Services
+              </h3>
+              {invoice.items.map((item, index) => (
+                <div key={index} style={{
                   display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  padding: '0.75rem 1.5rem',
-                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                  border: '1px solid rgba(255, 255, 255, 0.3)',
+                  justifyContent: 'space-between',
+                  padding: '0.75rem',
+                  background: 'rgba(255, 255, 255, 0.05)',
                   borderRadius: '0.5rem',
-                  color: 'white',
-                  cursor: 'pointer',
-                  fontWeight: '500'
-                }}
-              >
-                <Edit style={{height: '1rem', width: '1rem'}} />
-                Edit Details
-              </button>
+                  marginBottom: '0.5rem'
+                }}>
+                  <div>
+                    <p style={{fontWeight: 'bold', marginBottom: '0.25rem'}}>{item.serviceName}</p>
+                    {item.description && <p style={{fontSize: '0.875rem', color: '#cbd5e1'}}>{item.description}</p>}
+                    <p style={{fontSize: '0.875rem', color: '#cbd5e1'}}>
+                      {item.quantity} × ${item.unitPrice.toFixed(2)}
+                      {item.taxable && <span style={{color: '#10b981', marginLeft: '0.5rem'}}>Taxable</span>}
+                    </p>
+                  </div>
+                  <p style={{fontWeight: 'bold'}}>${item.total.toFixed(2)}</p>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Contractors */}
+          {invoice.contractors.length > 0 && (
+            <div style={{
+              background: 'rgba(255, 255, 255, 0.1)',
+              borderRadius: '0.75rem',
+              padding: '1.5rem',
+              marginBottom: '2rem'
+            }}>
+              <h3 style={{fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem'}}>
+                Contractors
+              </h3>
+              {invoice.contractors.map((ic, index) => (
+                <div key={index} style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  padding: '0.75rem',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  borderRadius: '0.5rem',
+                  marginBottom: '0.5rem'
+                }}>
+                  <div>
+                    <p style={{fontWeight: 'bold', marginBottom: '0.25rem'}}>{ic.contractor.name}</p>
+                    <div style={{display: 'flex', flexWrap: 'wrap', gap: '0.25rem', marginBottom: '0.25rem'}}>
+                      {ic.assignedSkills.map(skill => (
+                        <span key={skill} style={{
+                          padding: '0.125rem 0.5rem',
+                          backgroundColor: 'rgba(147, 51, 234, 0.2)',
+                          border: '1px solid rgba(147, 51, 234, 0.3)',
+                          borderRadius: '9999px',
+                          fontSize: '0.75rem',
+                          color: '#e9d5ff'
+                        }}>
+                          {skill}
+                        </span>
+                      ))}
+                    </div>
+                    <p style={{fontSize: '0.875rem', color: '#cbd5e1'}}>
+                      {ic.rateType === 'hourly' 
+                        ? `${ic.hours} hrs @ $${ic.hours && ic.hours > 0 ? (ic.cost / ic.hours).toFixed(2) : '0.00'}/hr`
+                        : 'Flat rate'
+                      }
+                      {!ic.includeInTotal && <span style={{color: '#f59e0b', marginLeft: '0.5rem'}}>(Not included in total)</span>}
+                    </p>
+                  </div>
+                  <p style={{fontWeight: 'bold'}}>${Number(ic.cost).toFixed(2)}</p>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Totals */}
+          <div style={{
+            background: 'rgba(255, 255, 255, 0.1)',
+            borderRadius: '0.75rem',
+            padding: '1.5rem',
+            marginBottom: '2rem'
+          }}>
+            <h3 style={{fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem'}}>
+              Invoice Summary
+            </h3>
+            <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem'}}>
+              <span>Subtotal:</span>
+              <span>${invoice.subtotal.toFixed(2)}</span>
+            </div>
+            {contractorCostsTotal > 0 && (
+              <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem'}}>
+                <span>Contractors:</span>
+                <span>${contractorCostsTotal.toFixed(2)}</span>
+              </div>
             )}
-            {isEditing && (
-              <>
-                <button
-                  onClick={handleSaveEdit}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    padding: '0.75rem 1.5rem',
-                    background: 'linear-gradient(to right, #10b981, #14b8a6)',
-                    border: 'none',
-                    borderRadius: '0.5rem',
-                    color: 'white',
-                    cursor: 'pointer',
-                    fontWeight: '500'
-                  }}
-                >
-                  <Save style={{height: '1rem', width: '1rem'}} />
-                  Save Changes
-                </button>
-                <button
-                  onClick={handleCancelEdit}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    padding: '0.75rem 1.5rem',
-                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                    border: '1px solid rgba(255, 255, 255, 0.2)',
-                    borderRadius: '0.5rem',
-                    color: 'white',
-                    cursor: 'pointer',
-                    fontWeight: '500'
-                  }}
-                >
-                  <X style={{height: '1rem', width: '1rem'}} />
-                  Cancel
-                </button>
-              </>
-            )}
+            <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem'}}>
+              <span>Tax ({invoice.taxRate}%):</span>
+              <span>${invoice.taxAmount.toFixed(2)}</span>
+            </div>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              fontSize: '1.25rem',
+              fontWeight: 'bold',
+              borderTop: '1px solid rgba(255, 255, 255, 0.2)',
+              paddingTop: '0.5rem'
+            }}>
+              <span>Total:</span>
+              <span>${grandTotal.toFixed(2)}</span>
+            </div>
+          </div>
+
+          {/* Notes and Terms */}
+          {(invoice.notes || invoice.terms) && (
+            <div style={{
+              background: 'rgba(255, 255, 255, 0.1)',
+              borderRadius: '0.75rem',
+              padding: '1.5rem',
+              marginBottom: '2rem'
+            }}>
+              {invoice.notes && (
+                <div style={{marginBottom: '1rem'}}>
+                  <h3 style={{fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '0.5rem'}}>
+                    Notes
+                  </h3>
+                  <p style={{lineHeight: '1.6'}}>{invoice.notes}</p>
+                </div>
+              )}
+              {invoice.terms && (
+                <div>
+                  <h3 style={{fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '0.5rem'}}>
+                    Terms & Conditions
+                  </h3>
+                  <p style={{lineHeight: '1.6'}}>{invoice.terms}</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Activity Log Section (Admin Only) */}
+          {invoice.activityLog && (
+            <div style={{
+              background: 'rgba(255, 255, 255, 0.1)',
+              backdropFilter: 'blur(8px)',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
+              borderRadius: '0.75rem',
+              padding: '1.5rem',
+              marginBottom: '2rem'
+            }}>
+              <h3 style={{color: 'white', fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem'}}>
+                Activity Log (Admin Only)
+              </h3>
+              <div style={{
+                backgroundColor: 'rgba(0, 0, 0, 0.2)',
+                borderRadius: '0.5rem',
+                padding: '1rem',
+                fontFamily: 'monospace',
+                fontSize: '0.875rem',
+                color: '#cbd5e1',
+                whiteSpace: 'pre-wrap',
+                maxHeight: '200px',
+                overflowY: 'auto'
+              }}>
+                {invoice.activityLog}
+              </div>
+            </div>
+          )}
+
+          {/* Action Buttons */}
+          <div style={{display: 'flex', gap: '1rem', justifyContent: 'center', marginBottom: '2rem'}}>
             {invoice.status === 'sent' && (
               <button
-                onClick={() => setShowPaymentModal(true)}
+                onClick={handlePayInvoice}
+                disabled={processing}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
                   gap: '0.5rem',
-                  padding: '0.75rem 1.5rem',
-                  background: 'linear-gradient(to right, #10b981, #059669)',
-                  color: 'white',
-                  borderRadius: '0.5rem',
+                  padding: '1rem 2rem',
+                  background: processing ? 'rgba(255, 255, 255, 0.1)' : 'linear-gradient(to right, #10b981, #14b8a6)',
                   border: 'none',
-                  cursor: 'pointer',
-                  fontWeight: '500'
+                  borderRadius: '0.75rem',
+                  color: 'white',
+                  cursor: processing ? 'not-allowed' : 'pointer',
+                  fontWeight: 'bold',
+                  fontSize: '1.125rem',
+                  opacity: processing ? 0.5 : 1
                 }}
               >
-                <CreditCard style={{height: '1rem', width: '1rem'}} />
-                Process Payment
+                <CreditCard style={{height: '1.25rem', width: '1.25rem'}} />
+                {processing ? 'Processing...' : `Pay $${grandTotal.toFixed(2)}`}
               </button>
             )}
+          </div>
+
+          {/* Delete Invoice Button */}
+          <div style={{display: 'flex', justifyContent: 'center', marginTop: '2rem'}}>
             <button
-              onClick={() => setShowEmailModal(true)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                padding: '0.75rem 1.5rem',
-                background: 'linear-gradient(to right, #3b82f6, #1d4ed8)',
-                color: 'white',
-                borderRadius: '0.5rem',
-                border: 'none',
-                cursor: 'pointer',
-                fontWeight: '500'
-              }}
-            >
-              <Send style={{height: '1rem', width: '1rem'}} />
-              Send via Email
-            </button>
-            <button
-              onClick={handleDownload}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                padding: '0.75rem 1.5rem',
-                backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
-                borderRadius: '0.5rem',
-                color: 'white',
-                cursor: 'pointer',
-                fontWeight: '500'
-              }}
-            >
-              <Download style={{height: '1rem', width: '1rem'}} />
-              Download PDF
-            </button>
-            <button
-              onClick={handleDelete}
+              onClick={handleDeleteInvoice}
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -543,461 +593,10 @@ export default function InvoiceDetailPage() {
               }}
             >
               <Trash2 style={{height: '1rem', width: '1rem'}} />
-              Delete
+              Delete Invoice
             </button>
           </div>
         </div>
-
-        {/* Invoice Header with Client and Project Information */}
-        <div style={{backgroundColor: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.75rem', padding: '2rem', marginBottom: '2rem'}}>
-          <div style={{display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '1.5rem'}}>
-            <div style={{flex: 1}}>
-              <h1 style={{fontSize: '2.25rem', fontWeight: 'bold', color: 'white', marginBottom: '1rem'}}>
-                Invoice #{invoice.invoiceNumber}
-              </h1>
-              
-              {/* Client and Project Information */}
-              <div style={{marginBottom: '1.5rem'}}>
-                <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem'}}>
-                  <div>
-                    <span style={{color: '#cbd5e1', fontSize: '0.875rem'}}>Name:</span>
-                    <p style={{color: 'white', margin: '0', fontWeight: '500'}}>{invoice.client.name}</p>
-                  </div>
-                  <div>
-                    <span style={{color: '#cbd5e1', fontSize: '0.875rem'}}>Email:</span>
-                    <p style={{color: 'white', margin: '0', fontWeight: '500'}}>{invoice.client.email}</p>
-                  </div>
-                  <div>
-                    <span style={{color: '#cbd5e1', fontSize: '0.875rem'}}>Phone:</span>
-                    <p style={{color: 'white', margin: '0', fontWeight: '500'}}>{invoice.client.phone || 'Not provided'}</p>
-                  </div>
-                  <div>
-                    <span style={{color: '#cbd5e1', fontSize: '0.875rem'}}>Address:</span>
-                    <p style={{color: 'white', margin: '0', fontWeight: '500'}}>{invoice.client.address || 'Not provided'}</p>
-                  </div>
-                  <div>
-                    <span style={{color: '#cbd5e1', fontSize: '0.875rem'}}>Project:</span>
-                    {isEditing ? (
-                      <input
-                        type="text"
-                        value={editData.project}
-                        onChange={(e) => handleEditDataChange('project', e.target.value)}
-                        style={{
-                          width: '100%',
-                          padding: '0.5rem',
-                          backgroundColor: 'rgba(59, 130, 246, 0.15)',
-                          border: '2px solid rgba(59, 130, 246, 0.5)',
-                          borderRadius: '0.25rem',
-                          color: 'white',
-                          outline: 'none',
-                          marginTop: '0.25rem',
-                          boxShadow: '0 0 0 3px rgba(59, 130, 246, 0.1)',
-                          transition: 'all 0.2s'
-                        }}
-                        placeholder="Enter project name..."
-                      />
-                    ) : (
-                      <p style={{color: 'white', margin: '0', fontWeight: '500'}}>{invoice.project}</p>
-                    )}
-                  </div>
-                  <div>
-                    <span style={{color: '#cbd5e1', fontSize: '0.875rem'}}>Project Description:</span>
-                    {isEditing ? (
-                      <textarea
-                        value={editData.projectDescription}
-                        onChange={(e) => handleEditDataChange('projectDescription', e.target.value)}
-                        rows={3}
-                        style={{
-                          width: '100%',
-                          padding: '0.5rem',
-                          backgroundColor: 'rgba(59, 130, 246, 0.15)',
-                          border: '2px solid rgba(59, 130, 246, 0.5)',
-                          borderRadius: '0.25rem',
-                          color: 'white',
-                          outline: 'none',
-                          resize: 'vertical',
-                          marginTop: '0.25rem',
-                          boxShadow: '0 0 0 3px rgba(59, 130, 246, 0.1)',
-                          transition: 'all 0.2s'
-                        }}
-                        placeholder="Describe the project details..."
-                      />
-                    ) : (
-                      <p style={{color: 'white', margin: '0', fontWeight: '500'}}>{invoice.projectDescription || 'Not provided'}</p>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            {/* Status Badge */}
-            <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', backgroundColor: 'rgba(255, 255, 255, 0.1)', borderRadius: '0.5rem', border: '1px solid rgba(255, 255, 255, 0.2)'}}>
-              <div style={{
-                width: '0.5rem',
-                height: '0.5rem',
-                borderRadius: '50%',
-                backgroundColor: getStatusColor(invoice.status)
-              }} />
-              <span style={{color: 'white', fontWeight: '500', textTransform: 'capitalize'}}>{invoice.status}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Two Column Layout */}
-        <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem'}}>
-          {/* Left Column - Invoice Details */}
-          <div>
-            {/* Invoice Details */}
-            <div style={{backgroundColor: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.75rem', padding: '1.5rem', marginBottom: '2rem'}}>
-              <h2 style={{fontSize: '1.25rem', fontWeight: 'bold', color: 'white', marginBottom: '1rem'}}>Invoice Details</h2>
-              <div style={{display: 'flex', flexDirection: 'column', gap: '0.75rem'}}>
-                <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem'}}>
-                  <div>
-                    <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>Issue Date</label>
-                    <div style={{color: 'white'}}>{new Date(invoice.issueDate).toLocaleDateString()}</div>
-                  </div>
-                  <div>
-                    <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>Due Date</label>
-                    <div style={{color: 'white'}}>{new Date(invoice.dueDate).toLocaleDateString()}</div>
-                  </div>
-                </div>
-                {invoice.paidDate && (
-                  <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem'}}>
-                    <div>
-                      <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>Paid Date</label>
-                      <div style={{color: 'white'}}>{new Date(invoice.paidDate).toLocaleDateString()}</div>
-                    </div>
-                    <div>
-                      <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>Payment Method</label>
-                      <div style={{color: 'white'}}>{invoice.paymentMethod}</div>
-                    </div>
-                  </div>
-                )}
-                {invoice.quoteId && (
-                  <div>
-                    <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>Converted from Quote</label>
-                    <div style={{color: 'white'}}>Quote #{invoice.quoteId}</div>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Financial Summary */}
-            <div style={{backgroundColor: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.75rem', padding: '1.5rem'}}>
-              <h2 style={{fontSize: '1.25rem', fontWeight: 'bold', color: 'white', marginBottom: '1rem'}}>Financial Summary</h2>
-              <div style={{display: 'flex', flexDirection: 'column', gap: '0.75rem'}}>
-                                 <div style={{display: 'flex', justifyContent: 'space-between'}}>
-                   <span style={{color: '#cbd5e1'}}>Subtotal:</span>
-                   <span style={{color: 'white'}}>${(invoice.subtotal || 0).toFixed(2)}</span>
-                 </div>
-                 <div style={{display: 'flex', justifyContent: 'space-between'}}>
-                   <span style={{color: '#cbd5e1'}}>Tax ({invoice.taxRate || 0}%):</span>
-                   <span style={{color: 'white'}}>${(invoice.taxAmount || 0).toFixed(2)}</span>
-                 </div>
-                 <div style={{borderTop: '1px solid rgba(255, 255, 255, 0.2)', paddingTop: '0.75rem', display: 'flex', justifyContent: 'space-between'}}>
-                   <span style={{fontWeight: 'bold', color: 'white'}}>Total:</span>
-                   <span style={{fontWeight: 'bold', color: 'white', fontSize: '1.125rem'}}>${(invoice.total || 0).toFixed(2)}</span>
-                 </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Right Column - Services and Contractors */}
-          <div>
-            {/* Services */}
-            <div style={{backgroundColor: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.75rem', padding: '1.5rem', marginBottom: '2rem'}}>
-              <h2 style={{fontSize: '1.25rem', fontWeight: 'bold', color: 'white', marginBottom: '1rem'}}>Services</h2>
-              {regularServices.length === 0 ? (
-                <p style={{color: '#cbd5e1', fontStyle: 'italic'}}>No services added</p>
-              ) : (
-                <div style={{display: 'flex', flexDirection: 'column', gap: '1rem'}}>
-                  {regularServices.map((item) => (
-                    <div key={item.id} style={{border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.5rem', padding: '1rem'}}>
-                      <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem'}}>
-                        <div style={{flex: 1}}>
-                          <div style={{fontWeight: '500', color: 'white', marginBottom: '0.25rem'}}>{item.serviceName}</div>
-                          {item.description && (
-                            <div style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.5rem'}}>{item.description}</div>
-                          )}
-                          <div style={{fontSize: '0.875rem', color: '#94a3b8'}}>
-                            {item.quantity} × ${(item.unitPrice || 0).toFixed(2)}
-                          </div>
-                        </div>
-                        <div style={{fontWeight: '500', color: 'white'}}>${(item.total || 0).toFixed(2)}</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Contractors */}
-            <div style={{backgroundColor: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.75rem', padding: '1.5rem'}}>
-              <h2 style={{fontSize: '1.25rem', fontWeight: 'bold', color: 'white', marginBottom: '1rem'}}>Contractors</h2>
-              {assignedContractors.length === 0 ? (
-                <p style={{color: '#cbd5e1', fontStyle: 'italic'}}>No contractors assigned</p>
-              ) : (
-                <div style={{display: 'flex', flexDirection: 'column', gap: '1rem'}}>
-                  {assignedContractors.map((item) => (
-                    <div key={item.id} style={{border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.5rem', padding: '1rem'}}>
-                      <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem'}}>
-                        <div style={{flex: 1}}>
-                          <div style={{fontWeight: '500', color: 'white', marginBottom: '0.25rem'}}>
-                            {item.contractor?.name || 'Unknown Contractor'}
-                          </div>
-                          <div style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem'}}>
-                            {item.contractor?.email}
-                          </div>
-                          <div style={{fontSize: '0.875rem', color: '#94a3b8'}}>
-                            {item.quantity} × ${(item.unitPrice || 0).toFixed(2)}
-                          </div>
-                        </div>
-                        <div style={{fontWeight: '500', color: 'white'}}>${(item.total || 0).toFixed(2)}</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Terms and Notes */}
-        <div style={{backgroundColor: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.75rem', padding: '1.5rem', marginTop: '2rem'}}>
-          <div style={{marginBottom: '1.5rem'}}>
-            <h2 style={{fontSize: '1.25rem', fontWeight: 'bold', color: 'white', marginBottom: '1rem'}}>Terms & Conditions</h2>
-            {isEditing ? (
-              <textarea
-                value={editData.terms}
-                onChange={(e) => handleEditDataChange('terms', e.target.value)}
-                rows={4}
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  backgroundColor: 'rgba(59, 130, 246, 0.15)',
-                  border: '2px solid rgba(59, 130, 246, 0.5)',
-                  borderRadius: '0.25rem',
-                  color: 'white',
-                  outline: 'none',
-                  resize: 'vertical',
-                  fontSize: '0.875rem',
-                  lineHeight: '1.6',
-                  boxShadow: '0 0 0 3px rgba(59, 130, 246, 0.1)',
-                  transition: 'all 0.2s'
-                }}
-                placeholder="Enter terms and conditions..."
-              />
-            ) : (
-              <p style={{fontSize: '0.875rem', color: '#cbd5e1', lineHeight: '1.6', margin: 0}}>{invoice.terms || 'No terms specified'}</p>
-            )}
-          </div>
-          <div>
-            <h2 style={{fontSize: '1.25rem', fontWeight: 'bold', color: 'white', marginBottom: '1rem'}}>Notes</h2>
-            {isEditing ? (
-              <textarea
-                value={editData.notes}
-                onChange={(e) => handleEditDataChange('notes', e.target.value)}
-                rows={3}
-                style={{
-                  width: '100%',
-                  padding: '0.5rem',
-                  backgroundColor: 'rgba(59, 130, 246, 0.15)',
-                  border: '2px solid rgba(59, 130, 246, 0.5)',
-                  borderRadius: '0.25rem',
-                  color: 'white',
-                  outline: 'none',
-                  resize: 'vertical',
-                  marginTop: '0.25rem',
-                  boxShadow: '0 0 0 3px rgba(59, 130, 246, 0.1)',
-                  transition: 'all 0.2s'
-                }}
-                placeholder="Enter notes..."
-              />
-            ) : (
-              <p style={{fontSize: '0.875rem', color: '#cbd5e1', lineHeight: '1.6', margin: 0}}>{invoice.notes || 'No notes specified'}</p>
-            )}
-          </div>
-        </div>
-
-        {/* Email Modal */}
-        {showEmailModal && (
-          <div style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000
-          }}>
-            <div style={{
-              backgroundColor: 'rgba(15, 23, 42, 0.95)',
-              backdropFilter: 'blur(8px)',
-              border: '1px solid rgba(255, 255, 255, 0.2)',
-              borderRadius: '0.75rem',
-              padding: '2rem',
-              maxWidth: '500px',
-              width: '90%',
-              maxHeight: '80vh',
-              overflow: 'auto'
-            }}>
-              <h2 style={{fontSize: '1.5rem', fontWeight: 'bold', color: 'white', marginBottom: '1.5rem'}}>Send Invoice via Email</h2>
-              
-              <div style={{display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1.5rem'}}>
-                <div>
-                  <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>To:</label>
-                  <input
-                    type="email"
-                    value={emailData.to}
-                    onChange={(e) => setEmailData({...emailData, to: e.target.value})}
-                    style={{
-                      width: '100%',
-                      padding: '0.75rem',
-                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                      border: '1px solid rgba(255, 255, 255, 0.2)',
-                      borderRadius: '0.5rem',
-                      color: 'white',
-                      outline: 'none'
-                    }}
-                  />
-                </div>
-                
-                <div>
-                  <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>Subject:</label>
-                  <input
-                    type="text"
-                    value={emailData.subject}
-                    onChange={(e) => setEmailData({...emailData, subject: e.target.value})}
-                    style={{
-                      width: '100%',
-                      padding: '0.75rem',
-                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                      border: '1px solid rgba(255, 255, 255, 0.2)',
-                      borderRadius: '0.5rem',
-                      color: 'white',
-                      outline: 'none'
-                    }}
-                  />
-                </div>
-                
-                <div>
-                  <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>Message:</label>
-                  <textarea
-                    value={emailData.message}
-                    onChange={(e) => setEmailData({...emailData, message: e.target.value})}
-                    rows={6}
-                    style={{
-                      width: '100%',
-                      padding: '0.75rem',
-                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                      border: '1px solid rgba(255, 255, 255, 0.2)',
-                      borderRadius: '0.5rem',
-                      color: 'white',
-                      outline: 'none',
-                      resize: 'vertical'
-                    }}
-                  />
-                </div>
-              </div>
-              
-              <div style={{display: 'flex', gap: '1rem', justifyContent: 'flex-end'}}>
-                <button
-                  onClick={() => setShowEmailModal(false)}
-                  style={{
-                    padding: '0.75rem 1.5rem',
-                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                    border: '1px solid rgba(255, 255, 255, 0.2)',
-                    borderRadius: '0.5rem',
-                    color: 'white',
-                    cursor: 'pointer'
-                  }}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSendEmail}
-                  disabled={sendingEmail}
-                  style={{
-                    padding: '0.75rem 1.5rem',
-                    background: 'linear-gradient(to right, #3b82f6, #1d4ed8)',
-                    color: 'white',
-                    borderRadius: '0.5rem',
-                    border: 'none',
-                    cursor: sendingEmail ? 'not-allowed' : 'pointer',
-                    opacity: sendingEmail ? 0.6 : 1
-                  }}
-                >
-                  {sendingEmail ? 'Sending...' : 'Send Email'}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Payment Modal */}
-        {showPaymentModal && (
-          <div style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000
-          }}>
-            <div style={{
-              backgroundColor: 'rgba(15, 23, 42, 0.95)',
-              backdropFilter: 'blur(8px)',
-              border: '1px solid rgba(255, 255, 255, 0.2)',
-              borderRadius: '0.75rem',
-              padding: '2rem',
-              maxWidth: '400px',
-              width: '90%'
-            }}>
-              <h2 style={{fontSize: '1.5rem', fontWeight: 'bold', color: 'white', marginBottom: '1rem'}}>Process Payment</h2>
-                             <p style={{color: '#cbd5e1', marginBottom: '1.5rem'}}>
-                 Mark invoice #{invoice.invoiceNumber} as paid for ${(invoice.total || 0).toFixed(2)}?
-               </p>
-              
-              <div style={{display: 'flex', gap: '1rem', justifyContent: 'flex-end'}}>
-                <button
-                  onClick={() => setShowPaymentModal(false)}
-                  style={{
-                    padding: '0.75rem 1.5rem',
-                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                    border: '1px solid rgba(255, 255, 255, 0.2)',
-                    borderRadius: '0.5rem',
-                    color: 'white',
-                    cursor: 'pointer'
-                  }}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handlePayment}
-                  disabled={processingPayment}
-                  style={{
-                    padding: '0.75rem 1.5rem',
-                    background: 'linear-gradient(to right, #10b981, #059669)',
-                    color: 'white',
-                    borderRadius: '0.5rem',
-                    border: 'none',
-                    cursor: processingPayment ? 'not-allowed' : 'pointer',
-                    opacity: processingPayment ? 0.6 : 1
-                  }}
-                >
-                  {processingPayment ? 'Processing...' : 'Mark as Paid'}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   )

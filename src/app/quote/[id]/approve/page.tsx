@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import { CheckCircle, XCircle, CreditCard, Clock, User, Mail, Phone, MapPin } from 'lucide-react'
+import { loadStripe } from '@stripe/stripe-js'
+import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js'
 
 interface Client {
   id: string
@@ -119,12 +121,14 @@ export default function QuoteApprovalPage() {
     
     setProcessing(true)
     try {
-      const response = await fetch(`/api/quotes/${quoteId}/approve`, {
+      // Create Stripe checkout session
+      const response = await fetch('/api/stripe/create-checkout-session', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          quoteId,
           token,
           paymentOption,
           amount: selectedAmount
@@ -132,14 +136,18 @@ export default function QuoteApprovalPage() {
       })
 
       if (response.ok) {
-        // Redirect to success page or show success message
-        window.location.href = `/quote/${quoteId}/approved?payment=${paymentOption}`
+        const { sessionId } = await response.json()
+        
+        // Redirect to Stripe Checkout
+        const { redirectToCheckout } = await import('@/lib/stripe-client')
+        await redirectToCheckout(sessionId)
       } else {
         const errorData = await response.json()
-        setError(errorData.error || 'Failed to approve quote')
+        setError(errorData.error || 'Failed to create payment session')
       }
     } catch (err) {
-      setError('Failed to approve quote')
+      console.error('Payment error:', err)
+      setError('Failed to process payment')
     } finally {
       setProcessing(false)
     }
