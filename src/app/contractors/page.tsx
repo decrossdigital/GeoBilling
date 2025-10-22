@@ -57,6 +57,13 @@ export default function ContractorsPage() {
     status: "active" as "active" | "inactive"
   })
 
+  const DEFAULT_SKILLS = [
+    'Vocals', 'Guitar', 'Bass', 'Piano', 'Keyboard', 'Organ',
+    'Drums', 'Percussion', 'Saxophone', 'Trumpet', 'Violin',
+    'Mixing', 'Mastering', 'Production', 'Recording Engineer',
+    'Sound Design', 'Songwriting', 'Arranging', 'Audio Editing'
+  ]
+
   const [availableSkills, setAvailableSkills] = useState<string[]>([])
 
   // Load available skills from localStorage
@@ -67,7 +74,11 @@ export default function ContractorsPage() {
         setAvailableSkills(JSON.parse(savedSkills))
       } catch (error) {
         console.error('Failed to load skills:', error)
+        setAvailableSkills(DEFAULT_SKILLS)
       }
+    } else {
+      // If no skills in localStorage, use defaults
+      setAvailableSkills(DEFAULT_SKILLS)
     }
   }, [])
 

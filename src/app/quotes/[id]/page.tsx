@@ -164,13 +164,23 @@ export default function QuoteDetailPage() {
 
   // Load available skills from localStorage
   useEffect(() => {
+    const DEFAULT_SKILLS = [
+      'Vocals', 'Guitar', 'Bass', 'Piano', 'Keyboard', 'Organ',
+      'Drums', 'Percussion', 'Saxophone', 'Trumpet', 'Violin',
+      'Mixing', 'Mastering', 'Production', 'Recording Engineer',
+      'Sound Design', 'Songwriting', 'Arranging', 'Audio Editing'
+    ]
+
     const savedSkills = localStorage.getItem('availableSkills')
     if (savedSkills) {
       try {
         setAvailableSkills(JSON.parse(savedSkills))
       } catch (error) {
         console.error('Failed to load skills:', error)
+        setAvailableSkills(DEFAULT_SKILLS)
       }
+    } else {
+      setAvailableSkills(DEFAULT_SKILLS)
     }
   }, [])
 
