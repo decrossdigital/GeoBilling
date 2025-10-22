@@ -148,6 +148,7 @@ model Contractor {
   quoteItems       QuoteItem[]
   invoiceItems     InvoiceItem[]
   quoteContractors QuoteContractor[]
+  invoiceContractors InvoiceContractor[]
 
   @@map("contractors")
 }
@@ -323,6 +324,7 @@ model Invoice {
   client        Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
   quote         Quote?   @relation(fields: [quoteId], references: [id])
   items         InvoiceItem[]
+  contractors   InvoiceContractor[]
   payments      Payment[]
 
   @@map("invoices")
@@ -349,6 +351,27 @@ model InvoiceItem {
   serviceTemplate ServiceTemplate? @relation(fields: [serviceTemplateId], references: [id])
 
   @@map("invoice_items")
+}
+
+model InvoiceContractor {
+  id             String   @id @default(cuid())
+  invoiceId      String
+  contractorId   String
+  assignedSkills String[] // Skills for THIS specific assignment
+  rateType       String   // 'hourly' or 'flat'
+  hours          Decimal? @db.Decimal(10, 2) // null if flat rate
+  cost           Decimal  @db.Decimal(10, 2) // calculated cost
+  includeInTotal Boolean  @default(true) // whether to include in invoice total
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  invoice    Invoice    @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  contractor Contractor @relation(fields: [contractorId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId])
+  @@index([contractorId])
+  @@map("invoice_contractors")
 }
 
 // ========================================

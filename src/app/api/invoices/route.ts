@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { prisma } from '@/lib/prisma'
 import { authOptions } from '@/lib/auth'
+import { addActivityLog, ACTIVITY_ACTIONS } from '@/lib/activity-logger'
 
 // GET /api/invoices - Get all invoices for the current user
 export async function GET() {
@@ -92,7 +93,8 @@ export async function POST(request: NextRequest) {
       clientPhone,
       clientAddress,
       quoteId,
-      items 
+      items,
+      contractors
     } = body
 
     if (!project || !clientId || !dueDate) {
@@ -104,6 +106,9 @@ export async function POST(request: NextRequest) {
       where: { userId: user.id }
     })
     const invoiceNumber = `INV-${new Date().getFullYear()}-${String(invoiceCount + 1).padStart(3, '0')}`
+
+    // Create initial activity log
+    const initialActivityLog = addActivityLog(null, ACTIVITY_ACTIONS.INVOICE_CREATED, user.name || user.email)
 
     const invoice = await prisma.invoice.create({
       data: {
@@ -130,7 +135,8 @@ export async function POST(request: NextRequest) {
         userName: user.name || '',
         userEmail: user.email,
         userPhone: '',
-        userAddress: ''
+        userAddress: '',
+        activityLog: initialActivityLog
       }
     })
 
@@ -145,9 +151,27 @@ export async function POST(request: NextRequest) {
             quantity: parseFloat(item.quantity) || 0,
             unitPrice: parseFloat(item.unitPrice) || 0,
             total: parseFloat(item.total) || 0,
+            taxable: item.taxable || false,
             contractorId: item.contractorId || null,
             serviceTemplateId: item.serviceTemplateId || null,
             sortOrder: item.sortOrder || 0
+          }
+        })
+      }
+    }
+
+    // Create invoice contractors if provided
+    if (contractors && Array.isArray(contractors)) {
+      for (const contractor of contractors) {
+        await prisma.invoiceContractor.create({
+          data: {
+            invoiceId: invoice.id,
+            contractorId: contractor.contractorId,
+            assignedSkills: contractor.assignedSkills || [],
+            rateType: contractor.rateType || 'hourly',
+            hours: contractor.hours ? parseFloat(contractor.hours) : null,
+            cost: parseFloat(contractor.cost) || 0,
+            includeInTotal: contractor.includeInTotal !== false
           }
         })
       }
