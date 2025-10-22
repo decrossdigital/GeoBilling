@@ -334,9 +334,15 @@ export default function QuoteDetailPage() {
 
     const quoteUrl = `${window.location.origin}/quotes/${quoteId}`
 
+    // Calculate grand total with contractor costs
+    const contractorCostsTotal = assignedContractors
+      .filter(c => c.includeInTotal)
+      .reduce((sum, c) => sum + Number(c.cost), 0)
+    const calculatedGrandTotal = Number(quote.total) + contractorCostsTotal
+
     // Process templates
-    const processedSubject = processQuoteTemplate(templates.quoteSubject, quote as any, companySettings, quoteUrl)
-    const processedBody = processQuoteTemplate(templates.quoteBody, quote as any, companySettings, quoteUrl)
+    const processedSubject = processQuoteTemplate(templates.quoteSubject, quote as any, companySettings, quoteUrl, assignedContractors, calculatedGrandTotal)
+    const processedBody = processQuoteTemplate(templates.quoteBody, quote as any, companySettings, quoteUrl, assignedContractors, calculatedGrandTotal)
 
     // Save original for reset functionality
     setOriginalTemplate({

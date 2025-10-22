@@ -48,23 +48,23 @@ export function processQuoteTemplate(
   template: string,
   quote: QuoteData,
   companySettings: CompanySettings,
-  quoteUrl: string
+  quoteUrl: string,
+  assignedContractors: any[] = [],
+  grandTotal?: number
 ): string {
   const clientName = getClientName(quote.client)
   
-  // Build services section
-  const services = quote.items.filter(item => !item.contractorId)
-  const servicesSection = services.length > 0
-    ? `SERVICES\n${services.map(item => 
+  // Build services section (all items are services now)
+  const servicesSection = quote.items.length > 0
+    ? `SERVICES\n${quote.items.map(item => 
         `- ${item.serviceName} (Qty: ${item.quantity}) - $${item.total.toFixed(2)}${item.description ? '\n  ' + item.description : ''}`
       ).join('\n')}`
     : ''
 
-  // Build contractors section
-  const contractors = quote.items.filter(item => item.contractorId && item.contractor)
-  const contractorsSection = contractors.length > 0
-    ? `\nCONTRACTORS\n${contractors.map(item => 
-        `- ${item.contractor?.name}${item.contractor?.specialty ? ' - ' + item.contractor.specialty : ''} - $${item.total.toFixed(2)}`
+  // Build contractors section from assignedContractors
+  const contractorsSection = assignedContractors.length > 0
+    ? `\nCONTRACTORS\n${assignedContractors.map(ac => 
+        `- ${ac.contractor.name} - ${ac.assignedSkills.join(', ')}${ac.rateType === 'hourly' ? ` (${ac.hours} hrs)` : ' (Flat rate)'} - $${Number(ac.cost).toFixed(2)}${!ac.includeInTotal ? ' (Internal only)' : ''}`
       ).join('\n')}`
     : ''
 
@@ -83,7 +83,7 @@ export function processQuoteTemplate(
     .replace(/\{\{quoteNumber\}\}/g, quote.quoteNumber)
     .replace(/\{\{project\}\}/g, quote.project)
     .replace(/\{\{projectDescription\}\}/g, quote.projectDescription || '')
-    .replace(/\{\{total\}\}/g, quote.total.toFixed(2))
+    .replace(/\{\{total\}\}/g, (grandTotal !== undefined ? grandTotal : quote.total).toFixed(2))
     .replace(/\{\{validUntil\}\}/g, new Date(quote.validUntil).toLocaleDateString())
     .replace(/\{\{notes\}\}/g, quote.notes || 'No additional notes')
     .replace(/\{\{terms\}\}/g, quote.terms || 'Standard terms apply')
