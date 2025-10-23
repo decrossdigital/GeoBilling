@@ -39,9 +39,6 @@ export default function QuoteContractors({
   onToggleIncludeInTotal,
   isDraft = true
 }: QuoteContractorsProps) {
-  // Debug logging
-  console.log('QuoteContractors - contractors:', contractors)
-  
   const totalContractorCost = contractors
     .filter(c => c.includeInTotal)
     .reduce((sum, c) => sum + Number(c.cost), 0)

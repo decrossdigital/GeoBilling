@@ -49,7 +49,8 @@ interface Contractor {
   id: string
   name: string
   email: string
-  specialty: string
+  phone: string
+  skills: string[]
   pricingType: "hourly" | "flat"
   rate: number
 }
@@ -197,16 +198,16 @@ export default function NewQuotePage() {
     }))
   }
 
-  const addContractor = () => {
+  const addContractor = (contractor: Contractor) => {
     const newContractor: QuoteContractor = {
       id: Date.now().toString(),
-      contractorId: "",
-      contractorName: "",
-      specialty: "",
-      paymentType: "hourly",
-      hours: 0,
-      rate: 0,
-      amount: 0
+      contractorId: contractor.id,
+      contractorName: contractor.name,
+      specialty: contractor.skills.join(', '),
+      paymentType: contractor.pricingType as "hourly" | "flat",
+      hours: 1,
+      rate: Number(contractor.rate),
+      amount: Number(contractor.rate)
     }
     setQuoteContractors([...quoteContractors, newContractor])
   }
@@ -709,7 +710,7 @@ export default function NewQuotePage() {
                   {contractors.map((contractor) => (
                     <div
                       key={contractor.id}
-                      onClick={addContractor}
+                      onClick={() => addContractor(contractor)}
                       style={{
                         padding: '1rem',
                         borderRadius: '0.5rem',
@@ -726,7 +727,7 @@ export default function NewQuotePage() {
                         </div>
                         <div>
                                                 <div style={{fontWeight: '500', color: 'white'}}>{contractor.name}</div>
-                      <div style={{fontSize: '0.875rem', color: '#cbd5e1'}}>{contractor.specialty}</div>
+                      <div style={{fontSize: '0.875rem', color: '#cbd5e1'}}>{contractor.skills.join(', ')}</div>
                       <div style={{fontSize: '0.875rem', color: '#94a3b8'}}>${contractor.rate}{contractor.pricingType === 'hourly' ? '/hr' : ''}</div>
                         </div>
                       </div>
