@@ -277,7 +277,8 @@ export default function NewQuotePage() {
         clientEmail: selectedClient.email,
         clientPhone: selectedClient.phone || "",
         clientAddress: selectedClient.address || "",
-        items: itemsForDatabase
+        items: itemsForDatabase,
+        contractors: quoteContractors
       }
 
       console.log('Sending quote data:', quoteData)
@@ -350,7 +351,8 @@ export default function NewQuotePage() {
         clientEmail: selectedClient.email,
         clientPhone: selectedClient.phone || "",
         clientAddress: selectedClient.address || "",
-        items: itemsForDatabase
+        items: itemsForDatabase,
+        contractors: quoteContractors
       }
 
       const response = await fetch('/api/quotes', {

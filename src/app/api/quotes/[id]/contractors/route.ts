@@ -99,6 +99,7 @@ export async function POST(
       }
     }
 
+    console.log('API returning contractor assignment:', result)
     return NextResponse.json(result, { status: 201 })
   } catch (error) {
     console.error('Error assigning contractor:', error)

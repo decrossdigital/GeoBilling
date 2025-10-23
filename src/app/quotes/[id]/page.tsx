@@ -35,6 +35,17 @@ interface Contractor {
   rate: number
 }
 
+interface QuoteContractor {
+  id: string
+  contractorId: string
+  assignedSkills: string[]
+  rateType: string
+  hours: number | null
+  cost: number
+  includeInTotal: boolean
+  contractor: Contractor
+}
+
 interface QuoteItem {
   id: string
   serviceName: string
@@ -87,7 +98,7 @@ export default function QuoteDetailPage() {
   const [contractorRateType, setContractorRateType] = useState<'hourly' | 'flat'>('hourly')
   const [contractorHours, setContractorHours] = useState(1)
   const [contractorCost, setContractorCost] = useState(0)
-  const [assignedContractors, setAssignedContractors] = useState<any[]>([])
+  const [assignedContractors, setAssignedContractors] = useState<QuoteContractor[]>([])
   const [showEmailModal, setShowEmailModal] = useState(false)
   const [sendingEmail, setSendingEmail] = useState(false)
   const [converting, setConverting] = useState(false)

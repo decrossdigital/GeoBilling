@@ -91,7 +91,8 @@ export async function POST(request: NextRequest) {
       clientEmail,
       clientPhone,
       clientAddress,
-      items 
+      items,
+      contractors 
     } = body
 
     if (!project || !clientId) {
@@ -153,6 +154,23 @@ export async function POST(request: NextRequest) {
             contractorId: item.contractorId || null,
             serviceTemplateId: item.serviceTemplateId || null,
             sortOrder: item.sortOrder || 0
+          }
+        })
+      }
+    }
+
+    // Create contractor assignments if provided
+    if (contractors && Array.isArray(contractors)) {
+      for (const contractor of contractors) {
+        await prisma.quoteContractor.create({
+          data: {
+            quoteId: quote.id,
+            contractorId: contractor.contractorId,
+            assignedSkills: contractor.assignedSkills || [],
+            rateType: contractor.rateType || 'hourly',
+            hours: contractor.hours || null,
+            cost: parseFloat(contractor.cost) || 0,
+            includeInTotal: contractor.includeInTotal !== undefined ? contractor.includeInTotal : true
           }
         })
       }
