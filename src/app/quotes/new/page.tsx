@@ -152,13 +152,14 @@ export default function NewQuotePage() {
 
   const addQuoteItem = (service?: ServiceTemplate) => {
     if (service) {
+      const unitPrice = Number(service.rate) || 0
       const newItem: QuoteItem = {
         id: Date.now().toString(),
         serviceName: service.name,
         description: service.description || "",
         quantity: 1,
-        unitPrice: service.rate,
-        total: service.rate,
+        unitPrice: unitPrice,
+        total: unitPrice,
         taxable: false,
         pricingType: service.pricingType
       }
@@ -239,13 +240,13 @@ export default function NewQuotePage() {
     }
 
     try {
-      const servicesTotal = quoteItems.reduce((sum, item) => sum + item.total, 0)
-      const contractorsTotal = quoteContractors.reduce((sum, contractor) => sum + contractor.amount, 0)
-      const subtotal = servicesTotal + contractorsTotal
-      const taxableAmount = quoteItems.reduce((sum, item) => sum + (item.taxable ? item.total : 0), 0)
+      const servicesTotal = quoteItems.reduce((sum, item) => sum + Number(item.total), 0)
+      const contractorsTotal = quoteContractors.reduce((sum, contractor) => sum + Number(contractor.amount), 0)
+      const subtotal = Number(servicesTotal) + Number(contractorsTotal)
+      const taxableAmount = quoteItems.reduce((sum, item) => sum + (item.taxable ? Number(item.total) : 0), 0)
       const taxRate = 8 // 8% tax
-      const taxAmount = taxableAmount * (taxRate / 100)
-      const total = subtotal + taxAmount
+      const taxAmount = Number(taxableAmount) * (taxRate / 100)
+      const total = Number(subtotal) + Number(taxAmount)
 
       // Set default validUntil date if not provided (30 days from now)
       const defaultValidUntil = validUntil || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
@@ -313,13 +314,13 @@ export default function NewQuotePage() {
     }
 
     try {
-      const servicesTotal = quoteItems.reduce((sum, item) => sum + item.total, 0)
-      const contractorsTotal = quoteContractors.reduce((sum, contractor) => sum + contractor.amount, 0)
-      const subtotal = servicesTotal + contractorsTotal
-      const taxableAmount = quoteItems.reduce((sum, item) => sum + (item.taxable ? item.total : 0), 0)
+      const servicesTotal = quoteItems.reduce((sum, item) => sum + Number(item.total), 0)
+      const contractorsTotal = quoteContractors.reduce((sum, contractor) => sum + Number(contractor.amount), 0)
+      const subtotal = Number(servicesTotal) + Number(contractorsTotal)
+      const taxableAmount = quoteItems.reduce((sum, item) => sum + (item.taxable ? Number(item.total) : 0), 0)
       const taxRate = 8 // 8% tax
-      const taxAmount = taxableAmount * (taxRate / 100)
-      const total = subtotal + taxAmount
+      const taxAmount = Number(taxableAmount) * (taxRate / 100)
+      const total = Number(subtotal) + Number(taxAmount)
 
       // Set default validUntil date if not provided (30 days from now)
       const defaultValidUntil = validUntil || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
@@ -393,12 +394,12 @@ export default function NewQuotePage() {
     { number: 4, title: "Review & Send", description: "Review quote details and send to client" }
   ]
 
-  const servicesTotal = quoteItems.reduce((sum, item) => sum + item.total, 0)
-  const contractorsTotal = quoteContractors.reduce((sum, contractor) => sum + contractor.amount, 0)
-  const subtotal = servicesTotal + contractorsTotal
-  const taxableAmount = quoteItems.reduce((sum, item) => sum + (item.taxable ? item.total : 0), 0)
-  const taxAmount = taxableAmount * 0.08 // 8% tax on taxable items only
-  const totalAmount = subtotal + taxAmount
+  const servicesTotal = quoteItems.reduce((sum, item) => sum + Number(item.total), 0)
+  const contractorsTotal = quoteContractors.reduce((sum, contractor) => sum + Number(contractor.amount), 0)
+  const subtotal = Number(servicesTotal) + Number(contractorsTotal)
+  const taxableAmount = quoteItems.reduce((sum, item) => sum + (item.taxable ? Number(item.total) : 0), 0)
+  const taxAmount = Number(taxableAmount) * 0.08 // 8% tax on taxable items only
+  const totalAmount = Number(subtotal) + Number(taxAmount)
 
   return (
     <div style={{minHeight: '100vh', background: 'linear-gradient(to bottom right, #0f172a, #581c87, #0f172a)', color: 'white'}}>
