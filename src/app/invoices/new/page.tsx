@@ -1280,6 +1280,7 @@ export default function NewInvoicePage() {
           )}
         </div>
       </div>
+    </div>
 
       {/* Add Service Modal */}
       {showAddServiceModal && (
