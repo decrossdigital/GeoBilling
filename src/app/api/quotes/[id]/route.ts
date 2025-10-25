@@ -140,6 +140,7 @@ export async function PUT(
         validUntil: body.validUntil,
         terms: body.terms,
         notes: body.notes,
+        status: body.status,
         subtotal: recalculatedSubtotal,
         taxAmount: recalculatedTaxAmount,
         total: recalculatedTotal
