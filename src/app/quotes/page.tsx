@@ -32,6 +32,7 @@ interface QuoteItem {
 export default function QuotesPage() {
   const { data: session } = useSession()
   const [searchTerm, setSearchTerm] = useState("")
+  const [statusFilter, setStatusFilter] = useState("draft")
   const [selectedQuote, setSelectedQuote] = useState<Quote | null>(null)
   const [showQuoteModal, setShowQuoteModal] = useState(false)
   const [quotes, setQuotes] = useState<Quote[]>([])
@@ -60,11 +61,17 @@ export default function QuotesPage() {
     }
   }, [session])
 
-  const filteredQuotes = quotes.filter(quote =>
-    quote.quoteNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    quote.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    quote.clientCompany.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  const filteredQuotes = quotes.filter(quote => {
+    // Status filter
+    const statusMatch = statusFilter === "all" || quote.status === statusFilter
+    
+    // Search filter
+    const searchMatch = quote.quoteNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      quote.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      quote.clientCompany.toLowerCase().includes(searchTerm.toLowerCase())
+    
+    return statusMatch && searchMatch
+  })
 
   const totalQuotes = quotes.length
   const draftQuotes = quotes.filter(q => q.status === "draft").length
@@ -251,11 +258,11 @@ export default function QuotesPage() {
         {/* Search and Filters */}
         <div style={{marginBottom: '2rem'}}>
           <div style={{display: 'flex', alignItems: 'center', gap: '1rem'}}>
-            <div style={{position: 'relative', flex: 1}}>
+            <div style={{position: 'relative', flex: '0 0 300px'}}>
               <Search style={{position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', height: '1rem', width: '1rem', color: '#94a3b8'}} />
               <input
                 type="text"
-                placeholder="Search quotes by number, client, or company..."
+                placeholder="Search quotes..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 style={{
@@ -268,6 +275,42 @@ export default function QuotesPage() {
                   outline: 'none'
                 }}
               />
+            </div>
+            <div style={{position: 'relative'}}>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                style={{
+                  padding: '0.75rem 2.5rem 0.75rem 0.75rem',
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  borderRadius: '0.5rem',
+                  color: 'white',
+                  outline: 'none',
+                  appearance: 'none',
+                  cursor: 'pointer',
+                  minWidth: '150px'
+                }}
+              >
+                <option value="all">All Status</option>
+                <option value="draft">Draft</option>
+                <option value="sent">Sent</option>
+                <option value="approved">Approved</option>
+                <option value="rejected">Rejected</option>
+                <option value="expired">Expired</option>
+                <option value="converted">Converted</option>
+              </select>
+              <div style={{
+                position: 'absolute',
+                right: '0.75rem',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                pointerEvents: 'none'
+              }}>
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <path d="M3 4.5L6 7.5L9 4.5" stroke="#94a3b8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
             </div>
           </div>
         </div>
