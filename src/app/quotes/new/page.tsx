@@ -540,23 +540,33 @@ export default function NewQuotePage() {
               {/* Custom Service Option */}
               <div style={{marginBottom: '1.5rem'}}>
                 <h3 style={{fontSize: '1.125rem', fontWeight: '500', color: 'white', marginBottom: '1rem'}}>Add Custom Service</h3>
-                <div style={{padding: '1rem', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.5rem', backgroundColor: 'rgba(255, 255, 255, 0.05)'}}>
-                  <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
-                    <div style={{display: 'flex', alignItems: 'center', gap: '0.75rem'}}>
-                      <div style={{padding: '0.5rem', backgroundColor: 'rgba(59, 130, 246, 0.2)', borderRadius: '0.5rem'}}>
-                        <Plus style={{height: '1.25rem', width: '1.25rem', color: '#60a5fa'}} />
-                      </div>
-                      <div>
-                        <div style={{fontWeight: '500', color: 'white'}}>Custom Service</div>
-                        <div style={{fontSize: '0.875rem', color: '#cbd5e1'}}>Add a one-time service not in your templates</div>
-                      </div>
+                <div 
+                  onClick={() => addQuoteItem()}
+                  style={{
+                    padding: '1rem', 
+                    border: '1px solid rgba(255, 255, 255, 0.2)', 
+                    borderRadius: '0.5rem', 
+                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)'
+                    e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.5)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)'
+                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)'
+                  }}
+                >
+                  <div style={{display: 'flex', alignItems: 'center', gap: '0.75rem'}}>
+                    <div style={{padding: '0.5rem', backgroundColor: 'rgba(59, 130, 246, 0.2)', borderRadius: '0.5rem'}}>
+                      <Plus style={{height: '1.25rem', width: '1.25rem', color: '#60a5fa'}} />
                     </div>
-                    <button
-                      onClick={() => addQuoteItem()}
-                      style={{padding: '0.5rem', backgroundColor: '#2563eb', borderRadius: '0.5rem', border: 'none', cursor: 'pointer'}}
-                    >
-                      <Plus style={{height: '1rem', width: '1rem', color: 'white'}} />
-                    </button>
+                    <div>
+                      <div style={{fontWeight: '500', color: 'white'}}>Custom Service</div>
+                      <div style={{fontSize: '0.875rem', color: '#cbd5e1'}}>Add a one-time service not in your templates</div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -708,38 +718,6 @@ export default function NewQuotePage() {
                   </div>
                 </div>
               )}
-
-              {/* Add Custom Service */}
-              <div style={{marginTop: '1.5rem'}}>
-                <h3 style={{fontSize: '1.125rem', fontWeight: '500', color: 'white', marginBottom: '1rem'}}>Custom Service</h3>
-                <div 
-                  onClick={() => addQuoteItem()}
-                  style={{
-                    padding: '1rem', 
-                    border: '2px dashed rgba(255, 255, 255, 0.3)', 
-                    borderRadius: '0.5rem',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                    backgroundColor: 'rgba(255, 255, 255, 0.02)',
-                    textAlign: 'center'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)'
-                    e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.5)'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.02)'
-                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)'
-                  }}
-                >
-                  <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem'}}>
-                    <div>
-                      <div style={{fontWeight: '500', color: 'white'}}>Add Custom Service</div>
-                      <div style={{fontSize: '0.875rem', color: '#cbd5e1'}}>Create a custom service with your own details</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
             </div>
           )}
 
