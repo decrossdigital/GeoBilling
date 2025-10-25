@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react'
 import { useParams, useRouter } from 'next/navigation'
 import { ArrowLeft, Music, Home, Users, FileText, DollarSign, User, Settings, Edit, Save, X, Trash2 } from 'lucide-react'
 import Link from 'next/link'
+import Navigation from '@/components/navigation'
 import UserMenu from '@/components/user-menu'
 import QuoteHeader from '@/components/quotes/QuoteHeader'
 import QuoteDetails from '@/components/quotes/QuoteDetails'
@@ -712,40 +713,12 @@ export default function QuoteDetailPage() {
               <p style={{fontSize: '0.875rem', color: '#cbd5e1'}}>Uniquitous Music - Professional Billing System</p>
             </div>
           </div>
+          <UserMenu />
         </div>
-
+        
         {/* Navigation */}
-        <div style={{backgroundColor: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.75rem', padding: '1rem', marginBottom: '2rem'}}>
-          <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
-            <div style={{display: 'flex', gap: '0.5rem'}}>
-              <Link href="/" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', color: '#cbd5e1', textDecoration: 'none', fontWeight: '500'}}>
-                <Home style={{height: '1rem', width: '1rem'}} />
-                <span>Dashboard</span>
-              </Link>
-              <Link href="/clients" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', color: '#cbd5e1', textDecoration: 'none', fontWeight: '500'}}>
-                <Users style={{height: '1rem', width: '1rem'}} />
-                <span>Clients</span>
-              </Link>
-              <Link href="/quotes" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', background: 'linear-gradient(to right, #9333ea, #3b82f6)', color: 'white', textDecoration: 'none', fontWeight: '500', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'}}>
-                <FileText style={{height: '1rem', width: '1rem'}} />
-                <span>Quotes</span>
-              </Link>
-              <Link href="/invoices" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', color: '#cbd5e1', textDecoration: 'none', fontWeight: '500'}}>
-                <DollarSign style={{height: '1rem', width: '1rem'}} />
-                <span>Invoices</span>
-              </Link>
-              <Link href="/contractors" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', color: '#cbd5e1', textDecoration: 'none', fontWeight: '500'}}>
-                <User style={{height: '1rem', width: '1rem'}} />
-                <span>Contractors</span>
-              </Link>
-              <Link href="/services" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', color: '#cbd5e1', textDecoration: 'none', fontWeight: '500'}}>
-                <Settings style={{height: '1rem', width: '1rem'}} />
-                <span>Services</span>
-              </Link>
-            </div>
-            <UserMenu />
-          </div>
-        </div>
+        <Navigation />
+
 
         {/* Back to Quotes Link */}
         <div style={{marginBottom: '2rem'}}>
