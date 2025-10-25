@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { ArrowLeft, Plus, Edit, Trash2, Save, X, Music, Home, Users, FileText, DollarSign, User, Settings } from 'lucide-react'
 import Link from 'next/link'
+import Navigation from '@/components/navigation'
 import UserMenu from '@/components/user-menu'
 
 interface Client {
@@ -60,6 +61,13 @@ export default function NewInvoicePage() {
   const [selectedClient, setSelectedClient] = useState<Client | null>(null)
   const [services, setServices] = useState<ServiceItem[]>([])
   const [assignedContractors, setAssignedContractors] = useState<InvoiceContractor[]>([])
+
+  const steps = [
+    { number: 1, title: "Client Selection", description: "Choose the client for this invoice" },
+    { number: 2, title: "Add Services", description: "Select services and set pricing" },
+    { number: 3, title: "Add Contractors", description: "Select contractors and payment terms" },
+    { number: 4, title: "Review & Send", description: "Review invoice details and send to client" }
+  ]
   
   // Form data
   const [project, setProject] = useState('')
@@ -439,76 +447,83 @@ export default function NewInvoicePage() {
   }
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
-    }}>
-      {/* Navigation */}
-      <div style={{
-        background: 'rgba(255, 255, 255, 0.1)',
-        backdropFilter: 'blur(10px)',
-        borderBottom: '1px solid rgba(255, 255, 255, 0.2)',
-        padding: '1rem 0'
-      }}>
-        <div style={{
-          maxWidth: '1200px',
-          margin: '0 auto',
-          padding: '0 1rem',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between'
-        }}>
-          <div style={{display: 'flex', alignItems: 'center', gap: '2rem'}}>
-            <Link href="/invoices" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'white', textDecoration: 'none'}}>
-              <ArrowLeft style={{height: '1.25rem', width: '1.25rem'}} />
-              Back to Invoices
-            </Link>
-            
-            <div style={{display: 'flex', alignItems: 'center', gap: '1rem'}}>
-              <Link href="/" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'white', textDecoration: 'none', opacity: 0.7}}>
-                <Home style={{height: '1.25rem', width: '1.25rem'}} />
-                Dashboard
-              </Link>
-              <Link href="/clients" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'white', textDecoration: 'none', opacity: 0.7}}>
-                <Users style={{height: '1.25rem', width: '1.25rem'}} />
-                Clients
-              </Link>
-              <Link href="/quotes" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'white', textDecoration: 'none', opacity: 0.7}}>
-                <FileText style={{height: '1.25rem', width: '1.25rem'}} />
-                Quotes
-              </Link>
-              <Link href="/invoices" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'white', textDecoration: 'none', fontWeight: 'bold'}}>
-                <DollarSign style={{height: '1.25rem', width: '1.25rem'}} />
-                Invoices
-              </Link>
-              <Link href="/contractors" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'white', textDecoration: 'none', opacity: 0.7}}>
-                <User style={{height: '1.25rem', width: '1.25rem'}} />
-                Contractors
-              </Link>
-              <Link href="/settings" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'white', textDecoration: 'none', opacity: 0.7}}>
-                <Settings style={{height: '1.25rem', width: '1.25rem'}} />
-                Settings
-              </Link>
+    <div style={{minHeight: '100vh', background: 'linear-gradient(to bottom right, #0f172a, #581c87, #0f172a)', color: 'white'}}>
+      <div style={{maxWidth: '1200px', margin: '0 auto', padding: '2rem 1.5rem'}}>
+        {/* Header */}
+        <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2rem'}}>
+          <div style={{display: 'flex', alignItems: 'center', gap: '0.75rem'}}>
+            <div style={{padding: '0.75rem', background: 'linear-gradient(to right, #9333ea, #ec4899)', borderRadius: '1rem'}}>
+              <Music style={{height: '2rem', width: '2rem', color: 'white'}} />
+            </div>
+            <div>
+              <h1 style={{fontSize: '1.875rem', fontWeight: 'bold', color: 'white'}}>GeoBilling</h1>
+              <p style={{fontSize: '0.875rem', color: '#cbd5e1'}}>Uniquitous Music - Professional Billing System</p>
             </div>
           </div>
-          
           <UserMenu />
         </div>
-      </div>
+        
+        {/* Navigation */}
+        <Navigation />
 
-      <div style={{maxWidth: '1200px', margin: '0 auto', padding: '2rem 1rem'}}>
-        <div style={{
-          background: 'rgba(255, 255, 255, 0.1)',
-          backdropFilter: 'blur(10px)',
-          borderRadius: '1rem',
-          padding: '2rem',
-          color: 'white'
-        }}>
-          <h1 style={{fontSize: '2rem', fontWeight: 'bold', marginBottom: '2rem'}}>
-            Create New Invoice
-          </h1>
+        {/* Page Header */}
+        <div style={{marginBottom: '2rem'}}>
+          <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem'}}>
+            <div style={{display: 'flex', alignItems: 'center', gap: '1rem'}}>
+              <Link href="/invoices">
+                <button style={{color: '#cbd5e1', cursor: 'pointer', border: 'none', background: 'none', padding: '0.5rem'}}>
+                  <ArrowLeft style={{height: '1.25rem', width: '1.25rem'}} />
+                </button>
+              </Link>
+              <div>
+                <h1 style={{fontSize: '2.25rem', fontWeight: 'bold', color: 'white'}}>Create New Invoice</h1>
+                <p style={{color: '#cbd5e1'}}>Build a professional invoice for your client</p>
+              </div>
+            </div>
+          </div>
+        </div>
 
-          {/* Step 1: Client Selection */}
+        {/* Progress Steps */}
+        <div style={{marginBottom: '2rem'}}>
+          <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
+            {steps.map((stepItem, index) => (
+              <div key={stepItem.number} style={{display: 'flex', alignItems: 'center'}}>
+                <div style={{
+                  width: '2.5rem',
+                  height: '2.5rem',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: step <= stepItem.number ? '#3b82f6' : 'rgba(255, 255, 255, 0.1)',
+                  color: step <= stepItem.number ? 'white' : '#cbd5e1',
+                  fontWeight: 'bold',
+                  marginRight: '0.5rem'
+                }}>
+                  {stepItem.number}
+                </div>
+                <div>
+                  <div style={{fontWeight: '500', color: step <= stepItem.number ? 'white' : '#cbd5e1'}}>
+                    {stepItem.title}
+                  </div>
+                  <div style={{fontSize: '0.875rem', color: '#94a3b8'}}>
+                    {stepItem.description}
+                  </div>
+                </div>
+                {index < steps.length - 1 && (
+                  <div style={{
+                    width: '2rem',
+                    height: '1px',
+                    backgroundColor: step > stepItem.number ? '#3b82f6' : 'rgba(255, 255, 255, 0.2)',
+                    margin: '0 1rem'
+                  }} />
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Step 1: Client Selection */}
           {step === 1 && (
             <div>
               <h2 style={{fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1.5rem'}}>
@@ -971,8 +986,8 @@ export default function NewInvoicePage() {
             </div>
           )}
 
-          {/* Step 5: Review & Send */}
-          {step === 5 && (
+          {/* Step 4: Review & Send */}
+          {step === 4 && (
             <div>
               <h2 style={{fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1.5rem'}}>
                 Review and Send Invoice
@@ -992,6 +1007,104 @@ export default function NewInvoicePage() {
                 <p style={{color: '#cbd5e1', marginBottom: '0.25rem'}}>{selectedClient!.email}</p>
                 {selectedClient!.phone && <p style={{color: '#cbd5e1', marginBottom: '0.25rem'}}>{selectedClient!.phone}</p>}
                 {selectedClient!.address && <p style={{color: '#cbd5e1'}}>{selectedClient!.address}</p>}
+              </div>
+
+              {/* Additional Details */}
+              <div style={{
+                background: 'rgba(255, 255, 255, 0.1)',
+                borderRadius: '0.75rem',
+                padding: '1.5rem',
+                marginBottom: '1.5rem'
+              }}>
+                <h3 style={{fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem'}}>
+                  Additional Details
+                </h3>
+                
+                <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem'}}>
+                  <div>
+                    <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>
+                      Project Name *
+                    </label>
+                    <input
+                      type="text"
+                      value={project}
+                      onChange={(e) => setProject(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '0.75rem',
+                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                        border: '1px solid rgba(255, 255, 255, 0.2)',
+                        borderRadius: '0.5rem',
+                        color: 'white',
+                        outline: 'none'
+                      }}
+                      placeholder="Enter project name"
+                    />
+                  </div>
+                  <div>
+                    <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>
+                      Due Date
+                    </label>
+                    <input
+                      type="date"
+                      value={dueDate}
+                      onChange={(e) => setDueDate(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '0.75rem',
+                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                        border: '1px solid rgba(255, 255, 255, 0.2)',
+                        borderRadius: '0.5rem',
+                        color: 'white',
+                        outline: 'none'
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div style={{marginBottom: '1rem'}}>
+                  <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>
+                    Project Description
+                  </label>
+                  <textarea
+                    value={projectDescription}
+                    onChange={(e) => setProjectDescription(e.target.value)}
+                    rows={3}
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem',
+                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                      border: '1px solid rgba(255, 255, 255, 0.2)',
+                      borderRadius: '0.5rem',
+                      color: 'white',
+                      outline: 'none',
+                      resize: 'vertical'
+                    }}
+                    placeholder="Enter project description"
+                  />
+                </div>
+
+                <div style={{marginBottom: '1rem'}}>
+                  <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>
+                    Notes
+                  </label>
+                  <textarea
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    rows={3}
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem',
+                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                      border: '1px solid rgba(255, 255, 255, 0.2)',
+                      borderRadius: '0.5rem',
+                      color: 'white',
+                      outline: 'none',
+                      resize: 'vertical'
+                    }}
+                    placeholder="Enter any additional notes"
+                  />
+                </div>
               </div>
 
               {/* Services */}
