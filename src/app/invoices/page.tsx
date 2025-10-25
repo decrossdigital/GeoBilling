@@ -36,6 +36,7 @@ export default function InvoicesPage() {
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
+  const [statusFilter, setStatusFilter] = useState("draft")
 
   // Fetch invoices from API
   useEffect(() => {
@@ -60,11 +61,17 @@ export default function InvoicesPage() {
     }
   }, [session])
 
-  const filteredInvoices = invoices.filter(invoice =>
-    invoice.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    invoice.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    invoice.clientCompany.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  const filteredInvoices = invoices.filter(invoice => {
+    // Status filter
+    const statusMatch = statusFilter === "all" || invoice.status === statusFilter
+    
+    // Search filter
+    const searchMatch = invoice.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      invoice.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      invoice.clientCompany.toLowerCase().includes(searchTerm.toLowerCase())
+    
+    return statusMatch && searchMatch
+  })
 
   const totalInvoices = invoices.length
   const paidInvoices = invoices.filter(i => i.status === "paid").length
@@ -245,11 +252,11 @@ export default function InvoicesPage() {
         {/* Search and Filters */}
         <div style={{marginBottom: '2rem'}}>
           <div style={{display: 'flex', alignItems: 'center', gap: '1rem'}}>
-            <div style={{position: 'relative', flex: 1}}>
+            <div style={{position: 'relative', flex: '0 0 300px'}}>
               <Search style={{position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', height: '1rem', width: '1rem', color: '#94a3b8'}} />
               <input
                 type="text"
-                placeholder="Search invoices by number, client, or company..."
+                placeholder="Search invoices..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 style={{
@@ -262,6 +269,41 @@ export default function InvoicesPage() {
                   outline: 'none'
                 }}
               />
+            </div>
+            <div style={{position: 'relative'}}>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                style={{
+                  padding: '0.75rem 2.5rem 0.75rem 0.75rem',
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  borderRadius: '0.5rem',
+                  color: 'white',
+                  outline: 'none',
+                  appearance: 'none',
+                  cursor: 'pointer',
+                  minWidth: '150px'
+                }}
+              >
+                <option value="all">All Status</option>
+                <option value="draft">Draft</option>
+                <option value="sent">Sent</option>
+                <option value="paid">Paid</option>
+                <option value="overdue">Overdue</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+              <div style={{
+                position: 'absolute',
+                right: '0.75rem',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                pointerEvents: 'none'
+              }}>
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <path d="M3 4.5L6 7.5L9 4.5" stroke="#94a3b8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
             </div>
           </div>
         </div>
