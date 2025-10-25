@@ -67,8 +67,8 @@ export default function InvoicesPage() {
     
     // Search filter
     const searchMatch = invoice.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      invoice.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      invoice.clientCompany.toLowerCase().includes(searchTerm.toLowerCase())
+      (invoice.clientName && invoice.clientName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (invoice.clientCompany && invoice.clientCompany.toLowerCase().includes(searchTerm.toLowerCase()))
     
     return statusMatch && searchMatch
   })

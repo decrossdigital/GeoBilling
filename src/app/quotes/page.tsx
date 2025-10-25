@@ -67,8 +67,8 @@ export default function QuotesPage() {
     
     // Search filter
     const searchMatch = quote.quoteNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      quote.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      quote.clientCompany.toLowerCase().includes(searchTerm.toLowerCase())
+      (quote.clientName && quote.clientName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (quote.clientCompany && quote.clientCompany.toLowerCase().includes(searchTerm.toLowerCase()))
     
     return statusMatch && searchMatch
   })
