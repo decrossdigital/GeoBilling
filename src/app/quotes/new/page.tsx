@@ -713,6 +713,41 @@ export default function NewQuotePage() {
                   </div>
                 </div>
               )}
+
+              {/* Add Custom Service */}
+              <div style={{marginTop: '1.5rem'}}>
+                <h3 style={{fontSize: '1.125rem', fontWeight: '500', color: 'white', marginBottom: '1rem'}}>Custom Service</h3>
+                <div 
+                  onClick={() => addQuoteItem()}
+                  style={{
+                    padding: '1rem', 
+                    border: '2px dashed rgba(255, 255, 255, 0.3)', 
+                    borderRadius: '0.5rem',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    backgroundColor: 'rgba(255, 255, 255, 0.02)',
+                    textAlign: 'center'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)'
+                    e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.5)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.02)'
+                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)'
+                  }}
+                >
+                  <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem'}}>
+                    <div style={{padding: '0.5rem', backgroundColor: 'rgba(147, 51, 234, 0.2)', borderRadius: '0.5rem'}}>
+                      <Plus style={{height: '1.25rem', width: '1.25rem', color: '#a78bfa'}} />
+                    </div>
+                    <div>
+                      <div style={{fontWeight: '500', color: 'white'}}>Add Custom Service</div>
+                      <div style={{fontSize: '0.875rem', color: '#cbd5e1'}}>Create a custom service with your own details</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 
