@@ -1086,7 +1086,7 @@ export default function NewInvoicePage() {
 
               <div style={{display: 'flex', gap: '1rem'}}>
                 <button
-                  onClick={() => setStep(4)}
+                  onClick={() => setStep(3)}
                   style={{
                     padding: '1rem 2rem',
                     background: 'rgba(255, 255, 255, 0.1)',
