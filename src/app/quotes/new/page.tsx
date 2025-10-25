@@ -603,19 +603,14 @@ export default function NewQuotePage() {
                           e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)'
                         }}
                       >
-                        <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
-                          <div style={{display: 'flex', alignItems: 'center', gap: '0.75rem'}}>
-                            <div style={{padding: '0.5rem', backgroundColor: 'rgba(147, 51, 234, 0.2)', borderRadius: '0.5rem'}}>
-                              <Icon style={{height: '1.25rem', width: '1.25rem', color: '#a78bfa'}} />
-                            </div>
-                            <div>
-                              <div style={{fontWeight: '500', color: 'white'}}>{service.name}</div>
-                              <div style={{fontSize: '0.875rem', color: '#cbd5e1'}}>{service.description}</div>
-                              <div style={{fontSize: '0.875rem', color: '#94a3b8'}}>${service.rate}{service.pricingType === 'hourly' ? '/hour' : ''}</div>
-                            </div>
+                        <div style={{display: 'flex', alignItems: 'center', gap: '0.75rem'}}>
+                          <div style={{padding: '0.5rem', backgroundColor: 'rgba(147, 51, 234, 0.2)', borderRadius: '0.5rem'}}>
+                            <Icon style={{height: '1.25rem', width: '1.25rem', color: '#a78bfa'}} />
                           </div>
-                          <div style={{padding: '0.5rem', backgroundColor: '#2563eb', borderRadius: '0.5rem', color: 'white', fontSize: '0.875rem', fontWeight: '500'}}>
-                            Add
+                          <div>
+                            <div style={{fontWeight: '500', color: 'white'}}>{service.name}</div>
+                            <div style={{fontSize: '0.875rem', color: '#cbd5e1'}}>{service.description}</div>
+                            <div style={{fontSize: '0.875rem', color: '#94a3b8'}}>${service.rate}{service.pricingType === 'hourly' ? '/hour' : ''}</div>
                           </div>
                         </div>
                       </div>
@@ -738,9 +733,6 @@ export default function NewQuotePage() {
                   }}
                 >
                   <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem'}}>
-                    <div style={{padding: '0.5rem', backgroundColor: 'rgba(147, 51, 234, 0.2)', borderRadius: '0.5rem'}}>
-                      <Plus style={{height: '1.25rem', width: '1.25rem', color: '#a78bfa'}} />
-                    </div>
                     <div>
                       <div style={{fontWeight: '500', color: 'white'}}>Add Custom Service</div>
                       <div style={{fontSize: '0.875rem', color: '#cbd5e1'}}>Create a custom service with your own details</div>
