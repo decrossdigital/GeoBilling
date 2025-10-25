@@ -838,153 +838,9 @@ export default function NewInvoicePage() {
             </div>
           )}
 
-          {/* Step 4: Additional Details */}
-          {step === 4 && (
-            <div>
-              <h2 style={{fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1.5rem'}}>
-                Additional Details
-              </h2>
 
-              <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem'}}>
-                <div>
-                  <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>
-                    Project Name *
-                  </label>
-                  <input
-                    type="text"
-                    value={project}
-                    onChange={(e) => setProject(e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '0.75rem',
-                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                      border: '1px solid rgba(255, 255, 255, 0.2)',
-                      borderRadius: '0.5rem',
-                      color: 'white',
-                      outline: 'none'
-                    }}
-                    placeholder="Enter project name"
-                  />
-                </div>
-                <div>
-                  <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>
-                    Due Date
-                  </label>
-                  <input
-                    type="date"
-                    value={dueDate}
-                    onChange={(e) => setDueDate(e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '0.75rem',
-                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                      border: '1px solid rgba(255, 255, 255, 0.2)',
-                      borderRadius: '0.5rem',
-                      color: 'white',
-                      outline: 'none'
-                    }}
-                  />
-                </div>
-              </div>
 
-              <div style={{marginBottom: '1rem'}}>
-                <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>
-                  Project Description
-                </label>
-                <textarea
-                  value={projectDescription}
-                  onChange={(e) => setProjectDescription(e.target.value)}
-                  rows={3}
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                    border: '1px solid rgba(255, 255, 255, 0.2)',
-                    borderRadius: '0.5rem',
-                    color: 'white',
-                    outline: 'none',
-                    resize: 'vertical'
-                  }}
-                  placeholder="Enter project description"
-                />
-              </div>
 
-              <div style={{marginBottom: '1rem'}}>
-                <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>
-                  Notes
-                </label>
-                <textarea
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  rows={3}
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                    border: '1px solid rgba(255, 255, 255, 0.2)',
-                    borderRadius: '0.5rem',
-                    color: 'white',
-                    outline: 'none',
-                    resize: 'vertical'
-                  }}
-                  placeholder="Enter any additional notes"
-                />
-              </div>
-
-              <div style={{marginBottom: '2rem'}}>
-                <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>
-                  Terms & Conditions
-                </label>
-                <textarea
-                  value={terms}
-                  onChange={(e) => setTerms(e.target.value)}
-                  rows={4}
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                    border: '1px solid rgba(255, 255, 255, 0.2)',
-                    borderRadius: '0.5rem',
-                    color: 'white',
-                    outline: 'none',
-                    resize: 'vertical'
-                  }}
-                  placeholder="Enter terms and conditions"
-                />
-              </div>
-
-              <div style={{display: 'flex', gap: '1rem'}}>
-                <button
-                  onClick={() => setStep(3)}
-                  style={{
-                    padding: '1rem 2rem',
-                    background: 'rgba(255, 255, 255, 0.1)',
-                    border: '1px solid rgba(255, 255, 255, 0.2)',
-                    borderRadius: '0.75rem',
-                    color: 'white',
-                    cursor: 'pointer',
-                    fontWeight: 'bold'
-                  }}
-                >
-                  Back
-                </button>
-                <button
-                  onClick={() => setStep(5)}
-                  style={{
-                    padding: '1rem 2rem',
-                    background: 'linear-gradient(to right, #3b82f6, #1d4ed8)',
-                    border: 'none',
-                    borderRadius: '0.75rem',
-                    color: 'white',
-                    cursor: 'pointer',
-                    fontWeight: 'bold'
-                  }}
-                >
-                  Review & Send
-                </button>
-              </div>
-            </div>
-          )}
 
           {/* Step 4: Review & Send */}
           {step === 4 && (
@@ -1280,7 +1136,6 @@ export default function NewInvoicePage() {
           )}
         </div>
       </div>
-    </div>
 
       {/* Add Service Modal */}
       {showAddServiceModal && (
