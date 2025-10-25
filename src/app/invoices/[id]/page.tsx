@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useParams, useRouter } from 'next/navigation'
-import { ArrowLeft, Music, Trash2, CreditCard } from 'lucide-react'
+import { ArrowLeft, Music, Trash2, CreditCard, Edit, Save, X } from 'lucide-react'
 import Link from 'next/link'
 import Navigation from '@/components/navigation'
 import UserMenu from '@/components/user-menu'
@@ -86,6 +86,14 @@ export default function InvoiceDetailPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string>('')
   const [processing, setProcessing] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
+  const [editData, setEditData] = useState({
+    project: '',
+    projectDescription: '',
+    notes: '',
+    terms: '',
+    dueDate: ''
+  })
 
   useEffect(() => {
     if (invoiceId) {
@@ -99,6 +107,13 @@ export default function InvoiceDetailPage() {
       if (response.ok) {
         const data = await response.json()
         setInvoice(data)
+        setEditData({
+          project: data.project || '',
+          projectDescription: data.projectDescription || '',
+          notes: data.notes || '',
+          terms: data.terms || '',
+          dueDate: data.dueDate || ''
+        })
       } else {
         const errorData = await response.json()
         setError(errorData.error || 'Failed to load invoice')
@@ -107,6 +122,54 @@ export default function InvoiceDetailPage() {
       setError('Failed to load invoice')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleEditClick = () => {
+    setIsEditing(true)
+  }
+
+  const handleCancelEdit = () => {
+    setIsEditing(false)
+    if (invoice) {
+      setEditData({
+        project: invoice.project || '',
+        projectDescription: invoice.projectDescription || '',
+        notes: invoice.notes || '',
+        terms: invoice.terms || '',
+        dueDate: invoice.dueDate || ''
+      })
+    }
+  }
+
+  const handleEditDataChange = (field: string, value: string) => {
+    setEditData(prev => ({ ...prev, [field]: value }))
+  }
+
+  const handleSaveEdit = async () => {
+    if (!invoice) return
+
+    try {
+      const response = await fetch(`/api/invoices/${invoiceId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(editData),
+      })
+
+      if (response.ok) {
+        const updatedInvoice = await response.json()
+        setInvoice(updatedInvoice)
+        setIsEditing(false)
+        alert('Invoice updated successfully!')
+      } else {
+        const errorData = await response.json()
+        alert(`Failed to update invoice: ${errorData.error}`)
+      }
+    } catch (error) {
+      console.error('Error updating invoice:', error)
+      alert('Error updating invoice')
     }
   }
 
@@ -261,286 +324,458 @@ export default function InvoiceDetailPage() {
                 <p style={{color: '#cbd5e1'}}>{invoice.project}</p>
               </div>
             </div>
-            <div style={{
-              padding: '0.5rem 1rem',
-              backgroundColor: `rgba(${getStatusColor(invoice.status).slice(1).match(/.{2}/g)?.map(hex => parseInt(hex, 16)).join(', ')}, 0.2)`,
-              border: `1px solid ${getStatusColor(invoice.status)}`,
-              borderRadius: '9999px',
-              color: getStatusColor(invoice.status),
-              fontWeight: 'bold',
-              fontSize: '0.875rem'
-            }}>
-              {getStatusText(invoice.status)}
-            </div>
           </div>
         </div>
 
-        {/* Main Content */}
-        <div style={{backgroundColor: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.75rem', padding: '1.5rem'}}>
-          {/* Client and Invoice Info */}
-          <div style={{
-            background: 'rgba(255, 255, 255, 0.1)',
-            borderRadius: '0.75rem',
-            padding: '1.5rem',
-            marginBottom: '2rem'
-          }}>
-            <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem'}}>
-              <div>
-                <h3 style={{fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem'}}>
-                  Client Information
-                </h3>
-                <p style={{fontWeight: 'bold', marginBottom: '0.25rem'}}>{getClientName(invoice.client)}</p>
-                <p style={{color: '#cbd5e1', marginBottom: '0.25rem'}}>{invoice.client.email}</p>
-                {invoice.client.phone && <p style={{color: '#cbd5e1', marginBottom: '0.25rem'}}>{invoice.client.phone}</p>}
-                {invoice.client.address && <p style={{color: '#cbd5e1'}}>{invoice.client.address}</p>}
-              </div>
-              <div>
-                <h3 style={{fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem'}}>
-                  Invoice Details
-                </h3>
-                <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem'}}>
-                  <span>Issue Date:</span>
-                  <span>{new Date(invoice.issueDate).toLocaleDateString()}</span>
-                </div>
-                <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem'}}>
-                  <span>Due Date:</span>
-                  <span>{new Date(invoice.dueDate).toLocaleDateString()}</span>
-                </div>
-                {invoice.paidDate && (
-                  <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem'}}>
-                    <span>Paid Date:</span>
-                    <span>{new Date(invoice.paidDate).toLocaleDateString()}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Services */}
-          {invoice.items.length > 0 && (
-            <div style={{
-              background: 'rgba(255, 255, 255, 0.1)',
-              borderRadius: '0.75rem',
-              padding: '1.5rem',
-              marginBottom: '2rem'
-            }}>
+        {/* Main Content Box */}
+        <div style={{backgroundColor: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.75rem', padding: '1.5rem', marginBottom: '2rem'}}>
+          <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem'}}>
+            {/* Left Column - Client Info */}
+            <div>
               <h3 style={{fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem'}}>
-                Services
+                Client Information
               </h3>
-              {invoice.items.map((item, index) => (
-                <div key={index} style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  padding: '0.75rem',
-                  background: 'rgba(255, 255, 255, 0.05)',
-                  borderRadius: '0.5rem',
-                  marginBottom: '0.5rem'
-                }}>
-                  <div>
-                    <p style={{fontWeight: 'bold', marginBottom: '0.25rem'}}>{item.serviceName}</p>
-                    {item.description && <p style={{fontSize: '0.875rem', color: '#cbd5e1'}}>{item.description}</p>}
-                    <p style={{fontSize: '0.875rem', color: '#cbd5e1'}}>
-                      {item.quantity} × ${item.unitPrice.toFixed(2)}
-                      {item.taxable && <span style={{color: '#10b981', marginLeft: '0.5rem'}}>Taxable</span>}
-                    </p>
-                  </div>
-                  <p style={{fontWeight: 'bold'}}>${item.total.toFixed(2)}</p>
-                </div>
-              ))}
+              <p style={{fontWeight: 'bold', marginBottom: '0.25rem'}}>{getClientName(invoice.client)}</p>
+              <p style={{color: '#cbd5e1', marginBottom: '0.25rem'}}>{invoice.client.email}</p>
+              {invoice.client.phone && <p style={{color: '#cbd5e1', marginBottom: '0.25rem'}}>{invoice.client.phone}</p>}
+              {invoice.client.address && <p style={{color: '#cbd5e1'}}>{invoice.client.address}</p>}
             </div>
-          )}
 
-          {/* Contractors */}
-          {invoice.contractors && invoice.contractors.length > 0 && (
-            <div style={{
-              background: 'rgba(255, 255, 255, 0.1)',
-              borderRadius: '0.75rem',
-              padding: '1.5rem',
-              marginBottom: '2rem'
-            }}>
+            {/* Right Column - Invoice Details */}
+            <div>
               <h3 style={{fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem'}}>
-                Contractors
+                Invoice Details
               </h3>
-              {(invoice.contractors || []).map((ic, index) => (
-                <div key={index} style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  padding: '0.75rem',
-                  background: 'rgba(255, 255, 255, 0.05)',
-                  borderRadius: '0.5rem',
-                  marginBottom: '0.5rem'
-                }}>
-                  <div>
-                    <p style={{fontWeight: 'bold', marginBottom: '0.25rem'}}>{ic.contractor.name}</p>
-                    <div style={{display: 'flex', flexWrap: 'wrap', gap: '0.25rem', marginBottom: '0.25rem'}}>
-                      {ic.assignedSkills.map(skill => (
-                        <span key={skill} style={{
-                          padding: '0.125rem 0.5rem',
-                          backgroundColor: 'rgba(147, 51, 234, 0.2)',
-                          border: '1px solid rgba(147, 51, 234, 0.3)',
-                          borderRadius: '9999px',
-                          fontSize: '0.75rem',
-                          color: '#e9d5ff'
-                        }}>
-                          {skill}
-                        </span>
-                      ))}
-                    </div>
-                    <p style={{fontSize: '0.875rem', color: '#cbd5e1'}}>
-                      {ic.rateType === 'hourly' 
-                        ? `${ic.hours} hrs @ $${ic.hours && ic.hours > 0 ? (ic.cost / ic.hours).toFixed(2) : '0.00'}/hr`
-                        : 'Flat rate'
-                      }
-                      {!ic.includeInTotal && <span style={{color: '#f59e0b', marginLeft: '0.5rem'}}>(Not included in total)</span>}
-                    </p>
-                  </div>
-                  <p style={{fontWeight: 'bold'}}>${Number(ic.cost).toFixed(2)}</p>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Totals */}
-          <div style={{
-            background: 'rgba(255, 255, 255, 0.1)',
-            borderRadius: '0.75rem',
-            padding: '1.5rem',
-            marginBottom: '2rem'
-          }}>
-            <h3 style={{fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem'}}>
-              Invoice Summary
-            </h3>
-            <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem'}}>
-              <span>Subtotal:</span>
-              <span>${invoice.subtotal.toFixed(2)}</span>
-            </div>
-            {contractorCostsTotal > 0 && (
               <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem'}}>
-                <span>Contractors:</span>
-                <span>${contractorCostsTotal.toFixed(2)}</span>
+                <span>Issue Date:</span>
+                <span>{new Date(invoice.issueDate).toLocaleDateString()}</span>
               </div>
-            )}
-            <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem'}}>
-              <span>Tax ({invoice.taxRate}%):</span>
-              <span>${invoice.taxAmount.toFixed(2)}</span>
-            </div>
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              fontSize: '1.25rem',
-              fontWeight: 'bold',
-              borderTop: '1px solid rgba(255, 255, 255, 0.2)',
-              paddingTop: '0.5rem'
-            }}>
-              <span>Total:</span>
-              <span>${grandTotal.toFixed(2)}</span>
-            </div>
-          </div>
-
-          {/* Notes and Terms */}
-          {(invoice.notes || invoice.terms) && (
-            <div style={{
-              background: 'rgba(255, 255, 255, 0.1)',
-              borderRadius: '0.75rem',
-              padding: '1.5rem',
-              marginBottom: '2rem'
-            }}>
-              {invoice.notes && (
-                <div style={{marginBottom: '1rem'}}>
-                  <h3 style={{fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '0.5rem'}}>
-                    Notes
-                  </h3>
-                  <p style={{lineHeight: '1.6'}}>{invoice.notes}</p>
-                </div>
-              )}
-              {invoice.terms && (
-                <div>
-                  <h3 style={{fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '0.5rem'}}>
-                    Terms & Conditions
-                  </h3>
-                  <p style={{lineHeight: '1.6'}}>{invoice.terms}</p>
+              <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem'}}>
+                <span>Due Date:</span>
+                <span>{new Date(invoice.dueDate).toLocaleDateString()}</span>
+              </div>
+              {invoice.paidDate && (
+                <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem'}}>
+                  <span>Paid Date:</span>
+                  <span>{new Date(invoice.paidDate).toLocaleDateString()}</span>
                 </div>
               )}
             </div>
-          )}
-
-          {/* Activity Log Section (Admin Only) */}
-          {invoice.activityLog && (
-            <div style={{
-              background: 'rgba(255, 255, 255, 0.1)',
-              backdropFilter: 'blur(8px)',
-              border: '1px solid rgba(255, 255, 255, 0.2)',
-              borderRadius: '0.75rem',
-              padding: '1.5rem',
-              marginBottom: '2rem'
-            }}>
-              <h3 style={{color: 'white', fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem'}}>
-                Activity Log (Admin Only)
-              </h3>
-              <div style={{
-                backgroundColor: 'rgba(0, 0, 0, 0.2)',
-                borderRadius: '0.5rem',
-                padding: '1rem',
-                fontFamily: 'monospace',
-                fontSize: '0.875rem',
-                color: '#cbd5e1',
-                whiteSpace: 'pre-wrap',
-                maxHeight: '200px',
-                overflowY: 'auto'
-              }}>
-                {invoice.activityLog}
-              </div>
-            </div>
-          )}
-
-          {/* Action Buttons */}
-          <div style={{display: 'flex', gap: '1rem', justifyContent: 'center', marginBottom: '2rem'}}>
-            {invoice.status === 'sent' && (
-              <button
-                onClick={handlePayInvoice}
-                disabled={processing}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  padding: '1rem 2rem',
-                  background: processing ? 'rgba(255, 255, 255, 0.1)' : 'linear-gradient(to right, #10b981, #14b8a6)',
-                  border: 'none',
-                  borderRadius: '0.75rem',
-                  color: 'white',
-                  cursor: processing ? 'not-allowed' : 'pointer',
-                  fontWeight: 'bold',
-                  fontSize: '1.125rem',
-                  opacity: processing ? 0.5 : 1
-                }}
-              >
-                <CreditCard style={{height: '1.25rem', width: '1.25rem'}} />
-                {processing ? 'Processing...' : `Pay $${grandTotal.toFixed(2)}`}
-              </button>
-            )}
           </div>
 
-          {/* Delete Invoice Button */}
-          <div style={{display: 'flex', justifyContent: 'center', marginTop: '2rem'}}>
+          {/* Project and Project Description */}
+          <div style={{marginTop: '1.5rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem'}}>
+            <div>
+              <span style={{color: '#cbd5e1', fontSize: '0.875rem'}}>Project:</span>
+              {isEditing ? (
+                <input
+                  type="text"
+                  value={editData.project}
+                  onChange={(e) => handleEditDataChange('project', e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '0.5rem',
+                    backgroundColor: 'rgba(59, 130, 246, 0.15)',
+                    border: '2px solid rgba(59, 130, 246, 0.5)',
+                    borderRadius: '0.25rem',
+                    color: 'white',
+                    outline: 'none',
+                    marginTop: '0.25rem',
+                    boxShadow: '0 0 0 3px rgba(59, 130, 246, 0.1)',
+                    transition: 'all 0.2s'
+                  }}
+                  placeholder="Enter project name..."
+                />
+              ) : (
+                <p style={{color: 'white', margin: '0', fontWeight: '500'}}>{invoice.project || 'Not provided'}</p>
+              )}
+            </div>
+            <div>
+              <span style={{color: '#cbd5e1', fontSize: '0.875rem'}}>Project Description:</span>
+              {isEditing ? (
+                <textarea
+                  value={editData.projectDescription}
+                  onChange={(e) => handleEditDataChange('projectDescription', e.target.value)}
+                  rows={3}
+                  style={{
+                    width: '100%',
+                    padding: '0.5rem',
+                    backgroundColor: 'rgba(59, 130, 246, 0.15)',
+                    border: '2px solid rgba(59, 130, 246, 0.5)',
+                    borderRadius: '0.25rem',
+                    color: 'white',
+                    outline: 'none',
+                    resize: 'vertical',
+                    marginTop: '0.25rem',
+                    boxShadow: '0 0 0 3px rgba(59, 130, 246, 0.1)',
+                    transition: 'all 0.2s'
+                  }}
+                  placeholder="Describe the project details..."
+                />
+              ) : (
+                <p style={{color: 'white', margin: '0', fontWeight: '500'}}>{invoice.projectDescription || 'Not provided'}</p>
+              )}
+            </div>
+          </div>
+
+          {/* Status Badge */}
+          <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', backgroundColor: 'rgba(255, 255, 255, 0.1)', borderRadius: '0.5rem', border: '1px solid rgba(255, 255, 255, 0.2)', marginTop: '1.5rem'}}>
+            <div style={{
+              width: '0.5rem',
+              height: '0.5rem',
+              borderRadius: '50%',
+              backgroundColor: getStatusColor(invoice.status)
+            }} />
+            <span style={{color: 'white', fontWeight: '500', textTransform: 'capitalize'}}>{getStatusText(invoice.status)}</span>
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div style={{display: 'flex', gap: '1rem', marginBottom: '2rem', flexWrap: 'wrap'}}>
+          {(invoice.status === 'draft' || invoice.status === 'sent') && !isEditing ? (
             <button
-              onClick={handleDeleteInvoice}
+              onClick={handleEditClick}
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.5rem',
                 padding: '0.75rem 1.5rem',
-                backgroundColor: 'rgba(239, 68, 68, 0.2)',
-                border: '1px solid rgba(239, 68, 68, 0.3)',
+                backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                border: '1px solid rgba(255, 255, 255, 0.3)',
                 borderRadius: '0.5rem',
-                color: '#f87171',
+                color: 'white',
                 cursor: 'pointer',
                 fontWeight: '500'
               }}
             >
-              <Trash2 style={{height: '1rem', width: '1rem'}} />
-              Delete Invoice
+              <Edit style={{height: '1rem', width: '1rem'}} />
+              Edit Details
             </button>
+          ) : (invoice.status === 'draft' || invoice.status === 'sent') && isEditing ? (
+            <>
+              <button
+                onClick={handleSaveEdit}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.75rem 1.5rem',
+                  background: 'linear-gradient(to right, #10b981, #14b8a6)',
+                  border: 'none',
+                  borderRadius: '0.5rem',
+                  color: 'white',
+                  cursor: 'pointer',
+                  fontWeight: '500'
+                }}
+              >
+                <Save style={{height: '1rem', width: '1rem'}} />
+                Save Changes
+              </button>
+              <button
+                onClick={handleCancelEdit}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.75rem 1.5rem',
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  borderRadius: '0.5rem',
+                  color: 'white',
+                  cursor: 'pointer',
+                  fontWeight: '500'
+                }}
+              >
+                <X style={{height: '1rem', width: '1rem'}} />
+                Cancel
+              </button>
+            </>
+          ) : null}
+          {invoice.status === 'sent' && (
+            <button
+              onClick={handlePayInvoice}
+              disabled={processing}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                padding: '0.75rem 1.5rem',
+                background: processing ? 'rgba(255, 255, 255, 0.1)' : 'linear-gradient(to right, #10b981, #14b8a6)',
+                border: 'none',
+                borderRadius: '0.5rem',
+                color: 'white',
+                cursor: processing ? 'not-allowed' : 'pointer',
+                fontWeight: '500',
+                opacity: processing ? 0.5 : 1
+              }}
+            >
+              <CreditCard style={{height: '1rem', width: '1rem'}} />
+              {processing ? 'Processing...' : `Pay $${grandTotal.toFixed(2)}`}
+            </button>
+          )}
+        </div>
+
+        {/* Two Column Layout */}
+        <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem'}}>
+          {/* Left Column - Services */}
+          <div>
+            <div style={{backgroundColor: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.75rem', padding: '1.5rem'}}>
+              <h3 style={{fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem'}}>
+                Services
+              </h3>
+              {invoice.items.length > 0 ? (
+                invoice.items.map((item, index) => (
+                  <div key={index} style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    padding: '0.75rem',
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    borderRadius: '0.5rem',
+                    marginBottom: '0.5rem'
+                  }}>
+                    <div>
+                      <p style={{fontWeight: 'bold', marginBottom: '0.25rem'}}>{item.serviceName}</p>
+                      {item.description && <p style={{fontSize: '0.875rem', color: '#cbd5e1'}}>{item.description}</p>}
+                      <p style={{fontSize: '0.875rem', color: '#cbd5e1'}}>
+                        {item.quantity} × ${item.unitPrice.toFixed(2)}
+                        {item.taxable && <span style={{color: '#10b981', marginLeft: '0.5rem'}}>Taxable</span>}
+                      </p>
+                    </div>
+                    <p style={{fontWeight: 'bold'}}>${item.total.toFixed(2)}</p>
+                  </div>
+                ))
+              ) : (
+                <p style={{color: '#cbd5e1', textAlign: 'center', padding: '2rem'}}>No services added</p>
+              )}
+            </div>
           </div>
+
+          {/* Right Column - Contractors */}
+          <div>
+            <div style={{backgroundColor: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.75rem', padding: '1.5rem'}}>
+              <h3 style={{fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem'}}>
+                Contractors
+              </h3>
+              {invoice.contractors && invoice.contractors.length > 0 ? (
+                invoice.contractors.map((ic, index) => (
+                  <div key={index} style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    padding: '0.75rem',
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    borderRadius: '0.5rem',
+                    marginBottom: '0.5rem'
+                  }}>
+                    <div>
+                      <p style={{fontWeight: 'bold', marginBottom: '0.25rem'}}>{ic.contractor.name}</p>
+                      <div style={{display: 'flex', flexWrap: 'wrap', gap: '0.25rem', marginBottom: '0.25rem'}}>
+                        {ic.assignedSkills.map(skill => (
+                          <span key={skill} style={{
+                            padding: '0.125rem 0.5rem',
+                            backgroundColor: 'rgba(147, 51, 234, 0.2)',
+                            border: '1px solid rgba(147, 51, 234, 0.3)',
+                            borderRadius: '9999px',
+                            fontSize: '0.75rem',
+                            color: '#e9d5ff'
+                          }}>
+                            {skill}
+                          </span>
+                        ))}
+                      </div>
+                      <p style={{fontSize: '0.875rem', color: '#cbd5e1'}}>
+                        {ic.rateType === 'hourly' 
+                          ? `${ic.hours} hrs @ $${ic.hours && ic.hours > 0 ? (ic.cost / ic.hours).toFixed(2) : '0.00'}/hr`
+                          : 'Flat rate'
+                        }
+                        {!ic.includeInTotal && <span style={{color: '#f59e0b', marginLeft: '0.5rem'}}>(Not included in total)</span>}
+                      </p>
+                    </div>
+                    <p style={{fontWeight: 'bold'}}>${Number(ic.cost).toFixed(2)}</p>
+                  </div>
+                ))
+              ) : (
+                <p style={{color: '#cbd5e1', textAlign: 'center', padding: '2rem'}}>No contractors assigned</p>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Invoice Details Section */}
+        <div style={{backgroundColor: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.75rem', padding: '1.5rem', marginBottom: '2rem'}}>
+          <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem'}}>
+            {/* Left Column */}
+            <div>
+              <div style={{display: 'flex', flexDirection: 'column', gap: '1rem'}}>
+                <div>
+                  <span style={{color: '#cbd5e1', fontSize: '0.875rem'}}>Notes:</span>
+                  {isEditing ? (
+                    <textarea
+                      value={editData.notes}
+                      onChange={(e) => handleEditDataChange('notes', e.target.value)}
+                      rows={3}
+                      style={{
+                        width: '100%',
+                        padding: '0.5rem',
+                        backgroundColor: 'rgba(59, 130, 246, 0.15)',
+                        border: '2px solid rgba(59, 130, 246, 0.5)',
+                        borderRadius: '0.25rem',
+                        color: 'white',
+                        outline: 'none',
+                        resize: 'vertical',
+                        marginTop: '0.25rem',
+                        boxShadow: '0 0 0 3px rgba(59, 130, 246, 0.1)',
+                        transition: 'all 0.2s'
+                      }}
+                      placeholder="Enter notes..."
+                    />
+                  ) : (
+                    <p style={{color: 'white', margin: '0', fontWeight: '500'}}>{invoice.notes || 'No notes specified'}</p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column */}
+            <div>
+              <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap'}}>
+                <div>
+                  <span style={{color: '#cbd5e1', fontSize: '0.875rem'}}>Subtotal:</span>
+                  <p style={{color: 'white', margin: '0', fontWeight: '500'}}>${invoice.subtotal.toFixed(2)}</p>
+                </div>
+                {contractorCostsTotal > 0 && (
+                  <div>
+                    <span style={{color: '#cbd5e1', fontSize: '0.875rem'}}>Contractors:</span>
+                    <p style={{color: 'white', margin: '0', fontWeight: '500'}}>${contractorCostsTotal.toFixed(2)}</p>
+                  </div>
+                )}
+                <div>
+                  <span style={{color: '#cbd5e1', fontSize: '0.875rem'}}>Tax Rate:</span>
+                  <p style={{color: 'white', margin: '0', fontWeight: '500'}}>{invoice.taxRate}%</p>
+                </div>
+                <div>
+                  <span style={{color: '#cbd5e1', fontSize: '0.875rem'}}>Tax Amount:</span>
+                  <p style={{color: 'white', margin: '0', fontWeight: '500'}}>${invoice.taxAmount.toFixed(2)}</p>
+                </div>
+                <div>
+                  <span style={{color: '#cbd5e1', fontSize: '0.875rem'}}>Total:</span>
+                  <p style={{color: 'white', margin: '0', fontSize: '1.25rem', fontWeight: '600'}}>${grandTotal.toFixed(2)}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Terms and Due Date */}
+        <div style={{
+          background: 'rgba(255, 255, 255, 0.1)',
+          backdropFilter: 'blur(8px)',
+          border: '1px solid rgba(255, 255, 255, 0.2)',
+          borderRadius: '0.75rem',
+          padding: '1.5rem',
+          marginBottom: '2rem'
+        }}>
+          <div style={{marginBottom: '1.5rem'}}>
+            <h2 style={{fontSize: '1.25rem', fontWeight: 'bold', color: 'white', marginBottom: '1rem'}}>Terms & Conditions</h2>
+            {isEditing ? (
+              <textarea
+                value={editData.terms}
+                onChange={(e) => handleEditDataChange('terms', e.target.value)}
+                rows={4}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  backgroundColor: 'rgba(59, 130, 246, 0.15)',
+                  border: '2px solid rgba(59, 130, 246, 0.5)',
+                  borderRadius: '0.25rem',
+                  color: 'white',
+                  outline: 'none',
+                  resize: 'vertical',
+                  fontSize: '0.875rem',
+                  lineHeight: '1.6',
+                  boxShadow: '0 0 0 3px rgba(59, 130, 246, 0.1)',
+                  transition: 'all 0.2s'
+                }}
+                placeholder="Enter terms and conditions..."
+              />
+            ) : (
+              <p style={{fontSize: '0.875rem', color: '#cbd5e1', lineHeight: '1.6', margin: 0}}>{invoice.terms || 'No terms specified'}</p>
+            )}
+          </div>
+          <div>
+            <h2 style={{fontSize: '1.25rem', fontWeight: 'bold', color: 'white', marginBottom: '1rem'}}>Due Date</h2>
+            {isEditing ? (
+              <input
+                type="date"
+                value={editData.dueDate}
+                onChange={(e) => handleEditDataChange('dueDate', e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  backgroundColor: 'rgba(59, 130, 246, 0.15)',
+                  border: '2px solid rgba(59, 130, 246, 0.5)',
+                  borderRadius: '0.25rem',
+                  color: 'white',
+                  outline: 'none',
+                  fontSize: '0.875rem',
+                  boxShadow: '0 0 0 3px rgba(59, 130, 246, 0.1)',
+                  transition: 'all 0.2s'
+                }}
+              />
+            ) : (
+              <p style={{fontSize: '0.875rem', color: '#cbd5e1', lineHeight: '1.6', margin: 0}}>{new Date(invoice.dueDate).toLocaleDateString()}</p>
+            )}
+          </div>
+        </div>
+
+        {/* Activity Log Section (Admin Only) */}
+        {invoice.activityLog && (
+          <div style={{
+            background: 'rgba(255, 255, 255, 0.1)',
+            backdropFilter: 'blur(8px)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            borderRadius: '0.75rem',
+            padding: '1.5rem',
+            marginBottom: '2rem'
+          }}>
+            <h3 style={{color: 'white', fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem'}}>
+              Activity Log (Admin Only)
+            </h3>
+            <div style={{
+              backgroundColor: 'rgba(0, 0, 0, 0.2)',
+              borderRadius: '0.5rem',
+              padding: '1rem',
+              fontFamily: 'monospace',
+              fontSize: '0.875rem',
+              color: '#cbd5e1',
+              whiteSpace: 'pre-wrap',
+              maxHeight: '200px',
+              overflowY: 'auto'
+            }}>
+              {invoice.activityLog}
+            </div>
+          </div>
+        )}
+
+        {/* Delete Invoice Button */}
+        <div style={{display: 'flex', justifyContent: 'center', marginTop: '2rem'}}>
+          <button
+            onClick={handleDeleteInvoice}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              padding: '0.75rem 1.5rem',
+              backgroundColor: 'rgba(239, 68, 68, 0.2)',
+              border: '1px solid rgba(239, 68, 68, 0.3)',
+              borderRadius: '0.5rem',
+              color: '#f87171',
+              cursor: 'pointer',
+              fontWeight: '500'
+            }}
+          >
+            <Trash2 style={{height: '1rem', width: '1rem'}} />
+            Delete Invoice
+          </button>
         </div>
       </div>
     </div>
