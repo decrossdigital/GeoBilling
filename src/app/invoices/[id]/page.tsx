@@ -222,7 +222,7 @@ export default function InvoiceDetailPage() {
     )
   }
 
-  const contractorCostsTotal = invoice.contractors
+  const contractorCostsTotal = (invoice.contractors || [])
     .filter(c => c.includeInTotal)
     .reduce((sum, c) => sum + Number(c.cost), 0)
   const grandTotal = invoice.total + contractorCostsTotal
@@ -351,7 +351,7 @@ export default function InvoiceDetailPage() {
           )}
 
           {/* Contractors */}
-          {invoice.contractors.length > 0 && (
+          {invoice.contractors && invoice.contractors.length > 0 && (
             <div style={{
               background: 'rgba(255, 255, 255, 0.1)',
               borderRadius: '0.75rem',
@@ -361,7 +361,7 @@ export default function InvoiceDetailPage() {
               <h3 style={{fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem'}}>
                 Contractors
               </h3>
-              {invoice.contractors.map((ic, index) => (
+              {(invoice.contractors || []).map((ic, index) => (
                 <div key={index} style={{
                   display: 'flex',
                   justifyContent: 'space-between',
