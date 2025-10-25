@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useParams, useRouter } from 'next/navigation'
-import { ArrowLeft, Music, Home, Users, FileText, DollarSign, User, Settings, Edit, Save, X, Trash2, CreditCard } from 'lucide-react'
+import { ArrowLeft, Music, Trash2, CreditCard } from 'lucide-react'
 import Link from 'next/link'
+import Navigation from '@/components/navigation'
 import UserMenu from '@/components/user-menu'
 
 interface Client {
@@ -202,13 +203,7 @@ export default function InvoiceDetailPage() {
 
   if (loading) {
     return (
-      <div style={{
-        minHeight: '100vh',
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center'
-      }}>
+      <div style={{minHeight: '100vh', background: 'linear-gradient(to bottom right, #0f172a, #581c87, #0f172a)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
         <div style={{color: 'white', textAlign: 'center'}}>
           <h2>Loading invoice...</h2>
         </div>
@@ -218,13 +213,7 @@ export default function InvoiceDetailPage() {
 
   if (error || !invoice) {
     return (
-      <div style={{
-        minHeight: '100vh',
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center'
-      }}>
+      <div style={{minHeight: '100vh', background: 'linear-gradient(to bottom right, #0f172a, #581c87, #0f172a)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
         <div style={{color: 'white', textAlign: 'center'}}>
           <h2>Error loading invoice</h2>
           <p>{error}</p>
@@ -239,85 +228,38 @@ export default function InvoiceDetailPage() {
   const grandTotal = invoice.total + contractorCostsTotal
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
-    }}>
-      {/* Navigation */}
-      <div style={{
-        background: 'rgba(255, 255, 255, 0.1)',
-        backdropFilter: 'blur(10px)',
-        borderBottom: '1px solid rgba(255, 255, 255, 0.2)',
-        padding: '1rem 0'
-      }}>
-        <div style={{
-          maxWidth: '1200px',
-          margin: '0 auto',
-          padding: '0 1rem',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between'
-        }}>
-          <div style={{display: 'flex', alignItems: 'center', gap: '2rem'}}>
-            <Link href="/invoices" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'white', textDecoration: 'none'}}>
-              <ArrowLeft style={{height: '1.25rem', width: '1.25rem'}} />
-              Back to Invoices
-            </Link>
-            
-            <div style={{display: 'flex', alignItems: 'center', gap: '1rem'}}>
-              <Link href="/" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'white', textDecoration: 'none', opacity: 0.7}}>
-                <Home style={{height: '1.25rem', width: '1.25rem'}} />
-                Dashboard
-              </Link>
-              <Link href="/clients" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'white', textDecoration: 'none', opacity: 0.7}}>
-                <Users style={{height: '1.25rem', width: '1.25rem'}} />
-                Clients
-              </Link>
-              <Link href="/quotes" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'white', textDecoration: 'none', opacity: 0.7}}>
-                <FileText style={{height: '1.25rem', width: '1.25rem'}} />
-                Quotes
-              </Link>
-              <Link href="/invoices" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'white', textDecoration: 'none', fontWeight: 'bold'}}>
-                <DollarSign style={{height: '1.25rem', width: '1.25rem'}} />
-                Invoices
-              </Link>
-              <Link href="/contractors" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'white', textDecoration: 'none', opacity: 0.7}}>
-                <User style={{height: '1.25rem', width: '1.25rem'}} />
-                Contractors
-              </Link>
-              <Link href="/settings" style={{display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'white', textDecoration: 'none', opacity: 0.7}}>
-                <Settings style={{height: '1.25rem', width: '1.25rem'}} />
-                Settings
-              </Link>
+    <div style={{minHeight: '100vh', background: 'linear-gradient(to bottom right, #0f172a, #581c87, #0f172a)', color: 'white'}}>
+      <div style={{maxWidth: '1200px', margin: '0 auto', padding: '2rem 1.5rem'}}>
+        {/* Header */}
+        <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2rem'}}>
+          <div style={{display: 'flex', alignItems: 'center', gap: '0.75rem'}}>
+            <div style={{padding: '0.75rem', background: 'linear-gradient(to right, #9333ea, #ec4899)', borderRadius: '1rem'}}>
+              <Music style={{height: '2rem', width: '2rem', color: 'white'}} />
+            </div>
+            <div>
+              <h1 style={{fontSize: '1.875rem', fontWeight: 'bold', color: 'white'}}>GeoBilling</h1>
+              <p style={{fontSize: '0.875rem', color: '#cbd5e1'}}>Uniquitous Music - Professional Billing System</p>
             </div>
           </div>
-          
           <UserMenu />
         </div>
-      </div>
+        
+        {/* Navigation */}
+        <Navigation />
 
-      <div style={{maxWidth: '1200px', margin: '0 auto', padding: '2rem 1rem'}}>
-        <div style={{
-          background: 'rgba(255, 255, 255, 0.1)',
-          backdropFilter: 'blur(10px)',
-          borderRadius: '1rem',
-          padding: '2rem',
-          color: 'white'
-        }}>
-          {/* Header */}
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'flex-start',
-            marginBottom: '2rem'
-          }}>
-            <div>
-              <h1 style={{fontSize: '2rem', fontWeight: 'bold', marginBottom: '0.5rem'}}>
-                Invoice #{invoice.invoiceNumber}
-              </h1>
-              <p style={{fontSize: '1.25rem', opacity: 0.9}}>
-                {invoice.project}
-              </p>
+        {/* Page Header */}
+        <div style={{marginBottom: '2rem'}}>
+          <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem'}}>
+            <div style={{display: 'flex', alignItems: 'center', gap: '1rem'}}>
+              <Link href="/invoices">
+                <button style={{color: '#cbd5e1', cursor: 'pointer', border: 'none', background: 'none', padding: '0.5rem'}}>
+                  <ArrowLeft style={{height: '1.25rem', width: '1.25rem'}} />
+                </button>
+              </Link>
+              <div>
+                <h1 style={{fontSize: '2.25rem', fontWeight: 'bold', color: 'white'}}>Invoice #{invoice.invoiceNumber}</h1>
+                <p style={{color: '#cbd5e1'}}>{invoice.project}</p>
+              </div>
             </div>
             <div style={{
               padding: '0.5rem 1rem',
@@ -331,7 +273,10 @@ export default function InvoiceDetailPage() {
               {getStatusText(invoice.status)}
             </div>
           </div>
+        </div>
 
+        {/* Main Content */}
+        <div style={{backgroundColor: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.75rem', padding: '1.5rem'}}>
           {/* Client and Invoice Info */}
           <div style={{
             background: 'rgba(255, 255, 255, 0.1)',
