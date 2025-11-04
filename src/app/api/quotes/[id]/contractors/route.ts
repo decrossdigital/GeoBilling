@@ -60,7 +60,7 @@ export async function POST(
 
     const { id: quoteId } = await params
     const body = await request.json()
-    const { contractorId, assignedSkills, rateType, hours, cost, includeInTotal } = body
+    const { contractorId, assignedSkills, rateType, hours, cost, includeInTotal, notes } = body
 
     // Validate required fields
     if (!contractorId || !assignedSkills || !rateType || cost === undefined) {
@@ -79,7 +79,8 @@ export async function POST(
         rateType,
         hours: hours !== undefined ? hours : null,
         cost,
-        includeInTotal: includeInTotal !== undefined ? includeInTotal : true
+        includeInTotal: includeInTotal !== undefined ? includeInTotal : true,
+        notes: notes || null
       },
       include: {
         contractor: true

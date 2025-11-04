@@ -28,8 +28,25 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Quote not found or invalid token' }, { status: 404 })
     }
 
-    // Check if quote has expired
+    // Check if quote has expired and update status if needed
     if (new Date() > new Date(quote.validUntil)) {
+      // If quote hasn't been marked as expired yet, mark it now
+      if (quote.status !== 'expired') {
+        const updatedActivityLog = addActivityLog(
+          quote.activityLog,
+          ACTIVITY_ACTIONS.QUOTE_EXPIRED,
+          'System',
+          'Quote expired when attempting to create checkout session'
+        )
+        
+        await prisma.quote.update({
+          where: { id: quoteId },
+          data: {
+            status: 'expired',
+            activityLog: updatedActivityLog
+          }
+        })
+      }
       return NextResponse.json({ error: 'Quote has expired' }, { status: 400 })
     }
 

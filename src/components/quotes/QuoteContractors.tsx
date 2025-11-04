@@ -1,6 +1,6 @@
 'use client'
 
-import { Plus, Users, Trash2 } from 'lucide-react'
+import { Plus, Users, Trash2, Edit } from 'lucide-react'
 
 interface Contractor {
   id: string
@@ -21,12 +21,14 @@ interface QuoteContractor {
   hours: number | null
   cost: number
   includeInTotal: boolean
+  notes?: string | null
   contractor: Contractor
 }
 
 interface QuoteContractorsProps {
   contractors: QuoteContractor[]
   onAddContractor: () => void
+  onEditContractor: (contractorId: string) => void
   onRemoveContractor: (contractorId: string) => void
   onToggleIncludeInTotal?: (contractorId: string, include: boolean) => void
   isDraft?: boolean
@@ -35,6 +37,7 @@ interface QuoteContractorsProps {
 export default function QuoteContractors({ 
   contractors, 
   onAddContractor,
+  onEditContractor,
   onRemoveContractor,
   onToggleIncludeInTotal,
   isDraft = true
@@ -136,6 +139,11 @@ export default function QuoteContractors({
                         </span>
                       )}
                     </p>
+                    {qc.notes && (
+                      <p style={{fontSize: '0.75rem', color: '#94a3b8', marginTop: '0.25rem', fontStyle: 'italic'}}>
+                        {qc.notes}
+                      </p>
+                    )}
                   </div>
                   <div style={{textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem'}}>
                     <p style={{color: 'white', fontWeight: 'bold', fontSize: '1rem', margin: 0}}>
@@ -159,25 +167,46 @@ export default function QuoteContractors({
                         <span>Include in total</span>
                       </label>
                       {isDraft && (
-                        <button
-                          onClick={() => onRemoveContractor(qc.id)}
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.25rem',
-                            padding: '0.25rem 0.5rem',
-                            backgroundColor: 'rgba(239, 68, 68, 0.2)',
-                            color: '#fca5a5',
-                            border: '1px solid rgba(239, 68, 68, 0.3)',
-                            borderRadius: '0.25rem',
-                            cursor: 'pointer',
-                            fontSize: '0.75rem',
-                            fontWeight: '500'
-                          }}
-                        >
-                          <Trash2 style={{height: '0.75rem', width: '0.75rem'}} />
-                          Remove
-                        </button>
+                        <div style={{display: 'flex', gap: '0.5rem'}}>
+                          <button
+                            onClick={() => onEditContractor(qc.id)}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '0.25rem',
+                              padding: '0.25rem 0.5rem',
+                              backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                              color: '#60a5fa',
+                              border: '1px solid rgba(59, 130, 246, 0.3)',
+                              borderRadius: '0.25rem',
+                              cursor: 'pointer',
+                              fontSize: '0.75rem',
+                              fontWeight: '500'
+                            }}
+                          >
+                            <Edit style={{height: '0.75rem', width: '0.75rem'}} />
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => onRemoveContractor(qc.id)}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '0.25rem',
+                              padding: '0.25rem 0.5rem',
+                              backgroundColor: 'rgba(239, 68, 68, 0.2)',
+                              color: '#fca5a5',
+                              border: '1px solid rgba(239, 68, 68, 0.3)',
+                              borderRadius: '0.25rem',
+                              cursor: 'pointer',
+                              fontSize: '0.75rem',
+                              fontWeight: '500'
+                            }}
+                          >
+                            <Trash2 style={{height: '0.75rem', width: '0.75rem'}} />
+                            Remove
+                          </button>
+                        </div>
                       )}
                     </div>
                   </div>

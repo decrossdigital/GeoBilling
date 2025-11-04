@@ -124,7 +124,7 @@ export default function PaymentForm({
           width: '3rem',
           height: '3rem',
           borderRadius: '50%',
-          background: 'linear-gradient(to right, #9333ea, #ec4899)',
+          background: 'linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)',
           marginBottom: '1rem'
         }}>
           <CreditCard style={{height: '1.5rem', width: '1.5rem', color: 'white'}} />

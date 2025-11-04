@@ -109,7 +109,13 @@ export async function POST(request: NextRequest) {
     const validUntilDate = validUntil ? new Date(validUntil) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
 
     // Create initial activity log
-    const initialActivityLog = addActivityLog(null, ACTIVITY_ACTIONS.QUOTE_CREATED, user.name || user.email)
+    let initialActivityLog = addActivityLog(null, ACTIVITY_ACTIONS.QUOTE_CREATED, user.name || user.email)
+    
+    // If quote is being created with "sent" status, add sent activity log entry
+    const finalStatus = status || 'draft'
+    if (finalStatus === 'sent') {
+      initialActivityLog = addActivityLog(initialActivityLog, ACTIVITY_ACTIONS.QUOTE_SENT, user.name || user.email)
+    }
 
     const quote = await prisma.quote.create({
       data: {
@@ -118,7 +124,7 @@ export async function POST(request: NextRequest) {
         description: projectDescription || '',
         project: project,
         projectDescription: projectDescription || '',
-        status: status || 'draft',
+        status: finalStatus,
         validUntil: validUntilDate,
         subtotal: parseFloat(subtotal) || 0,
         taxRate: parseFloat(taxRate) || 0,
@@ -170,7 +176,8 @@ export async function POST(request: NextRequest) {
             rateType: contractor.rateType || 'hourly',
             hours: contractor.hours || null,
             cost: parseFloat(contractor.cost) || 0,
-            includeInTotal: contractor.includeInTotal !== undefined ? contractor.includeInTotal : true
+            includeInTotal: contractor.includeInTotal !== undefined ? contractor.includeInTotal : true,
+            notes: contractor.notes || null
           }
         })
       }

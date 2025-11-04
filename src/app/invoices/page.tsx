@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
 import Link from "next/link"
-import UserMenu from "@/components/user-menu"
+import Header from "@/components/header"
 import { Plus, Search, Eye, CheckCircle, Clock, XCircle, Users, TrendingUp, Music, FileText, DollarSign } from "lucide-react"
 import Navigation from "@/components/navigation"
 
@@ -17,6 +17,7 @@ interface Invoice {
   status: "draft" | "sent" | "paid" | "overdue" | "cancelled"
   issueDate: string
   dueDate: string
+  createdAt: string
   paidDate?: string
   paymentMethod?: string
   items: InvoiceItem[]
@@ -140,21 +141,10 @@ export default function InvoicesPage() {
 
 
   return (
-    <div style={{minHeight: '100vh', background: 'linear-gradient(to bottom right, #0f172a, #581c87, #0f172a)', color: 'white'}}>
+    <div style={{minHeight: '100vh', background: 'linear-gradient(135deg, #0a0e27 0%, #1e1b4b 50%, #0f172a 100%)', color: 'white'}}>
       <div style={{maxWidth: '1200px', margin: '0 auto', padding: '2rem 1.5rem'}}>
         {/* Header */}
-        <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2rem'}}>
-          <div style={{display: 'flex', alignItems: 'center', gap: '0.75rem'}}>
-            <div style={{padding: '0.75rem', background: 'linear-gradient(to right, #9333ea, #ec4899)', borderRadius: '1rem'}}>
-              <Music style={{height: '2rem', width: '2rem', color: 'white'}} />
-            </div>
-            <div>
-              <h1 style={{fontSize: '1.875rem', fontWeight: 'bold', color: 'white'}}>GeoBilling</h1>
-              <p style={{fontSize: '0.875rem', color: '#cbd5e1'}}>Uniquitous Music - Professional Billing System</p>
-            </div>
-          </div>
-          <UserMenu />
-        </div>
+        <Header />
 
         {/* Navigation */}
         <Navigation />
@@ -315,11 +305,11 @@ export default function InvoicesPage() {
               <thead>
                 <tr style={{backgroundColor: 'rgba(255, 255, 255, 0.05)'}}>
                   <th style={{padding: '1rem', textAlign: 'left', fontSize: '0.875rem', fontWeight: '500', color: '#cbd5e1'}}>Invoice</th>
+                  <th style={{padding: '1rem', textAlign: 'left', fontSize: '0.875rem', fontWeight: '500', color: '#cbd5e1'}}>Created</th>
                   <th style={{padding: '1rem', textAlign: 'left', fontSize: '0.875rem', fontWeight: '500', color: '#cbd5e1'}}>Client</th>
                   <th style={{padding: '1rem', textAlign: 'left', fontSize: '0.875rem', fontWeight: '500', color: '#cbd5e1'}}>Amount</th>
                   <th style={{padding: '1rem', textAlign: 'left', fontSize: '0.875rem', fontWeight: '500', color: '#cbd5e1'}}>Status</th>
                   <th style={{padding: '1rem', textAlign: 'left', fontSize: '0.875rem', fontWeight: '500', color: '#cbd5e1'}}>Due Date</th>
-                  <th style={{padding: '1rem', textAlign: 'left', fontSize: '0.875rem', fontWeight: '500', color: '#cbd5e1'}}>Payment</th>
                   <th style={{padding: '1rem', textAlign: 'left', fontSize: '0.875rem', fontWeight: '500', color: '#cbd5e1'}}>Actions</th>
                 </tr>
               </thead>
@@ -338,7 +328,9 @@ export default function InvoicesPage() {
                       <td style={{padding: '1rem'}}>
                         <div style={{fontWeight: '500', color: 'white'}}>{invoice.invoiceNumber}</div>
                         <div style={{fontSize: '0.875rem', color: '#cbd5e1'}}>From {invoice.title}</div>
-                        <div style={{fontSize: '0.875rem', color: '#94a3b8'}}>Issued {new Date(invoice.issueDate).toLocaleDateString()}</div>
+                      </td>
+                      <td style={{padding: '1rem'}}>
+                        <div style={{fontSize: '0.875rem', color: '#cbd5e1'}}>{new Date(invoice.createdAt || invoice.issueDate).toLocaleDateString()}</div>
                       </td>
                       <td style={{padding: '1rem'}}>
                         <div style={{fontWeight: '500', color: 'white'}}>{invoice.clientName}</div>
@@ -356,7 +348,7 @@ export default function InvoicesPage() {
                           borderRadius: '0.25rem',
                           fontSize: '0.75rem',
                           fontWeight: '500',
-                          backgroundColor: `rgba(${getStatusBgColor(invoice.status).replace('rgba(', '').replace(')', '').split(',').slice(0, 3).join(', ')}, 0.1)`,
+                          backgroundColor: getStatusBgColor(invoice.status),
                           color: getStatusColor(invoice.status)
                         }}>
                           {getStatusIcon(invoice.status)}
@@ -371,19 +363,6 @@ export default function InvoicesPage() {
                           <div style={{fontSize: '0.75rem', color: '#f87171'}}>
                             {Math.ceil((new Date().getTime() - new Date(invoice.dueDate).getTime()) / (1000 * 60 * 60 * 24))} days overdue
                           </div>
-                        )}
-                      </td>
-                      <td style={{padding: '1rem'}}>
-                        {invoice.status === "paid" ? (
-                          <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
-                            <CheckCircle style={{height: '1rem', width: '1rem', color: '#34d399'}} />
-                            <div>
-                              <div style={{fontSize: '0.875rem', color: 'white'}}>{invoice.paymentMethod}</div>
-                              <div style={{fontSize: '0.75rem', color: '#cbd5e1'}}>{invoice.paidDate && new Date(invoice.paidDate).toLocaleDateString()}</div>
-                            </div>
-                          </div>
-                        ) : (
-                          <div style={{fontSize: '0.875rem', color: '#94a3b8'}}>Pending</div>
                         )}
                       </td>
                       <td style={{padding: '1rem'}}>

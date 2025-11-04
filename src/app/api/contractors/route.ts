@@ -25,7 +25,15 @@ export async function GET() {
       orderBy: { createdAt: 'desc' }
     })
 
-    return NextResponse.json(contractors)
+    // Convert Decimal to Number for JSON
+    const result = contractors.map(contractor => ({
+      ...contractor,
+      hourlyRate: contractor.hourlyRate ? Number(contractor.hourlyRate) : null,
+      flatRate: contractor.flatRate ? Number(contractor.flatRate) : null,
+      rate: Number(contractor.rate)
+    }))
+
+    return NextResponse.json(result)
   } catch (error) {
     console.error('Error fetching contractors:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

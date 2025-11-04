@@ -113,7 +113,7 @@ export default function PaymentModal({
           <div style={{display: 'flex', alignItems: 'center', gap: '0.75rem'}}>
             <div style={{
               padding: '0.5rem',
-              background: 'linear-gradient(to right, #9333ea, #ec4899)',
+              background: 'linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)',
               borderRadius: '0.5rem'
             }}>
               <CreditCard style={{height: '1rem', width: '1rem', color: 'white'}} />

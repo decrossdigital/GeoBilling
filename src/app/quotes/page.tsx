@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
 import Link from "next/link"
-import UserMenu from "@/components/user-menu"
+import Header from "@/components/header"
 import { Plus, Search, Eye, Edit, Download, Clock, CheckCircle, XCircle, Users, TrendingUp, Music, ExternalLink, FileText, DollarSign } from "lucide-react"
 import Navigation from "@/components/navigation"
 
@@ -32,11 +32,57 @@ interface QuoteItem {
 export default function QuotesPage() {
   const { data: session } = useSession()
   const [searchTerm, setSearchTerm] = useState("")
-  const [statusFilter, setStatusFilter] = useState("draft")
+  const [statusFilter, setStatusFilter] = useState("draft_and_sent")
   const [selectedQuote, setSelectedQuote] = useState<Quote | null>(null)
   const [showQuoteModal, setShowQuoteModal] = useState(false)
   const [quotes, setQuotes] = useState<Quote[]>([])
   const [loading, setLoading] = useState(true)
+
+  // Check and expire quotes once per day on app startup
+  useEffect(() => {
+    const checkAndExpireQuotes = async () => {
+      if (!session) return
+
+      // Check if we've already run expiration check today
+      const lastCheckKey = 'quoteExpirationLastCheck'
+      const lastCheckDate = localStorage.getItem(lastCheckKey)
+      const today = new Date().toDateString()
+
+      if (lastCheckDate === today) {
+        // Already checked today, skip
+        return
+      }
+
+      try {
+        const response = await fetch('/api/quotes/expire', {
+          method: 'POST'
+        })
+        
+        if (response.ok) {
+          const result = await response.json()
+          // Store today's date to mark that we've checked
+          localStorage.setItem(lastCheckKey, today)
+          
+          // If quotes were expired, refresh the quotes list
+          if (result.expiredCount > 0) {
+            // Refetch quotes to get updated statuses
+            const quotesResponse = await fetch('/api/quotes')
+            if (quotesResponse.ok) {
+              const quotesData = await quotesResponse.json()
+              setQuotes(quotesData)
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error checking for expired quotes:', error)
+        // Don't block the app if expiration check fails
+      }
+    }
+
+    if (session) {
+      checkAndExpireQuotes()
+    }
+  }, [session])
 
   // Fetch quotes from API
   useEffect(() => {
@@ -63,7 +109,14 @@ export default function QuotesPage() {
 
   const filteredQuotes = quotes.filter(quote => {
     // Status filter
-    const statusMatch = statusFilter === "all" || quote.status === statusFilter
+    let statusMatch = false
+    if (statusFilter === "all") {
+      statusMatch = true
+    } else if (statusFilter === "draft_and_sent") {
+      statusMatch = quote.status === "draft" || quote.status === "sent"
+    } else {
+      statusMatch = quote.status === statusFilter
+    }
     
     // Search filter
     const searchMatch = quote.quoteNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -146,21 +199,10 @@ export default function QuotesPage() {
   }
 
   return (
-    <div style={{minHeight: '100vh', background: 'linear-gradient(to bottom right, #0f172a, #581c87, #0f172a)', color: 'white'}}>
+    <div style={{minHeight: '100vh', background: 'linear-gradient(135deg, #0a0e27 0%, #1e1b4b 50%, #0f172a 100%)', color: 'white'}}>
       <div style={{maxWidth: '1200px', margin: '0 auto', padding: '2rem 1.5rem'}}>
         {/* Header */}
-        <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2rem'}}>
-          <div style={{display: 'flex', alignItems: 'center', gap: '0.75rem'}}>
-            <div style={{padding: '0.75rem', background: 'linear-gradient(to right, #9333ea, #ec4899)', borderRadius: '1rem'}}>
-              <Music style={{height: '2rem', width: '2rem', color: 'white'}} />
-            </div>
-            <div>
-              <h1 style={{fontSize: '1.875rem', fontWeight: 'bold', color: 'white'}}>GeoBilling</h1>
-              <p style={{fontSize: '0.875rem', color: '#cbd5e1'}}>Uniquitous Music - Professional Billing System</p>
-            </div>
-          </div>
-          <UserMenu />
-        </div>
+        <Header />
 
         {/* Navigation */}
         <Navigation />
@@ -293,6 +335,7 @@ export default function QuotesPage() {
                 }}
               >
                 <option value="all">All Status</option>
+                <option value="draft_and_sent">Draft & Sent</option>
                 <option value="draft">Draft</option>
                 <option value="sent">Sent</option>
                 <option value="approved">Approved</option>
@@ -322,11 +365,11 @@ export default function QuotesPage() {
               <thead>
                 <tr style={{backgroundColor: 'rgba(255, 255, 255, 0.05)'}}>
                   <th style={{padding: '1rem', textAlign: 'left', fontSize: '0.875rem', fontWeight: '500', color: '#cbd5e1'}}>Quote</th>
+                  <th style={{padding: '1rem', textAlign: 'left', fontSize: '0.875rem', fontWeight: '500', color: '#cbd5e1'}}>Created</th>
                   <th style={{padding: '1rem', textAlign: 'left', fontSize: '0.875rem', fontWeight: '500', color: '#cbd5e1'}}>Client</th>
                   <th style={{padding: '1rem', textAlign: 'left', fontSize: '0.875rem', fontWeight: '500', color: '#cbd5e1'}}>Services</th>
                   <th style={{padding: '1rem', textAlign: 'left', fontSize: '0.875rem', fontWeight: '500', color: '#cbd5e1'}}>Amount</th>
                   <th style={{padding: '1rem', textAlign: 'left', fontSize: '0.875rem', fontWeight: '500', color: '#cbd5e1'}}>Status</th>
-                  <th style={{padding: '1rem', textAlign: 'left', fontSize: '0.875rem', fontWeight: '500', color: '#cbd5e1'}}>Valid Until</th>
                   <th style={{padding: '1rem', textAlign: 'left', fontSize: '0.875rem', fontWeight: '500', color: '#cbd5e1'}}>Details</th>
                 </tr>
               </thead>
@@ -344,7 +387,9 @@ export default function QuotesPage() {
                     <tr key={quote.id} style={{borderTop: '1px solid rgba(255, 255, 255, 0.1)'}}>
                       <td style={{padding: '1rem'}}>
                         <div style={{fontWeight: '500', color: 'white'}}>{quote.quoteNumber}</div>
-                        <div style={{fontSize: '0.875rem', color: '#94a3b8'}}>{new Date(quote.createdAt).toLocaleDateString()}</div>
+                      </td>
+                      <td style={{padding: '1rem'}}>
+                        <div style={{fontSize: '0.875rem', color: '#cbd5e1'}}>{new Date(quote.createdAt).toLocaleDateString()}</div>
                       </td>
                       <td style={{padding: '1rem'}}>
                         <div style={{fontWeight: '500', color: 'white'}}>{quote.clientName}</div>
@@ -371,9 +416,6 @@ export default function QuotesPage() {
                           {getStatusIcon(quote.status)}
                           {quote.status}
                         </div>
-                      </td>
-                      <td style={{padding: '1rem'}}>
-                        <div style={{fontSize: '0.875rem', color: '#cbd5e1'}}>{new Date(quote.validUntil).toLocaleDateString()}</div>
                       </td>
                       <td style={{padding: '1rem'}}>
                         <Link

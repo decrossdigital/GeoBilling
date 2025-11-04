@@ -1,6 +1,7 @@
 // Template processing utility for email templates with merge fields
 
 interface QuoteData {
+  id?: string
   quoteNumber: string
   project: string
   projectDescription?: string
@@ -51,7 +52,8 @@ export function processQuoteTemplate(
   quoteUrl: string,
   assignedContractors: any[] = [],
   grandTotal?: number,
-  approvalToken?: string
+  approvalToken?: string,
+  termsUrl?: string
 ): string {
   const clientName = getClientName(quote.client)
   
@@ -95,13 +97,31 @@ export function processQuoteTemplate(
     
     // System fields
     .replace(/\{\{quoteUrl\}\}/g, quoteUrl)
-    .replace(/\{\{approvalUrl\}\}/g, approvalToken ? `${quoteUrl.replace('/quotes/', '/quote/')}/approve?token=${approvalToken}` : '')
+    .replace(/\{\{approvalUrl\}\}/g, approvalToken ? (() => {
+      // Convert quote URL to approval URL
+      // Extract the origin (protocol + domain)
+      const originMatch = quoteUrl.match(/(https?:\/\/[^\/]+)/)
+      const origin = originMatch ? originMatch[1] : ''
+      
+      // Extract quote ID from quoteUrl - handle both /quotes/[id] and /quote/[id] patterns
+      const quoteIdMatch = quoteUrl.match(/\/quote[s]?\/([^\/\?]+)/)
+      const quoteId = quoteIdMatch ? quoteIdMatch[1] : (quote.id || '')
+      
+      if (quoteId && origin) {
+        return `${origin}/quote/${quoteId}/approve?token=${approvalToken}`
+      }
+      
+      return ''
+    })() : '')
     
     // Company fields
     .replace(/\{\{companyName\}\}/g, companySettings.name)
     .replace(/\{\{companyEmail\}\}/g, companySettings.email)
     .replace(/\{\{companyPhone\}\}/g, companySettings.phone)
     .replace(/\{\{companyAddress\}\}/g, companySettings.address || '')
+    
+    // Terms URL (defaults to quoteUrl origin + /terms if not provided)
+    .replace(/\{\{termsUrl\}\}/g, termsUrl || (quoteUrl.split('/quote')[0] || quoteUrl.split('/quotes')[0]) + '/terms')
 
   return processed
 }

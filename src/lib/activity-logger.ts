@@ -57,10 +57,16 @@ export const ACTIVITY_ACTIONS = {
   QUOTE_REJECTED: 'Quote rejected by client',
   QUOTE_EXPIRED: 'Quote expired',
   QUOTE_EDITED: 'Quote edited and resent',
+  QUOTE_RESENT: 'Quote resent',
+  TERMS_AGREED: 'Terms & Conditions agreed to',
   
   INVOICE_CREATED: 'Invoice created',
   INVOICE_SENT: 'Invoice sent to client',
+  INVOICE_EDITED: 'Invoice edited',
+  INVOICE_RESENT: 'Invoice resent',
   PAYMENT_RECEIVED: 'Payment received',
+  CONTRACTOR_BILLING_REQUESTED: 'Contractor billing requested',
+  CONTRACTOR_FUNDED: 'Contractor funded',
   INVOICE_OVERDUE: 'Invoice marked as overdue',
   INVOICE_CANCELLED: 'Invoice cancelled'
 } as const

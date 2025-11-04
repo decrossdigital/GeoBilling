@@ -4,8 +4,9 @@ import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
 import Link from "next/link"
 import Navigation from "@/components/navigation"
-import UserMenu from "@/components/user-menu"
+import Header from "@/components/header"
 import { ArrowLeft, Save, Send, ChevronRight, ChevronLeft, Plus, Trash2, Music, Headphones, Mic, Home, FileText, Users, BarChart3, Settings, User } from "lucide-react"
+import { processQuoteTemplate } from '@/lib/template-processor'
 
 interface Client {
   id: string
@@ -65,6 +66,7 @@ interface QuoteContractor {
   hours?: number
   rate: number
   amount: number
+  includeInTotal: boolean
 }
 
 export default function NewQuotePage() {
@@ -74,6 +76,7 @@ export default function NewQuotePage() {
   const [quoteItems, setQuoteItems] = useState<QuoteItem[]>([])
   const [quoteContractors, setQuoteContractors] = useState<QuoteContractor[]>([])
   const [quoteNotes, setQuoteNotes] = useState("")
+  const [quoteTerms, setQuoteTerms] = useState("")
   const [validUntil, setValidUntil] = useState("")
   const [project, setProject] = useState("")
   const [projectDescription, setProjectDescription] = useState("")
@@ -81,6 +84,38 @@ export default function NewQuotePage() {
   const [contractors, setContractors] = useState<Contractor[]>([])
   const [serviceTemplates, setServiceTemplates] = useState<ServiceTemplate[]>([])
   const [loading, setLoading] = useState(true)
+  const [availableSkills, setAvailableSkills] = useState<string[]>([])
+  const [selectedSkills, setSelectedSkills] = useState<string[]>([])
+  const [filteredContractors, setFilteredContractors] = useState<Contractor[]>([])
+  const [contractorRateType, setContractorRateType] = useState<'hourly' | 'flat'>('hourly')
+  const [contractorHours, setContractorHours] = useState(1)
+  const [contractorCost, setContractorCost] = useState(0)
+  const [contractorIncludeInTotal, setContractorIncludeInTotal] = useState(true)
+
+  // Set default terms on component mount
+  useEffect(() => {
+    if (!quoteTerms) {
+      const termsUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/terms`
+      setQuoteTerms(`PAYMENT TERMS
+- A 50% deposit is required to begin work on this project
+- Final payment is due upon project completion and before final files are delivered
+- Payment methods: [Payment methods will be specified when payment processing is fully implemented]
+
+DELIVERABLES
+- Final audio files will be delivered in the agreed format once full payment has been received
+- Project files (stems, sessions, etc.) are available upon request and full payment
+
+REVISIONS
+- This quote includes up to 3 rounds of revisions at no additional charge
+- Additional revisions beyond the included rounds will be billed at our standard hourly rate
+
+CANCELLATION POLICY
+- Cancellation after work has begun will result in the client being responsible for payment of work completed to date
+- Deposits are non-refundable once work has commenced
+
+For complete terms and conditions, please visit: ${termsUrl}`)
+    }
+  }, [])
 
   // Fetch clients from API
   useEffect(() => {
@@ -147,8 +182,71 @@ export default function NewQuotePage() {
     fetchServiceTemplates()
   }, [session])
 
+  // Load available skills from localStorage
+  useEffect(() => {
+    const skills = localStorage.getItem('availableSkills')
+    if (skills) {
+      try {
+        setAvailableSkills(JSON.parse(skills))
+      } catch (error) {
+        console.error('Error parsing available skills:', error)
+      }
+    }
+  }, [])
+
+  // Filter contractors based on selected skills
+  useEffect(() => {
+    if (selectedSkills.length === 0) {
+      setFilteredContractors(contractors)
+    } else {
+      const filtered = contractors.filter(contractor =>
+        selectedSkills.every(skill => contractor.skills.includes(skill))
+      )
+      setFilteredContractors(filtered)
+    }
+  }, [contractors, selectedSkills])
+
+  // Calculate contractor cost
+  useEffect(() => {
+    if (contractorRateType === 'hourly') {
+      setContractorCost(contractorHours * 50) // Default rate, will be updated when contractor is selected
+    } else {
+      setContractorCost(50) // Default flat rate
+    }
+  }, [contractorRateType, contractorHours])
+
   const selectClient = (client: Client) => {
     setSelectedClient(client)
+  }
+
+  const toggleSkillFilter = (skill: string) => {
+    setSelectedSkills(prev =>
+      prev.includes(skill)
+        ? prev.filter(s => s !== skill)
+        : [...prev, skill]
+    )
+  }
+
+  const addContractorWithSkills = (contractor: Contractor) => {
+    const newContractor: QuoteContractor = {
+      id: Date.now().toString(),
+      contractorId: contractor.id,
+      contractorName: contractor.name,
+      specialty: selectedSkills.join(', '),
+      paymentType: contractorRateType,
+      hours: contractorRateType === 'hourly' ? contractorHours : undefined,
+      rate: contractorRateType === 'hourly' ? contractor.rate : contractor.rate,
+      amount: contractorCost,
+      includeInTotal: contractorIncludeInTotal
+    }
+    setQuoteContractors([...quoteContractors, newContractor])
+    
+    // Reset form
+    setSelectedSkills([])
+    setContractorRateType('hourly')
+    setContractorHours(1)
+    setContractorCost(0)
+    setContractorIncludeInTotal(true)
   }
 
   const addQuoteItem = (service?: ServiceTemplate) => {
@@ -209,7 +307,8 @@ export default function NewQuotePage() {
       paymentType: contractor.pricingType as "hourly" | "flat",
       hours: 1,
       rate: Number(contractor.rate),
-      amount: Number(contractor.rate)
+      amount: Number(contractor.rate),
+      includeInTotal: true
     }
     setQuoteContractors([...quoteContractors, newContractor])
   }
@@ -242,7 +341,7 @@ export default function NewQuotePage() {
 
     try {
       const servicesTotal = quoteItems.reduce((sum, item) => sum + Number(item.total), 0)
-      const contractorsTotal = quoteContractors.reduce((sum, contractor) => sum + Number(contractor.amount), 0)
+      const contractorsTotal = quoteContractors.filter(c => c.includeInTotal).reduce((sum, contractor) => sum + Number(contractor.amount), 0)
       const subtotal = Number(servicesTotal) + Number(contractorsTotal)
       const taxableAmount = quoteItems.reduce((sum, item) => sum + (item.taxable ? Number(item.total) : 0), 0)
       const taxRate = 8 // 8% tax
@@ -274,7 +373,24 @@ export default function NewQuotePage() {
         taxAmount: taxAmount,
         total: total,
         notes: quoteNotes,
-        terms: "Payment due within 30 days",
+        terms: quoteTerms || `PAYMENT TERMS
+- A 50% deposit is required to begin work on this project
+- Final payment is due upon project completion and before final files are delivered
+- Payment methods: [Payment methods will be specified when payment processing is fully implemented]
+
+DELIVERABLES
+- Final audio files will be delivered in the agreed format once full payment has been received
+- Project files (stems, sessions, etc.) are available upon request and full payment
+
+REVISIONS
+- This quote includes up to 3 rounds of revisions at no additional charge
+- Additional revisions beyond the included rounds will be billed at our standard hourly rate
+
+CANCELLATION POLICY
+- Cancellation after work has begun will result in the client being responsible for payment of work completed to date
+- Deposits are non-refundable once work has commenced
+
+For complete terms and conditions, please visit: ${typeof window !== 'undefined' ? window.location.origin : ''}/terms`,
         clientId: selectedClient.id,
         clientName: getClientName(selectedClient),
         clientEmail: selectedClient.email,
@@ -316,7 +432,7 @@ export default function NewQuotePage() {
 
     try {
       const servicesTotal = quoteItems.reduce((sum, item) => sum + Number(item.total), 0)
-      const contractorsTotal = quoteContractors.reduce((sum, contractor) => sum + Number(contractor.amount), 0)
+      const contractorsTotal = quoteContractors.filter(c => c.includeInTotal).reduce((sum, contractor) => sum + Number(contractor.amount), 0)
       const subtotal = Number(servicesTotal) + Number(contractorsTotal)
       const taxableAmount = quoteItems.reduce((sum, item) => sum + (item.taxable ? Number(item.total) : 0), 0)
       const taxRate = 8 // 8% tax
@@ -348,7 +464,24 @@ export default function NewQuotePage() {
         taxAmount: taxAmount,
         total: total,
         notes: quoteNotes,
-        terms: "Payment due within 30 days",
+        terms: quoteTerms || `PAYMENT TERMS
+- A 50% deposit is required to begin work on this project
+- Final payment is due upon project completion and before final files are delivered
+- Payment methods: [Payment methods will be specified when payment processing is fully implemented]
+
+DELIVERABLES
+- Final audio files will be delivered in the agreed format once full payment has been received
+- Project files (stems, sessions, etc.) are available upon request and full payment
+
+REVISIONS
+- This quote includes up to 3 rounds of revisions at no additional charge
+- Additional revisions beyond the included rounds will be billed at our standard hourly rate
+
+CANCELLATION POLICY
+- Cancellation after work has begun will result in the client being responsible for payment of work completed to date
+- Deposits are non-refundable once work has commenced
+
+For complete terms and conditions, please visit: ${typeof window !== 'undefined' ? window.location.origin : ''}/terms`,
         clientId: selectedClient.id,
         clientName: getClientName(selectedClient),
         clientEmail: selectedClient.email,
@@ -367,12 +500,118 @@ export default function NewQuotePage() {
       })
 
       if (response.ok) {
-        alert('Quote sent successfully!')
-        window.location.href = '/quotes'
+        const createdQuote = await response.json()
+        const quoteId = createdQuote.id
+
+        // Generate approval token
+        const approvalToken = `token_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`
+
+        // Load email templates from localStorage
+        const savedTemplates = localStorage.getItem('emailTemplates')
+        const templates = savedTemplates ? JSON.parse(savedTemplates) : {
+          quoteSubject: "Quote {{quoteNumber}} - {{project}}",
+          quoteBody: "Dear {{clientName}},\n\nThank you for your interest in our services. We're pleased to present our quote for \"{{project}}\".\n\nQUOTE DETAILS\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nQuote Number: {{quoteNumber}}\nValid Until: {{validUntil}}\nTotal Amount: ${{total}}\n\n{{servicesSection}}\n\n{{contractorsSection}}\n\nNOTES\n{{notes}}\n\nTERMS & CONDITIONS\n{{terms}}\n\nYou can view the complete quote, request modifications or accept it online at:\n{{approvalUrl}}\n\nIf you have any questions about this quote, please contact us at:\n{{companyEmail}} | {{companyPhone}}\n\nBest regards,\n{{companyName}}"
+        }
+
+        // Company settings (would come from settings in real app)
+        const companySettings = {
+          name: "Uniquitous Music",
+          email: "george@uniquitousmusic.com",
+          phone: "(609) 316-8080",
+          address: ""
+        }
+
+        // Prepare quote data for template processing
+        const quoteForTemplate = {
+          ...createdQuote,
+          client: selectedClient,
+          items: quoteItems.map(item => ({
+            serviceName: item.serviceName,
+            description: item.description || '',
+            quantity: item.quantity,
+            total: item.total
+          })),
+          contractors: quoteContractors
+        }
+
+        // Build contractors data for template
+        const assignedContractors = quoteContractors.map(qc => ({
+          contractor: { name: qc.contractorName },
+          assignedSkills: [qc.specialty],
+          rateType: qc.paymentType,
+          hours: qc.hours || null,
+          cost: qc.amount,
+          includeInTotal: qc.includeInTotal
+        }))
+
+        // Get quote URL
+        const quoteUrl = `${window.location.origin}/quote/${quoteId}`
+        const approvalUrl = `${window.location.origin}/quote/${quoteId}/approve?token=${approvalToken}`
+
+        // Process email template
+        const termsUrl = `${window.location.origin}/terms`
+        const subject = processQuoteTemplate(
+          templates.quoteSubject || "Quote {{quoteNumber}} - {{project}}",
+          quoteForTemplate,
+          companySettings,
+          quoteUrl,
+          assignedContractors,
+          total,
+          approvalToken,
+          termsUrl
+        )
+
+        let message = processQuoteTemplate(
+          templates.quoteBody || "Dear {{clientName}},\n\nThank you for your interest in our services. We're pleased to present our quote for \"{{project}}\".\n\nQUOTE DETAILS\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nQuote Number: {{quoteNumber}}\nValid Until: {{validUntil}}\nTotal Amount: ${{total}}\n\n{{servicesSection}}\n\n{{contractorsSection}}\n\nNOTES\n{{notes}}\n\nTERMS & CONDITIONS\n{{terms}}\n\nFor complete Terms & Conditions, please visit: {{termsUrl}}\n\nYou can view the complete quote, request modifications or accept it online at:\n{{approvalUrl}}\n\nIf you have any questions about this quote, please contact us at:\n{{companyEmail}} | {{companyPhone}}\n\nBest regards,\n{{companyName}}",
+          quoteForTemplate,
+          companySettings,
+          quoteUrl,
+          assignedContractors,
+          total,
+          approvalToken,
+          termsUrl
+        )
+
+        // Ensure approval URL is present - manually fix if template processor failed
+        if (message.includes('{{approvalUrl}}')) {
+          console.warn('⚠ Quote Creation - {{approvalUrl}} was not replaced! Manually replacing...')
+          message = message.replace(/\{\{approvalUrl\}\}/g, `${window.location.origin}/quote/${quoteId}/approve?token=${approvalToken}`)
+        } else if (!message.includes('/approve?token=')) {
+          console.warn('⚠ Quote Creation - Approval URL missing. Replacing any /quote/[id] URLs...')
+          // Replace any /quote/[id] URLs with the approval URL
+          const urlPattern = new RegExp(`${window.location.origin.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}/quote[s]?/${quoteId}(?![/\\w])`, 'g')
+          message = message.replace(urlPattern, `${window.location.origin}/quote/${quoteId}/approve?token=${approvalToken}`)
+        }
+
+        // Send email
+        const emailResponse = await fetch('/api/quotes/send-email', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            quoteId: quoteId,
+            to: selectedClient.email,
+            subject: subject,
+            message: message,
+            approvalToken: approvalToken
+          })
+        })
+
+        if (emailResponse.ok) {
+          alert('Quote created and sent successfully!')
+          window.location.href = '/quotes'
+        } else {
+          const emailErrorData = await emailResponse.json()
+          console.error('Failed to send quote email:', emailErrorData)
+          alert(`Quote created but email failed to send: ${emailErrorData.error || 'Unknown error'}`)
+          // Still redirect to quotes page since quote was created
+          window.location.href = '/quotes'
+        }
       } else {
         const errorData = await response.json()
-        console.error('Failed to send quote:', errorData)
-        alert(`Failed to send quote: ${errorData.error || 'Unknown error'}`)
+        console.error('Failed to create quote:', errorData)
+        alert(`Failed to create quote: ${errorData.error || 'Unknown error'}`)
       }
     } catch (error) {
       console.error('Error sending quote:', error)
@@ -396,28 +635,17 @@ export default function NewQuotePage() {
   ]
 
   const servicesTotal = quoteItems.reduce((sum, item) => sum + Number(item.total), 0)
-  const contractorsTotal = quoteContractors.reduce((sum, contractor) => sum + Number(contractor.amount), 0)
+  const contractorsTotal = quoteContractors.filter(c => c.includeInTotal).reduce((sum, contractor) => sum + Number(contractor.amount), 0)
   const subtotal = Number(servicesTotal) + Number(contractorsTotal)
   const taxableAmount = quoteItems.reduce((sum, item) => sum + (item.taxable ? Number(item.total) : 0), 0)
   const taxAmount = Number(taxableAmount) * 0.08 // 8% tax on taxable items only
   const totalAmount = Number(subtotal) + Number(taxAmount)
 
   return (
-    <div style={{minHeight: '100vh', background: 'linear-gradient(to bottom right, #0f172a, #581c87, #0f172a)', color: 'white'}}>
+    <div style={{minHeight: '100vh', background: 'linear-gradient(135deg, #0a0e27 0%, #1e1b4b 50%, #0f172a 100%)', color: 'white'}}>
       <div style={{maxWidth: '1200px', margin: '0 auto', padding: '2rem 1.5rem'}}>
         {/* Header */}
-        <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2rem'}}>
-          <div style={{display: 'flex', alignItems: 'center', gap: '0.75rem'}}>
-            <div style={{padding: '0.75rem', background: 'linear-gradient(to right, #9333ea, #ec4899)', borderRadius: '1rem'}}>
-              <Music style={{height: '2rem', width: '2rem', color: 'white'}} />
-            </div>
-            <div>
-              <h1 style={{fontSize: '1.875rem', fontWeight: 'bold', color: 'white'}}>GeoBilling</h1>
-              <p style={{fontSize: '0.875rem', color: '#cbd5e1'}}>Uniquitous Music - Professional Billing System</p>
-            </div>
-          </div>
-          <UserMenu />
-        </div>
+        <Header />
         
         {/* Navigation */}
         <Navigation />
@@ -704,14 +932,134 @@ export default function NewQuotePage() {
             <div>
               <h2 style={{fontSize: '1.25rem', fontWeight: 'bold', color: 'white', marginBottom: '1.5rem'}}>Add Contractors</h2>
               
+              {/* Skills Filter */}
+              {availableSkills.length > 0 && (
+                <div style={{marginBottom: '1.5rem'}}>
+                  <h3 style={{fontSize: '1.125rem', fontWeight: '500', color: 'white', marginBottom: '1rem'}}>Skills Needed</h3>
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))',
+                    gap: '0.5rem',
+                    padding: '0.75rem',
+                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                    borderRadius: '0.5rem',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    marginBottom: '1rem'
+                  }}>
+                    {availableSkills.map(skill => (
+                      <label
+                        key={skill}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.5rem',
+                          cursor: 'pointer',
+                          color: '#cbd5e1',
+                          fontSize: '0.875rem'
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedSkills.includes(skill)}
+                          onChange={() => toggleSkillFilter(skill)}
+                          style={{ cursor: 'pointer' }}
+                        />
+                        <span>{skill}</span>
+                      </label>
+                    ))}
+                  </div>
+                  {selectedSkills.length > 0 && (
+                    <p style={{fontSize: '0.75rem', color: '#94a3b8', marginBottom: '1rem'}}>
+                      Showing contractors with: {selectedSkills.join(', ')}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Rate Type Selection */}
+              <div style={{marginBottom: '1.5rem'}}>
+                <h3 style={{fontSize: '1.125rem', fontWeight: '500', color: 'white', marginBottom: '1rem'}}>Rate Type</h3>
+                <div style={{display: 'flex', gap: '1rem', marginBottom: '1rem'}}>
+                  <label style={{display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', color: '#cbd5e1'}}>
+                    <input
+                      type="radio"
+                      name="rateType"
+                      value="hourly"
+                      checked={contractorRateType === 'hourly'}
+                      onChange={(e) => setContractorRateType(e.target.value as 'hourly' | 'flat')}
+                    />
+                    <span>Hourly</span>
+                  </label>
+                  <label style={{display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', color: '#cbd5e1'}}>
+                    <input
+                      type="radio"
+                      name="rateType"
+                      value="flat"
+                      checked={contractorRateType === 'flat'}
+                      onChange={(e) => setContractorRateType(e.target.value as 'hourly' | 'flat')}
+                    />
+                    <span>Flat Rate</span>
+                  </label>
+                </div>
+                {/* Include in total toggle */}
+                <div style={{marginTop: '0.5rem'}}>
+                  <label style={{display: 'inline-flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', color: '#cbd5e1'}}>
+                    <input
+                      type="checkbox"
+                      checked={contractorIncludeInTotal}
+                      onChange={(e) => setContractorIncludeInTotal(e.target.checked)}
+                    />
+                    <span>Include in total</span>
+                  </label>
+                </div>
+                
+                {contractorRateType === 'hourly' && (
+                  <div style={{marginBottom: '1rem'}}>
+                    <label style={{display: 'block', marginBottom: '0.5rem', color: '#cbd5e1', fontSize: '0.875rem'}}>
+                      Hours:
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      step="0.5"
+                      value={contractorHours}
+                      onChange={(e) => setContractorHours(Number(e.target.value))}
+                      style={{
+                        padding: '0.5rem',
+                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                        border: '1px solid rgba(255, 255, 255, 0.2)',
+                        borderRadius: '0.25rem',
+                        color: 'white',
+                        outline: 'none',
+                        width: '100px'
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+
               {/* Contractors */}
               <div style={{marginBottom: '1.5rem'}}>
                 <h3 style={{fontSize: '1.125rem', fontWeight: '500', color: 'white', marginBottom: '1rem'}}>Available Contractors</h3>
-                <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1rem'}}>
-                  {contractors.map((contractor) => (
+                {selectedSkills.length === 0 ? (
+                  <div style={{
+                    padding: '2rem',
+                    textAlign: 'center',
+                    color: '#94a3b8',
+                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                    borderRadius: '0.5rem',
+                    border: '1px solid rgba(255, 255, 255, 0.1)'
+                  }}>
+                    <p style={{margin: 0, fontSize: '0.875rem'}}>
+                      Please select skills above to see available contractors
+                    </p>
+                  </div>
+                ) : (
+                  <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1rem'}}>
+                    {filteredContractors.map((contractor) => (
                     <div
                       key={contractor.id}
-                      onClick={() => addContractor(contractor)}
+                      onClick={() => addContractorWithSkills(contractor)}
                       style={{
                         padding: '1rem',
                         borderRadius: '0.5rem',
@@ -727,14 +1075,15 @@ export default function NewQuotePage() {
                           <User style={{height: '1.25rem', width: '1.25rem', color: '#a78bfa'}} />
                         </div>
                         <div>
-                                                <div style={{fontWeight: '500', color: 'white'}}>{contractor.name}</div>
-                      <div style={{fontSize: '0.875rem', color: '#cbd5e1'}}>{contractor.skills.join(', ')}</div>
-                      <div style={{fontSize: '0.875rem', color: '#94a3b8'}}>${contractor.rate}{contractor.pricingType === 'hourly' ? '/hr' : ''}</div>
+                          <div style={{fontWeight: '500', color: 'white'}}>{contractor.name}</div>
+                          <div style={{fontSize: '0.875rem', color: '#cbd5e1'}}>{contractor.skills.join(', ')}</div>
+                          <div style={{fontSize: '0.875rem', color: '#94a3b8'}}>${contractor.rate}{contractor.pricingType === 'hourly' ? '/hr' : ''}</div>
                         </div>
                       </div>
                     </div>
                   ))}
-                </div>
+                  </div>
+                )}
               </div>
 
               {/* Quote Contractors */}
@@ -924,6 +1273,21 @@ export default function NewQuotePage() {
                     style={{width: '100%', padding: '0.5rem', backgroundColor: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.25rem', color: 'white', outline: 'none', resize: 'vertical'}}
                     placeholder="Add any additional notes for the client..."
                   />
+                </div>
+                <div style={{marginTop: '1rem'}}>
+                  <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>Terms & Conditions</label>
+                  <textarea
+                    value={quoteTerms}
+                    onChange={(e) => setQuoteTerms(e.target.value)}
+                    rows={3}
+                    style={{width: '100%', padding: '0.5rem', backgroundColor: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.25rem', color: 'white', outline: 'none', resize: 'vertical'}}
+                    placeholder="Payment terms (will auto-generate based on Valid Until date if left empty)"
+                  />
+                  {validUntil && !quoteTerms && (
+                    <p style={{fontSize: '0.75rem', color: '#94a3b8', marginTop: '0.25rem'}}>
+                      Suggested: Valid until {new Date(validUntil).toLocaleDateString()}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>

@@ -107,8 +107,27 @@ export async function POST(request: NextRequest) {
     })
     const invoiceNumber = `INV-${new Date().getFullYear()}-${String(invoiceCount + 1).padStart(3, '0')}`
 
-    // Create initial activity log
-    const initialActivityLog = addActivityLog(null, ACTIVITY_ACTIONS.INVOICE_CREATED, user.name || user.email)
+    // If converting from a quote, fetch the quote's activity log and prepend it
+    let initialActivityLog: string | null = null
+    if (quoteId) {
+      const sourceQuote = await prisma.quote.findFirst({
+        where: {
+          id: quoteId,
+          userId: user.id
+        },
+        select: {
+          activityLog: true
+        }
+      })
+      
+      if (sourceQuote?.activityLog) {
+        // Prepend the quote's activity log entries
+        initialActivityLog = sourceQuote.activityLog
+      }
+    }
+    
+    // Add the invoice created entry
+    initialActivityLog = addActivityLog(initialActivityLog, ACTIVITY_ACTIONS.INVOICE_CREATED, user.name || user.email)
 
     const invoice = await prisma.invoice.create({
       data: {
@@ -171,7 +190,8 @@ export async function POST(request: NextRequest) {
             rateType: contractor.rateType || 'hourly',
             hours: contractor.hours ? parseFloat(contractor.hours) : null,
             cost: parseFloat(contractor.cost) || 0,
-            includeInTotal: contractor.includeInTotal !== false
+            includeInTotal: contractor.includeInTotal !== false,
+            notes: contractor.notes || null
           }
         })
       }

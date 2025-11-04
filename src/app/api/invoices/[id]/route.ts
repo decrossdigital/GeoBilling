@@ -62,13 +62,32 @@ export async function GET(
         quantity: Number(item.quantity),
         unitPrice: Number(item.unitPrice),
         total: Number(item.total)
+      })),
+      payments: invoice.payments.map(payment => ({
+        ...payment,
+        amount: Number(payment.amount)
       }))
     }
 
     return NextResponse.json(invoiceWithNumbers)
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching invoice:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    console.error('Error details:', {
+      message: error.message,
+      code: error.code,
+      meta: error.meta,
+      stack: error.stack
+    })
+    return NextResponse.json({ 
+      error: 'Internal server error',
+      details: error.message,
+      fullError: process.env.NODE_ENV === 'development' ? {
+        message: error.message,
+        code: error.code,
+        meta: error.meta,
+        name: error.name
+      } : undefined
+    }, { status: 500 })
   }
 }
 

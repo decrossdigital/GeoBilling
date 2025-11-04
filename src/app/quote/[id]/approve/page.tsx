@@ -80,6 +80,14 @@ export default function QuoteApprovalPage() {
   const [error, setError] = useState<string>('')
   const [processing, setProcessing] = useState(false)
   const [paymentOption, setPaymentOption] = useState<'deposit' | 'full'>('deposit')
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false)
+  const [feedbackQuestions, setFeedbackQuestions] = useState({
+    missingItems: false,
+    beyondBudget: false,
+    notReadyYet: false
+  })
+  const [feedbackDetails, setFeedbackDetails] = useState('')
+  const [termsAgreed, setTermsAgreed] = useState(false)
   
   // Calculate payment amounts
   const depositAmount = quote ? quote.total * 0.5 : 0
@@ -119,61 +127,51 @@ export default function QuoteApprovalPage() {
   const handleApprove = async () => {
     if (!quote) return
     
-    setProcessing(true)
-    try {
-      // Create Stripe checkout session
-      const response = await fetch('/api/stripe/create-checkout-session', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          quoteId,
-          token,
-          paymentOption,
-          amount: selectedAmount
-        })
-      })
-
-      if (response.ok) {
-        const { sessionId } = await response.json()
-        
-        // Redirect to Stripe Checkout
-        const { redirectToCheckout } = await import('@/lib/stripe-client')
-        await redirectToCheckout(sessionId)
-      } else {
-        const errorData = await response.json()
-        setError(errorData.error || 'Failed to create payment session')
-      }
-    } catch (err) {
-      console.error('Payment error:', err)
-      setError('Failed to process payment')
-    } finally {
-      setProcessing(false)
-    }
+    // Calculate grand total for redirect
+    const contractorCostsTotal = quote.contractors
+      .filter(c => c.includeInTotal)
+      .reduce((sum, c) => sum + Number(c.cost), 0)
+    const calculatedGrandTotal = quote.total + contractorCostsTotal
+    
+    // Redirect to payment page
+    const params = new URLSearchParams({
+      quoteId,
+      token,
+      paymentOption,
+      amount: selectedAmount.toString(),
+      total: calculatedGrandTotal.toFixed(2),
+      termsAgreed: 'true'
+    })
+    window.location.href = `/quote/${quoteId}/payment?${params.toString()}`
   }
 
-  const handleReject = async () => {
+  const handleFeedbackSubmit = async () => {
     if (!quote) return
     
     setProcessing(true)
     try {
-      const response = await fetch(`/api/quotes/${quoteId}/reject`, {
+      const response = await fetch(`/api/quotes/${quoteId}/feedback`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ token })
+        body: JSON.stringify({ 
+          token,
+          feedbackQuestions,
+          feedbackDetails
+        })
       })
 
       if (response.ok) {
-        window.location.href = `/quote/${quoteId}/rejected`
+        window.location.href = `/quote/${quoteId}/feedback-submitted`
       } else {
         const errorData = await response.json()
-        setError(errorData.error || 'Failed to reject quote')
+        setError(errorData.error || 'Failed to submit feedback')
+        setShowFeedbackModal(false)
       }
     } catch (err) {
-      setError('Failed to reject quote')
+      setError('Failed to submit feedback')
+      setShowFeedbackModal(false)
     } finally {
       setProcessing(false)
     }
@@ -183,15 +181,16 @@ export default function QuoteApprovalPage() {
     return (
       <div style={{
         minHeight: '100vh',
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        background: 'linear-gradient(135deg, #0a0e27 0%, #1e1b4b 50%, #0f172a 100%)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center'
       }}>
         <div style={{
           background: 'rgba(255, 255, 255, 0.1)',
-          backdropFilter: 'blur(10px)',
-          borderRadius: '1rem',
+          backdropFilter: 'blur(8px)',
+          border: '1px solid rgba(255, 255, 255, 0.2)',
+          borderRadius: '0.75rem',
           padding: '2rem',
           textAlign: 'center',
           color: 'white'
@@ -207,23 +206,45 @@ export default function QuoteApprovalPage() {
     return (
       <div style={{
         minHeight: '100vh',
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        background: 'linear-gradient(135deg, #0a0e27 0%, #1e1b4b 50%, #0f172a 100%)',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'center'
+        justifyContent: 'center',
+        padding: '2rem 1rem'
       }}>
         <div style={{
           background: 'rgba(255, 255, 255, 0.1)',
-          backdropFilter: 'blur(10px)',
-          borderRadius: '1rem',
+          backdropFilter: 'blur(8px)',
+          border: '1px solid rgba(255, 255, 255, 0.2)',
+          borderRadius: '0.75rem',
           padding: '2rem',
           textAlign: 'center',
           color: 'white',
-          maxWidth: '500px'
+          maxWidth: '600px'
         }}>
           <XCircle style={{height: '3rem', width: '3rem', margin: '0 auto 1rem auto', color: '#f87171'}} />
-          <h2 style={{color: '#f87171', marginBottom: '1rem'}}>Error</h2>
-          <p>{error}</p>
+          <h2 style={{color: '#f87171', marginBottom: '1rem', fontSize: '1.5rem'}}>
+            Unable to Access Quote
+          </h2>
+          <p style={{fontSize: '1rem', lineHeight: '1.6', marginBottom: '1rem', color: '#cbd5e1'}}>
+            Perhaps this quote has been accepted already, modified or deleted.
+          </p>
+          <p style={{fontSize: '1rem', lineHeight: '1.6'}}>
+            <a 
+              href="https://uniquitousmusic.com/#contact" 
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                color: '#60a5fa',
+                textDecoration: 'underline',
+                transition: 'color 0.2s'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.color = '#93c5fd'}
+              onMouseLeave={(e) => e.currentTarget.style.color = '#60a5fa'}
+            >
+              Contact Uniquitous Music for assistance
+            </a>
+          </p>
         </div>
       </div>
     )
@@ -241,22 +262,23 @@ export default function QuoteApprovalPage() {
   return (
     <div style={{
       minHeight: '100vh',
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      background: 'linear-gradient(135deg, #0a0e27 0%, #1e1b4b 50%, #0f172a 100%)',
       padding: '2rem 1rem'
     }}>
       <div style={{
         maxWidth: '800px',
         margin: '0 auto',
         background: 'rgba(255, 255, 255, 0.1)',
-        backdropFilter: 'blur(10px)',
-        borderRadius: '1rem',
+        backdropFilter: 'blur(8px)',
+        border: '1px solid rgba(255, 255, 255, 0.2)',
+        borderRadius: '0.75rem',
         padding: '2rem',
         color: 'white'
       }}>
         {/* Header */}
         <div style={{textAlign: 'center', marginBottom: '2rem'}}>
           <h1 style={{fontSize: '2rem', fontWeight: 'bold', marginBottom: '0.5rem'}}>
-            Quote Approval Required
+            Your Quote from Uniquitous Music
           </h1>
           <p style={{fontSize: '1.25rem', opacity: 0.9}}>
             Quote #{quote.quoteNumber} - {quote.project}
@@ -388,6 +410,87 @@ export default function QuoteApprovalPage() {
           </div>
         </div>
 
+        {/* Terms */}
+        {quote.terms && (
+          <div style={{
+            background: 'rgba(255, 255, 255, 0.1)',
+            borderRadius: '0.75rem',
+            padding: '1.5rem',
+            marginBottom: '2rem'
+          }}>
+            <h3 style={{fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '0.75rem', color: 'white'}}>
+              Terms & Conditions
+            </h3>
+            <div style={{
+              maxHeight: '300px',
+              overflowY: 'auto',
+              paddingRight: '0.5rem'
+            }}>
+              <p style={{
+                fontSize: '0.875rem',
+                color: '#cbd5e1',
+                lineHeight: '1.6',
+                margin: 0,
+                marginBottom: '0.75rem',
+                whiteSpace: 'pre-wrap',
+                wordWrap: 'break-word'
+              }}>
+                {quote.terms}
+              </p>
+              <a 
+                href="/terms" 
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  fontSize: '0.875rem',
+                  color: '#60a5fa',
+                  textDecoration: 'underline',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.25rem',
+                  transition: 'color 0.2s'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.color = '#93c5fd'}
+                onMouseLeave={(e) => e.currentTarget.style.color = '#60a5fa'}
+              >
+                View complete Terms & Conditions
+                <span style={{fontSize: '0.75rem'}}>↗</span>
+              </a>
+            </div>
+            
+            {/* Terms Agreement Checkbox */}
+            <div style={{
+              marginTop: '1.5rem',
+              paddingTop: '1.5rem',
+              borderTop: '1px solid rgba(255, 255, 255, 0.2)'
+            }}>
+              <label style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem',
+                cursor: 'pointer',
+                fontSize: '0.875rem',
+                color: 'white'
+              }}>
+                <input
+                  type="checkbox"
+                  checked={termsAgreed}
+                  onChange={(e) => setTermsAgreed(e.target.checked)}
+                  style={{
+                    width: '1.25rem',
+                    height: '1.25rem',
+                    cursor: 'pointer',
+                    accentColor: '#3b82f6'
+                  }}
+                />
+                <span>
+                  <strong>Required:</strong> I have read and agree to the Terms & Conditions
+                </span>
+              </label>
+            </div>
+          </div>
+        )}
+
         {/* Payment Options */}
         <div style={{
           background: 'rgba(255, 255, 255, 0.1)',
@@ -470,67 +573,254 @@ export default function QuoteApprovalPage() {
           </div>
         </div>
 
-        {/* Terms */}
-        {quote.terms && (
-          <div style={{
-            background: 'rgba(255, 255, 255, 0.1)',
-            borderRadius: '0.75rem',
-            padding: '1.5rem',
-            marginBottom: '2rem'
-          }}>
-            <h3 style={{fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '0.75rem'}}>
-              Terms & Conditions
-            </h3>
-            <p style={{lineHeight: '1.6', fontSize: '0.875rem'}}>{quote.terms}</p>
-          </div>
-        )}
-
         {/* Action Buttons */}
         <div style={{display: 'flex', gap: '1rem', justifyContent: 'center'}}>
           <button
-            onClick={handleReject}
+            onClick={() => setShowFeedbackModal(true)}
             disabled={processing}
             style={{
               display: 'flex',
               alignItems: 'center',
               gap: '0.5rem',
               padding: '1rem 2rem',
-              background: 'rgba(239, 68, 68, 0.2)',
-              border: '2px solid rgba(239, 68, 68, 0.3)',
+              background: 'rgba(148, 163, 184, 0.2)',
+              border: '2px solid rgba(148, 163, 184, 0.3)',
               borderRadius: '0.75rem',
-              color: '#f87171',
+              color: '#cbd5e1',
               cursor: processing ? 'not-allowed' : 'pointer',
               fontWeight: 'bold',
               fontSize: '1.125rem',
-              opacity: processing ? 0.5 : 1
+              opacity: processing ? 0.5 : 1,
+              transition: 'all 0.2s'
+            }}
+            onMouseEnter={(e) => {
+              if (!processing) {
+                e.currentTarget.style.background = 'rgba(148, 163, 184, 0.3)'
+                e.currentTarget.style.borderColor = 'rgba(148, 163, 184, 0.5)'
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!processing) {
+                e.currentTarget.style.background = 'rgba(148, 163, 184, 0.2)'
+                e.currentTarget.style.borderColor = 'rgba(148, 163, 184, 0.3)'
+              }
             }}
           >
             <XCircle style={{height: '1.25rem', width: '1.25rem'}} />
-            {processing ? 'Processing...' : 'Decline Quote'}
+            Let's Discuss
           </button>
 
           <button
             onClick={handleApprove}
-            disabled={processing}
+            disabled={processing || !termsAgreed}
             style={{
               display: 'flex',
               alignItems: 'center',
               gap: '0.5rem',
               padding: '1rem 2rem',
-              background: 'linear-gradient(to right, #10b981, #14b8a6)',
+              background: processing || !termsAgreed 
+                ? 'rgba(148, 163, 184, 0.3)' 
+                : 'linear-gradient(to right, #10b981, #14b8a6)',
               border: 'none',
               borderRadius: '0.75rem',
               color: 'white',
-              cursor: processing ? 'not-allowed' : 'pointer',
+              cursor: processing || !termsAgreed ? 'not-allowed' : 'pointer',
               fontWeight: 'bold',
               fontSize: '1.125rem',
-              opacity: processing ? 0.5 : 1
+              opacity: processing || !termsAgreed ? 0.5 : 1,
+              transition: 'all 0.2s'
+            }}
+            onMouseEnter={(e) => {
+              if (!processing && termsAgreed) {
+                e.currentTarget.style.opacity = '0.9'
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!processing && termsAgreed) {
+                e.currentTarget.style.opacity = '1'
+              }
             }}
           >
             <CheckCircle style={{height: '1.25rem', width: '1.25rem'}} />
-            {processing ? 'Processing...' : `Approve & Pay $${selectedAmount.toFixed(2)}`}
+            Approve & Pay ${selectedAmount.toFixed(2)}
           </button>
         </div>
+
+        {/* Feedback Modal */}
+        {showFeedbackModal && (
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 0, 0, 0.7)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '1rem'
+          }}>
+            <div style={{
+              background: 'linear-gradient(135deg, #0a0e27 0%, #1e1b4b 50%, #0f172a 100%)',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
+              borderRadius: '0.75rem',
+              padding: '2rem',
+              maxWidth: '600px',
+              width: '100%',
+              maxHeight: '90vh',
+              overflow: 'auto',
+              color: 'white'
+            }}>
+              <h2 style={{fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1.5rem'}}>
+                We'd Love to Hear From You
+              </h2>
+              <p style={{marginBottom: '1.5rem', color: '#cbd5e1', lineHeight: '1.6'}}>
+                Help us understand how we can better serve you. Your feedback is valuable to us.
+              </p>
+
+              <div style={{marginBottom: '1.5rem'}}>
+                <label style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '0.75rem',
+                  padding: '0.75rem',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  borderRadius: '0.5rem',
+                  marginBottom: '0.75rem',
+                  cursor: 'pointer',
+                  transition: 'background 0.2s'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'}
+                onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'}
+                >
+                  <input
+                    type="checkbox"
+                    checked={feedbackQuestions.missingItems}
+                    onChange={(e) => setFeedbackQuestions(prev => ({...prev, missingItems: e.target.checked}))}
+                    style={{marginTop: '0.25rem', cursor: 'pointer'}}
+                  />
+                  <span>Is something you need missing from the quote?</span>
+                </label>
+
+                <label style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '0.75rem',
+                  padding: '0.75rem',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  borderRadius: '0.5rem',
+                  marginBottom: '0.75rem',
+                  cursor: 'pointer',
+                  transition: 'background 0.2s'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'}
+                onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'}
+                >
+                  <input
+                    type="checkbox"
+                    checked={feedbackQuestions.beyondBudget}
+                    onChange={(e) => setFeedbackQuestions(prev => ({...prev, beyondBudget: e.target.checked}))}
+                    style={{marginTop: '0.25rem', cursor: 'pointer'}}
+                  />
+                  <span>Is this beyond your budget?</span>
+                </label>
+
+                <label style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '0.75rem',
+                  padding: '0.75rem',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  borderRadius: '0.5rem',
+                  marginBottom: '0.75rem',
+                  cursor: 'pointer',
+                  transition: 'background 0.2s'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'}
+                onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'}
+                >
+                  <input
+                    type="checkbox"
+                    checked={feedbackQuestions.notReadyYet}
+                    onChange={(e) => setFeedbackQuestions(prev => ({...prev, notReadyYet: e.target.checked}))}
+                    style={{marginTop: '0.25rem', cursor: 'pointer'}}
+                  />
+                  <span>Not quite ready yet?</span>
+                </label>
+              </div>
+
+              <div style={{marginBottom: '1.5rem'}}>
+                <label style={{
+                  display: 'block',
+                  marginBottom: '0.5rem',
+                  fontSize: '0.875rem',
+                  color: '#cbd5e1'
+                }}>
+                  Please elaborate and share any additional thoughts or questions
+                </label>
+                <textarea
+                  value={feedbackDetails}
+                  onChange={(e) => setFeedbackDetails(e.target.value)}
+                  rows={4}
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    background: 'rgba(255, 255, 255, 0.1)',
+                    border: '2px solid rgba(255, 255, 255, 0.2)',
+                    borderRadius: '0.5rem',
+                    color: 'white',
+                    outline: 'none',
+                    resize: 'vertical',
+                    fontSize: '0.875rem',
+                    lineHeight: '1.6',
+                    fontFamily: 'inherit'
+                  }}
+                  placeholder="Share your thoughts..."
+                />
+              </div>
+
+              <div style={{display: 'flex', gap: '1rem', justifyContent: 'flex-end'}}>
+                <button
+                  onClick={() => {
+                    setShowFeedbackModal(false)
+                    setFeedbackQuestions({ missingItems: false, beyondBudget: false, notReadyYet: false })
+                    setFeedbackDetails('')
+                  }}
+                  disabled={processing}
+                  style={{
+                    padding: '0.75rem 1.5rem',
+                    background: 'rgba(148, 163, 184, 0.2)',
+                    border: '2px solid rgba(148, 163, 184, 0.3)',
+                    borderRadius: '0.5rem',
+                    color: '#cbd5e1',
+                    cursor: processing ? 'not-allowed' : 'pointer',
+                    fontWeight: 'bold',
+                    opacity: processing ? 0.5 : 1
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleFeedbackSubmit}
+                  disabled={processing}
+                  style={{
+                    padding: '0.75rem 1.5rem',
+                    background: 'linear-gradient(to right, #9333ea, #ec4899)',
+                    border: 'none',
+                    borderRadius: '0.5rem',
+                    color: 'white',
+                    cursor: processing ? 'not-allowed' : 'pointer',
+                    fontWeight: 'bold',
+                    opacity: processing ? 0.5 : 1
+                  }}
+                >
+                  {processing ? 'Submitting...' : 'Submit Feedback'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Valid Until */}
         <div style={{

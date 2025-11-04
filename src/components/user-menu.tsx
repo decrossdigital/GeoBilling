@@ -4,12 +4,26 @@ import { useState, useEffect } from "react"
 import { useSession, signOut } from "next-auth/react"
 import { ChevronDown, LogOut } from "lucide-react"
 
+// Default avatar as SVG data URL to avoid external requests
+const DEFAULT_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Ccircle fill='%239333ea' cx='16' cy='16' r='16'/%3E%3Ctext x='16' y='22' font-family='Arial' font-size='18' fill='white' text-anchor='middle'%3E%3F%3C/text%3E%3C/svg%3E"
+
 export default function UserMenu() {
   const { data: session } = useSession()
   const [isOpen, setIsOpen] = useState(false)
+  const [imageError, setImageError] = useState(false)
+
+  // Reset image error when session changes
+  useEffect(() => {
+    setImageError(false)
+  }, [session?.user?.image])
 
   const handleSignOut = () => {
     signOut({ callbackUrl: "/auth/signin" })
+  }
+
+  const handleImageError = () => {
+    // Silently fallback to default avatar on error (429, 403, network issues, etc.)
+    setImageError(true)
   }
 
   return (
@@ -30,9 +44,10 @@ export default function UserMenu() {
         }}
       >
         <img 
-          src={session?.user?.image || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=32&h=32&fit=crop&crop=face"} 
+          src={imageError || !session?.user?.image ? DEFAULT_AVATAR : session.user.image} 
           alt={session?.user?.name || "User"} 
           style={{width: '2rem', height: '2rem', borderRadius: '50%'}} 
+          onError={handleImageError}
         />
         <span style={{fontSize: '0.875rem', fontWeight: '500'}}>{session?.user?.name || "John Doe"}</span>
         <ChevronDown style={{height: '1rem', width: '1rem', transition: 'transform 0.2s', transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)'}} />

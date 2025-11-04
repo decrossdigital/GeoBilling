@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Color Scheme Mockups - GeoBilling</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding: 2rem;
+            background: #f5f5f5;
+        }
+        
+        .mockup-container {
+            margin-bottom: 4rem;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        .mockup-title {
+            padding: 1.5rem;
+            background: white;
+            border-bottom: 2px solid #e5e5e5;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1a1a1a;
+        }
+        
+        .mockup-description {
+            padding: 1rem 1.5rem;
+            background: white;
+            color: #666;
+            font-size: 0.9rem;
+            border-bottom: 1px solid #e5e5e5;
+        }
+        
+        /* CURRENT SCHEME */
+        .current {
+            background: linear-gradient(to bottom right, #0f172a, #581c87, #0f172a);
+            color: white;
+            padding: 2rem;
+        }
+        
+        /* OPTION 1: Deep Blue & Teal - Professional & Trustworthy */
+        .option1 {
+            background: linear-gradient(135deg, #0a1929 0%, #1a365d 50%, #0f172a 100%);
+            color: white;
+            padding: 2rem;
+        }
+        
+        .option1 .card {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+        }
+        
+        .option1 .accent {
+            background: linear-gradient(135deg, #2563eb 0%, #06b6d4 100%);
+        }
+        
+        .option1 .button-primary {
+            background: linear-gradient(135deg, #2563eb 0%, #06b6d4 100%);
+        }
+        
+        .option1 .text-muted {
+            color: #94a3b8;
+        }
+        
+        /* OPTION 2: Slate & Emerald - Modern & Clean */
+        .option2 {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+            color: white;
+            padding: 2rem;
+        }
+        
+        .option2 .card {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(16, 185, 129, 0.15);
+        }
+        
+        .option2 .accent {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+        
+        .option2 .button-primary {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+        
+        .option2 .text-muted {
+            color: #94a3b8;
+        }
+        
+        /* OPTION 3: Navy & Indigo - Sophisticated & Modern */
+        .option3 {
+            background: linear-gradient(135deg, #0a0e27 0%, #1e1b4b 50%, #0f172a 100%);
+            color: white;
+            padding: 2rem;
+        }
+        
+        .option3 .card {
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+        }
+        
+        .option3 .accent {
+            background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+        }
+        
+        .option3 .button-primary {
+            background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+        }
+        
+        .option3 .text-muted {
+            color: #a5b4fc;
+        }
+        
+        /* CURRENT PURPLE/PINK */
+        .current .card {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .current .accent {
+            background: linear-gradient(to right, #9333ea, #ec4899);
+        }
+        
+        .current .button-primary {
+            background: linear-gradient(to right, #9333ea, #ec4899);
+        }
+        
+        .current .text-muted {
+            color: #cbd5e1;
+        }
+        
+        /* Common Styles */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+        }
+        
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .logo-icon {
+            padding: 0.75rem;
+            border-radius: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .logo-text h1 {
+            font-size: 1.875rem;
+            font-weight: bold;
+            margin-bottom: 0.25rem;
+        }
+        
+        .logo-text p {
+            font-size: 0.875rem;
+            opacity: 0.8;
+        }
+        
+        .card {
+            backdrop-filter: blur(8px);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .button-primary {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            border: none;
+            color: white;
+            font-weight: 500;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .button-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+        
+        .input {
+            width: 100%;
+            padding: 0.5rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 0.25rem;
+            color: white;
+            outline: none;
+            margin-bottom: 1rem;
+        }
+        
+        .input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+        
+        .color-palette {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .color-swatch {
+            width: 60px;
+            height: 60px;
+            border-radius: 8px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-label {
+            font-size: 0.875rem;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+    <h1 style="text-align: center; margin-bottom: 3rem; color: #1a1a1a; font-size: 2.5rem;">Color Scheme Proposals</h1>
+    
+    <!-- CURRENT SCHEME -->
+    <div class="mockup-container">
+        <div class="mockup-title">Current Scheme: Purple/Pink Gradient</div>
+        <div class="mockup-description">
+            <strong>Colors:</strong> Deep slate (#0f172a) to purple (#581c87) background, purple (#9333ea) to pink (#ec4899) accents<br>
+            <strong>Feel:</strong> Creative, vibrant, but may feel less professional for billing
+        </div>
+        <div class="current">
+            <div class="header">
+                <div class="logo-section">
+                    <div class="logo-icon accent">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                            <path d="M9 18V5l12-2v13"></path>
+                            <circle cx="6" cy="18" r="3"></circle>
+                            <circle cx="18" cy="16" r="3"></circle>
+                        </svg>
+                    </div>
+                    <div class="logo-text">
+                        <h1>GeoBilling</h1>
+                        <p class="text-muted">Uniquitous Music - Professional Billing System</p>
+                    </div>
+                </div>
+                <button class="button-primary">Save Settings</button>
+            </div>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value">$45,231</div>
+                    <div class="stat-label">Total Revenue</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">142</div>
+                    <div class="stat-label">Active Clients</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">89</div>
+                    <div class="stat-label">Pending Invoices</div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-title">
+                    <span>Company Information</span>
+                </div>
+                <input type="text" class="input" placeholder="Company Name" value="Uniquitous Music">
+                <input type="email" class="input" placeholder="Email Address" value="george@uniquitousmusic.com">
+                <button class="button-primary">Update</button>
+            </div>
+            
+            <div class="color-palette">
+                <div class="color-swatch" style="background: #0f172a;">#0f172a</div>
+                <div class="color-swatch" style="background: #581c87;">#581c87</div>
+                <div class="color-swatch" style="background: #9333ea;">#9333ea</div>
+                <div class="color-swatch" style="background: #ec4899;">#ec4899</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- OPTION 1: Deep Blue & Teal -->
+    <div class="mockup-container">
+        <div class="mockup-title">Option 1: Deep Blue & Teal - Professional & Trustworthy</div>
+        <div class="mockup-description">
+            <strong>Colors:</strong> Deep navy (#0a1929) to slate (#1a365d) background, blue (#2563eb) to teal (#06b6d4) accents<br>
+            <strong>Feel:</strong> Professional, trustworthy, financial industry standard. Excellent contrast and readability.
+        </div>
+        <div class="option1">
+            <div class="header">
+                <div class="logo-section">
+                    <div class="logo-icon accent">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                            <path d="M9 18V5l12-2v13"></path>
+                            <circle cx="6" cy="18" r="3"></circle>
+                            <circle cx="18" cy="16" r="3"></circle>
+                        </svg>
+                    </div>
+                    <div class="logo-text">
+                        <h1>GeoBilling</h1>
+                        <p class="text-muted">Uniquitous Music - Professional Billing System</p>
+                    </div>
+                </div>
+                <button class="button-primary">Save Settings</button>
+            </div>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value">$45,231</div>
+                    <div class="stat-label">Total Revenue</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">142</div>
+                    <div class="stat-label">Active Clients</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">89</div>
+                    <div class="stat-label">Pending Invoices</div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-title">
+                    <span>Company Information</span>
+                </div>
+                <input type="text" class="input" placeholder="Company Name" value="Uniquitous Music">
+                <input type="email" class="input" placeholder="Email Address" value="george@uniquitousmusic.com">
+                <button class="button-primary">Update</button>
+            </div>
+            
+            <div class="color-palette">
+                <div class="color-swatch" style="background: #0a1929;">#0a1929</div>
+                <div class="color-swatch" style="background: #1a365d;">#1a365d</div>
+                <div class="color-swatch" style="background: #2563eb;">#2563eb</div>
+                <div class="color-swatch" style="background: #06b6d4;">#06b6d4</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- OPTION 2: Slate & Emerald -->
+    <div class="mockup-container">
+        <div class="mockup-title">Option 2: Slate & Emerald - Modern & Clean</div>
+        <div class="mockup-description">
+            <strong>Colors:</strong> Deep slate (#0f172a) to darker slate (#1e293b) background, emerald (#10b981) to darker emerald (#059669) accents<br>
+            <strong>Feel:</strong> Modern, clean, professional. Green conveys growth and success. Excellent for financial apps.
+        </div>
+        <div class="option2">
+            <div class="header">
+                <div class="logo-section">
+                    <div class="logo-icon accent">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                            <path d="M9 18V5l12-2v13"></path>
+                            <circle cx="6" cy="18" r="3"></circle>
+                            <circle cx="18" cy="16" r="3"></circle>
+                        </svg>
+                    </div>
+                    <div class="logo-text">
+                        <h1>GeoBilling</h1>
+                        <p class="text-muted">Uniquitous Music - Professional Billing System</p>
+                    </div>
+                </div>
+                <button class="button-primary">Save Settings</button>
+            </div>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value">$45,231</div>
+                    <div class="stat-label">Total Revenue</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">142</div>
+                    <div class="stat-label">Active Clients</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">89</div>
+                    <div class="stat-label">Pending Invoices</div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-title">
+                    <span>Company Information</span>
+                </div>
+                <input type="text" class="input" placeholder="Company Name" value="Uniquitous Music">
+                <input type="email" class="input" placeholder="Email Address" value="george@uniquitousmusic.com">
+                <button class="button-primary">Update</button>
+            </div>
+            
+            <div class="color-palette">
+                <div class="color-swatch" style="background: #0f172a;">#0f172a</div>
+                <div class="color-swatch" style="background: #1e293b;">#1e293b</div>
+                <div class="color-swatch" style="background: #10b981;">#10b981</div>
+                <div class="color-swatch" style="background: #059669;">#059669</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- OPTION 3: Navy & Indigo -->
+    <div class="mockup-container">
+        <div class="mockup-title">Option 3: Navy & Indigo - Sophisticated & Modern</div>
+        <div class="mockup-description">
+            <strong>Colors:</strong> Deep navy (#0a0e27) to indigo (#1e1b4b) background, indigo (#4f46e5) to lighter indigo (#6366f1) accents<br>
+            <strong>Feel:</strong> Sophisticated, premium, modern. Indigo is associated with creativity and professionalism. Great balance.
+        </div>
+        <div class="option3">
+            <div class="header">
+                <div class="logo-section">
+                    <div class="logo-icon accent">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                            <path d="M9 18V5l12-2v13"></path>
+                            <circle cx="6" cy="18" r="3"></circle>
+                            <circle cx="18" cy="16" r="3"></circle>
+                        </svg>
+                    </div>
+                    <div class="logo-text">
+                        <h1>GeoBilling</h1>
+                        <p class="text-muted">Uniquitous Music - Professional Billing System</p>
+                    </div>
+                </div>
+                <button class="button-primary">Save Settings</button>
+            </div>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value">$45,231</div>
+                    <div class="stat-label">Total Revenue</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">142</div>
+                    <div class="stat-label">Active Clients</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">89</div>
+                    <div class="stat-label">Pending Invoices</div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-title">
+                    <span>Company Information</span>
+                </div>
+                <input type="text" class="input" placeholder="Company Name" value="Uniquitous Music">
+                <input type="email" class="input" placeholder="Email Address" value="george@uniquitousmusic.com">
+                <button class="button-primary">Update</button>
+            </div>
+            
+            <div class="color-palette">
+                <div class="color-swatch" style="background: #0a0e27;">#0a0e27</div>
+                <div class="color-swatch" style="background: #1e1b4b;">#1e1b4b</div>
+                <div class="color-swatch" style="background: #4f46e5;">#4f46e5</div>
+                <div class="color-swatch" style="background: #6366f1;">#6366f1</div>
+            </div>
+        </div>
+    </div>
+    
+    <div style="max-width: 1200px; margin: 3rem auto; padding: 2rem; background: white; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+        <h2 style="margin-bottom: 1rem; color: #1a1a1a;">Recommendation Summary</h2>
+        <div style="line-height: 1.8; color: #444;">
+            <p><strong>🏆 Top Recommendation: Option 1 (Deep Blue & Teal)</strong></p>
+            <ul style="margin-left: 2rem; margin-top: 0.5rem;">
+                <li>Most professional and trustworthy for financial/billing applications</li>
+                <li>Industry standard colors (blue = trust, stability)</li>
+                <li>Excellent contrast and readability</li>
+                <li>Teal accent adds modern touch without being too playful</li>
+                <li>Works well for both business and creative clients</li>
+            </ul>
+            
+            <p style="margin-top: 1.5rem;"><strong>Alternative: Option 2 (Slate & Emerald)</strong></p>
+            <ul style="margin-left: 2rem; margin-top: 0.5rem;">
+                <li>If you want to emphasize growth and success</li>
+                <li>Very modern and clean aesthetic</li>
+                <li>Green conveys positive financial outcomes</li>
+            </ul>
+            
+            <p style="margin-top: 1.5rem;"><strong>For Creativity: Option 3 (Navy & Indigo)</strong></p>
+            <ul style="margin-left: 2rem; margin-top: 0.5rem;">
+                <li>Balances professionalism with creative energy</li>
+                <li>Perfect if you want to maintain some creative vibe</li>
+                <li>Still very professional but more unique</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>
+

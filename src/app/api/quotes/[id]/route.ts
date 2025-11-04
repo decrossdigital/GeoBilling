@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { getClientName } from '@/lib/template-processor'
+import { addActivityLog, ACTIVITY_ACTIONS } from '@/lib/activity-logger'
 
 export async function GET(
   request: NextRequest,
@@ -43,6 +45,43 @@ export async function GET(
       return NextResponse.json({ error: 'Quote not found' }, { status: 404 })
     }
 
+    // Check if quote has expired and update status if needed (only for sent quotes)
+    if (quote.status === 'sent' && new Date() > new Date(quote.validUntil)) {
+      const updatedActivityLog = addActivityLog(
+        quote.activityLog,
+        ACTIVITY_ACTIONS.QUOTE_EXPIRED,
+        'System',
+        'Quote expired automatically'
+      )
+      
+      await prisma.quote.update({
+        where: { id: quoteId },
+        data: {
+          status: 'expired',
+          activityLog: updatedActivityLog
+        }
+      })
+      
+      // Refetch the quote to get updated status
+      const updatedQuote = await prisma.quote.findFirst({
+        where: { id: quoteId },
+        include: {
+          client: true,
+          items: {
+            include: {
+              serviceTemplate: true,
+              contractor: true
+            }
+          }
+        }
+      })
+      
+      if (updatedQuote) {
+        // Use updated quote for the rest of the processing
+        Object.assign(quote, updatedQuote)
+      }
+    }
+
     // Recalculate totals based on current items to fix any calculation errors
     const itemsWithNumbers = quote.items.map(item => ({
       ...item,
@@ -59,8 +98,15 @@ export async function GET(
     const recalculatedTotal = recalculatedSubtotal + recalculatedTaxAmount
 
     // Convert Decimal values to numbers for frontend compatibility
+    // Compute client name from firstName/lastName
+    const clientWithName = quote.client ? {
+      ...quote.client,
+      name: getClientName(quote.client)
+    } : quote.client
+
     const quoteWithNumbers = {
       ...quote,
+      client: clientWithName,
       subtotal: recalculatedSubtotal,
       taxRate: taxRate,
       taxAmount: recalculatedTaxAmount,
@@ -157,8 +203,15 @@ export async function PUT(
     })
 
     // Convert Decimal values to numbers for frontend compatibility
+    // Compute client name from firstName/lastName
+    const clientWithName = updatedQuote.client ? {
+      ...updatedQuote.client,
+      name: getClientName(updatedQuote.client)
+    } : updatedQuote.client
+
     const quoteWithNumbers = {
       ...updatedQuote,
+      client: clientWithName,
       subtotal: recalculatedSubtotal,
       taxRate: taxRate,
       taxAmount: recalculatedTaxAmount,

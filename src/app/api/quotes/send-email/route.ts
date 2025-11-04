@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { quoteId, to, subject, message, approvalToken } = await request.json()
+    const { quoteId, to, subject, message, approvalToken, validUntil, isResend } = await request.json()
 
     if (!quoteId || !to || !subject || !message) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -46,25 +46,59 @@ export async function POST(request: NextRequest) {
     // Send the actual email using Resend with custom subject and message
     try {
       const { sendEmail } = await import('@/lib/email')
+      
+      // Debug: Check if approval URL is in the message
+      if (message.includes('approve?token=')) {
+        console.log('✓ Approval URL with token found in message')
+      } else if (message.includes('/quote/') && !message.includes('approve')) {
+        console.warn('⚠ URL found but missing /approve?token= path')
+      } else if (message.includes('/quote/')) {
+        console.warn('⚠ Quote URL found but token might be missing')
+      }
+      
+      // Convert plain text URLs to HTML links and newlines to breaks
+      let htmlMessage = message
+        // Convert URLs to HTML links (must be before newline conversion)
+        // This ensures query parameters are preserved in the href attribute
+        .replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" style="color: #667eea; text-decoration: underline;">$1</a>')
+        // Convert newlines to HTML breaks
+        .replace(/\n/g, '<br>')
+      
       await sendEmail({
         to,
         subject,
-        html: message.replace(/\n/g, '<br>')  // Convert newlines to HTML breaks
+        html: htmlMessage
       })
 
       // Use provided approval token or generate one
       const finalApprovalToken = approvalToken || `token_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`
       
-      // Update quote status to 'sent' and add activity log
-      const updatedActivityLog = addActivityLog(quote.activityLog, ACTIVITY_ACTIONS.QUOTE_SENT, user.name || user.email)
+      // Handle resend logic
+      let updateData: any = {
+        status: 'sent', // Update status to 'sent' (especially if it was expired)
+        approvalToken: finalApprovalToken
+      }
+      
+      // If validUntil is provided (for resend), update it
+      if (validUntil) {
+        updateData.validUntil = new Date(validUntil)
+      }
+      
+      // Add appropriate activity log entry
+      let activityAction = ACTIVITY_ACTIONS.QUOTE_SENT
+      if (isResend) {
+        activityAction = ACTIVITY_ACTIONS.QUOTE_RESENT
+        const validUntilInfo = validUntil ? ` - Valid until: ${new Date(validUntil).toLocaleDateString()}` : ''
+        const updatedActivityLog = addActivityLog(quote.activityLog, activityAction, user.name || user.email, validUntilInfo)
+        updateData.activityLog = updatedActivityLog
+      } else {
+        const updatedActivityLog = addActivityLog(quote.activityLog, activityAction, user.name || user.email)
+        updateData.activityLog = updatedActivityLog
+      }
       
       await prisma.quote.update({
         where: { id: quoteId },
-        data: { 
-          status: 'sent',
-          approvalToken: finalApprovalToken,
-          activityLog: updatedActivityLog
-        }
+        data: updateData
       })
 
       console.log('Quote email sent successfully:', {

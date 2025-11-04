@@ -95,7 +95,7 @@ export default function Navigation({ className = '' }: NavigationProps) {
           color: item.active ? 'white' : '#cbd5e1',
           textDecoration: 'none',
           fontWeight: '500',
-          background: item.active ? 'linear-gradient(to right, #9333ea, #3b82f6)' : 'transparent',
+          background: item.active ? 'linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)' : 'transparent',
           boxShadow: item.active ? '0 10px 15px -3px rgba(0, 0, 0, 0.1)' : 'none',
           transition: 'all 0.2s'
         }}
@@ -230,8 +230,8 @@ export default function Navigation({ className = '' }: NavigationProps) {
                     color: item.active ? 'white' : '#cbd5e1',
                     textDecoration: 'none',
                     fontWeight: '500',
-                    backgroundColor: item.active ? 'rgba(147, 51, 234, 0.2)' : 'rgba(255, 255, 255, 0.05)',
-                    border: item.active ? '1px solid rgba(147, 51, 234, 0.3)' : '1px solid rgba(255, 255, 255, 0.1)',
+                    backgroundColor: item.active ? 'rgba(79, 70, 229, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                    border: item.active ? '1px solid rgba(99, 102, 241, 0.3)' : '1px solid rgba(255, 255, 255, 0.1)',
                     transition: 'all 0.2s'
                   }}
                 >

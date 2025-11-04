@@ -16,7 +16,7 @@ export async function PUT(
 
     const { contractorId } = await params
     const body = await request.json()
-    const { assignedSkills, rateType, hours, cost, includeInTotal } = body
+    const { assignedSkills, rateType, hours, cost, includeInTotal, notes } = body
 
     const updated = await prisma.quoteContractor.update({
       where: { id: contractorId },
@@ -25,7 +25,8 @@ export async function PUT(
         rateType,
         hours: hours !== undefined ? hours : null,
         cost,
-        includeInTotal: includeInTotal !== undefined ? includeInTotal : true
+        includeInTotal: includeInTotal !== undefined ? includeInTotal : true,
+        notes: notes !== undefined ? notes : null
       },
       include: {
         contractor: true

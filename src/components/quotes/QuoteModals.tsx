@@ -24,12 +24,25 @@ interface QuoteItem {
   sortOrder: number
 }
 
+interface ServiceTemplate {
+  id: string
+  name: string
+  description: string
+  category: string
+  pricingType: 'hourly' | 'flat'
+  rate: number
+  currency: string
+  isActive: boolean
+  icon?: string
+}
+
 interface QuoteModalsProps {
   showEmailModal: boolean
   showAddServiceModal: boolean
   showEditServiceModal: boolean
   showAddContractorModal: boolean
   showEditContractorModal: boolean
+  showSelectServiceModal: boolean
   sendingEmail: boolean
   contractors: Contractor[]
   selectedContractor: string
@@ -39,25 +52,35 @@ interface QuoteModalsProps {
     description: string
     quantity: number
     unitPrice: number
+    pricingType?: 'hourly' | 'flat'
+    taxable?: boolean
   }
+  showServiceForm?: boolean
+  onCustomServiceClick?: () => void
+  onTemplateServiceClick?: (service: ServiceTemplate) => void
   emailData: {
     to: string
     subject: string
     message: string
   }
+  availableServices: ServiceTemplate[]
+  selectedService: string
   onCloseEmailModal: () => void
   onCloseAddServiceModal: () => void
   onCloseEditServiceModal: () => void
   onCloseAddContractorModal: () => void
   onCloseEditContractorModal: () => void
+  onCloseSelectServiceModal: () => void
   onSendEmail: () => void
   onAddService: () => void
   onEditService: () => void
   onAssignContractor: () => void
   onEditContractor: () => void
+  onSelectService: () => void
   onEmailDataChange: (field: string, value: string) => void
   onServiceFormChange: (field: string, value: string | number) => void
   onSelectedContractorChange: (value: string) => void
+  onSelectedServiceChange: (value: string) => void
   onResetTemplate?: () => void
   showPreview?: boolean
   onTogglePreview?: () => void
@@ -67,9 +90,11 @@ interface QuoteModalsProps {
   contractorRateType?: 'hourly' | 'flat'
   contractorHours?: number
   contractorCost?: number
+  contractorNotes?: string
   onToggleSkillFilter?: (skill: string) => void
   onRateTypeChange?: (type: 'hourly' | 'flat') => void
   onHoursChange?: (hours: number) => void
+  onContractorNotesChange?: (notes: string) => void
 }
 
 export default function QuoteModals({
@@ -78,25 +103,31 @@ export default function QuoteModals({
   showEditServiceModal,
   showAddContractorModal,
   showEditContractorModal,
+  showSelectServiceModal,
   sendingEmail,
   contractors,
   selectedContractor,
   editingItem,
   serviceForm,
   emailData,
+  availableServices,
+  selectedService,
   onCloseEmailModal,
   onCloseAddServiceModal,
   onCloseEditServiceModal,
   onCloseAddContractorModal,
   onCloseEditContractorModal,
+  onCloseSelectServiceModal,
   onSendEmail,
   onAddService,
   onEditService,
   onAssignContractor,
   onEditContractor,
+  onSelectService,
   onEmailDataChange,
   onServiceFormChange,
   onSelectedContractorChange,
+  onSelectedServiceChange,
   onResetTemplate,
   showPreview = false,
   onTogglePreview,
@@ -106,9 +137,14 @@ export default function QuoteModals({
   contractorRateType = 'hourly',
   contractorHours = 1,
   contractorCost = 0,
+  contractorNotes = '',
   onToggleSkillFilter,
   onRateTypeChange,
-  onHoursChange
+  onHoursChange,
+  onContractorNotesChange,
+  showServiceForm = false,
+  onCustomServiceClick,
+  onTemplateServiceClick
 }: QuoteModalsProps) {
   return (
     <>
@@ -547,6 +583,224 @@ export default function QuoteModals({
         </div>
       )}
 
+      {/* Select Service Modal */}
+      {showSelectServiceModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            backgroundColor: '#1e293b',
+            borderRadius: '12px',
+            padding: '30px',
+            width: '90%',
+            maxWidth: '650px',
+            maxHeight: '90vh',
+            overflowY: 'auto',
+            border: '1px solid rgba(255, 255, 255, 0.1)'
+          }}>
+            <h3 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'white', margin: '0 0 1rem 0' }}>
+              Add Services
+            </h3>
+
+            {/* Custom Service Option */}
+            <div style={{marginBottom: '1.5rem'}}>
+              <h4 style={{fontSize: '1.125rem', fontWeight: '500', color: 'white', marginBottom: '1rem'}}>Add Custom Service</h4>
+              <div 
+                onClick={onCustomServiceClick}
+                style={{
+                  padding: '1rem', 
+                  border: '1px solid rgba(255, 255, 255, 0.2)', 
+                  borderRadius: '0.5rem', 
+                  backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)'
+                  e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.5)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)'
+                  e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)'
+                }}
+              >
+                <div style={{display: 'flex', alignItems: 'center', gap: '0.75rem'}}>
+                  <div style={{padding: '0.5rem', backgroundColor: 'rgba(59, 130, 246, 0.2)', borderRadius: '0.5rem'}}>
+                    <span style={{color: '#60a5fa', fontWeight: 700, fontSize: '1.25rem'}}>+</span>
+                  </div>
+                  <div>
+                    <div style={{fontWeight: '500', color: 'white'}}>Custom Service</div>
+                    <div style={{fontSize: '0.875rem', color: '#cbd5e1'}}>Add a one-time service not in your templates</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Service Templates */}
+            <div style={{marginBottom: '1.5rem'}}>
+              <h4 style={{fontSize: '1.125rem', fontWeight: '500', color: 'white', marginBottom: '1rem'}}>Available Services</h4>
+              <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1rem'}}>
+                {availableServices.map((service) => {
+                  return (
+                    <div 
+                      key={service.id} 
+                      onClick={() => onTemplateServiceClick && onTemplateServiceClick(service)}
+                      style={{
+                        padding: '1rem', 
+                        border: '1px solid rgba(255, 255, 255, 0.2)', 
+                        borderRadius: '0.5rem',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                        backgroundColor: 'rgba(255, 255, 255, 0.02)'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)'
+                        e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.5)'
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.02)'
+                        e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)'
+                      }}
+                    >
+                      <div style={{display: 'flex', alignItems: 'center', gap: '0.75rem'}}>
+                        <div style={{padding: '0.5rem', backgroundColor: 'rgba(147, 51, 234, 0.2)', borderRadius: '0.5rem'}}>
+                          <span style={{color: '#a78bfa', fontWeight: 700}}>•</span>
+                        </div>
+                        <div>
+                          <div style={{fontWeight: '500', color: 'white'}}>{service.name}</div>
+                          <div style={{fontSize: '0.875rem', color: '#cbd5e1'}}>{service.description}</div>
+                          <div style={{fontSize: '0.875rem', color: '#94a3b8'}}>${service.rate}{service.pricingType === 'hourly' ? '/hour' : ''}</div>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* Service Form - shown when showServiceForm is true */}
+            {showServiceForm && (
+              <div style={{padding: '1rem', backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: '0.5rem', border: '1px solid rgba(255, 255, 255, 0.1)'}}>
+                <div style={{display: 'flex', flexDirection: 'column', gap: '1rem'}}>
+                  <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem'}}>
+                    <div style={{flex: 1, marginRight: '1rem'}}>
+                      <input
+                        type="text"
+                        placeholder="Enter service name"
+                        value={serviceForm.serviceName}
+                        onChange={(e) => onServiceFormChange('serviceName', e.target.value)}
+                        style={{width: '100%', padding: '0.5rem', backgroundColor: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.25rem', color: 'white', outline: 'none', marginBottom: '0.5rem'}}
+                      />
+                      <textarea
+                        placeholder="Enter service description"
+                        value={serviceForm.description}
+                        onChange={(e) => onServiceFormChange('description', e.target.value)}
+                        rows={2}
+                        style={{width: '100%', padding: '0.5rem', backgroundColor: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.25rem', color: 'white', outline: 'none', resize: 'vertical', fontFamily: 'inherit'}}
+                      />
+                    </div>
+                  </div>
+                  <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr', gap: '1rem'}}>
+                    <div>
+                      <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>Pricing Type</label>
+                      <select
+                        value={serviceForm.pricingType || 'flat'}
+                        onChange={(e) => onServiceFormChange('pricingType', e.target.value as 'hourly' | 'flat')}
+                        style={{width: '100%', padding: '0.5rem', backgroundColor: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.25rem', color: 'white', outline: 'none'}}
+                      >
+                        <option value="flat">Flat Rate</option>
+                        <option value="hourly">Per Hour</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>
+                        {(serviceForm.pricingType || 'flat') === 'hourly' ? 'Hours' : 'Quantity'}
+                      </label>
+                      <input
+                        type="number"
+                        value={serviceForm.quantity}
+                        onChange={(e) => onServiceFormChange('quantity', parseInt(e.target.value) || 1)}
+                        style={{width: '100%', padding: '0.5rem', backgroundColor: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.25rem', color: 'white', outline: 'none'}}
+                      />
+                    </div>
+                    <div>
+                      <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>
+                        {(serviceForm.pricingType || 'flat') === 'hourly' ? 'Rate ($/hr)' : 'Rate ($)'}
+                      </label>
+                      <input
+                        type="number"
+                        value={serviceForm.unitPrice}
+                        onChange={(e) => onServiceFormChange('unitPrice', parseFloat(e.target.value) || 0)}
+                        style={{width: '100%', padding: '0.5rem', backgroundColor: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.25rem', color: 'white', outline: 'none'}}
+                      />
+                    </div>
+                    <div>
+                      <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>Taxable</label>
+                      <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem', backgroundColor: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.25rem'}}>
+                        <input
+                          type="checkbox"
+                          checked={serviceForm.taxable || false}
+                          onChange={(e) => onServiceFormChange('taxable', e.target.checked)}
+                          style={{width: '1rem', height: '1rem', accentColor: '#3b82f6'}}
+                        />
+                        <span style={{fontSize: '0.875rem', color: 'white'}}>Yes</span>
+                      </div>
+                    </div>
+                    <div>
+                      <label style={{fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.25rem', display: 'block'}}>Amount</label>
+                      <div style={{padding: '0.5rem', backgroundColor: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.25rem', color: 'white', fontWeight: '500'}}>
+                        ${((serviceForm.quantity || 1) * (serviceForm.unitPrice || 0)).toLocaleString()}
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{display: 'flex', gap: '1rem', justifyContent: 'flex-end', marginTop: '1rem'}}>
+                    <button
+                      onClick={onCloseSelectServiceModal}
+                      style={{
+                        padding: '0.5rem 1rem',
+                        backgroundColor: '#6b7280',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '0.5rem',
+                        cursor: 'pointer',
+                        fontSize: '0.875rem',
+                        fontWeight: '500'
+                      }}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={onAddService}
+                      style={{
+                        padding: '0.5rem 1rem',
+                        backgroundColor: '#10b981',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '0.5rem',
+                        cursor: 'pointer',
+                        fontSize: '0.875rem',
+                        fontWeight: '500'
+                      }}
+                    >
+                      Add Service
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Add Contractor Modal */}
       {showAddContractorModal && (
         <div style={{
@@ -626,13 +880,27 @@ export default function QuoteModals({
               <label style={{ display: 'block', marginBottom: '0.5rem', color: '#cbd5e1', fontSize: '0.875rem', fontWeight: '500' }}>
                 Available Contractors ({filteredContractors?.length || 0}):
               </label>
-              <div style={{
-                maxHeight: '220px',
-                overflowY: 'auto',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                borderRadius: '0.5rem',
-                backgroundColor: 'rgba(255, 255, 255, 0.05)'
-              }}>
+              {!selectedSkills || selectedSkills.length === 0 ? (
+                <div style={{
+                  padding: '2rem',
+                  textAlign: 'center',
+                  color: '#94a3b8',
+                  backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                  borderRadius: '0.5rem',
+                  border: '1px solid rgba(255, 255, 255, 0.1)'
+                }}>
+                  <p style={{margin: 0, fontSize: '0.875rem'}}>
+                    Please select skills above to see available contractors
+                  </p>
+                </div>
+              ) : (
+                <div style={{
+                  maxHeight: '220px',
+                  overflowY: 'auto',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: '0.5rem',
+                  backgroundColor: 'rgba(255, 255, 255, 0.05)'
+                }}>
                 {filteredContractors && filteredContractors.length > 0 ? (
                   filteredContractors.map(contractor => (
                     <label
@@ -681,12 +949,11 @@ export default function QuoteModals({
                   ))
                 ) : (
                   <p style={{ padding: '1rem', color: '#94a3b8', textAlign: 'center', fontStyle: 'italic', fontSize: '0.875rem' }}>
-                    {selectedSkills && selectedSkills.length > 0 
-                      ? 'No contractors match selected skills' 
-                      : 'Select skills to filter contractors'}
+                    No contractors match selected skills
                   </p>
                 )}
-              </div>
+                </div>
+              )}
             </div>
 
             {/* Rate Type and Hours */}
@@ -743,6 +1010,18 @@ export default function QuoteModals({
                     />
                   </div>
                 )}
+
+                {/* Notes */}
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', color: '#cbd5e1', fontSize: '0.875rem', fontWeight: '500' }}>Notes:</label>
+                  <textarea
+                    value={contractorNotes}
+                    onChange={(e) => onContractorNotesChange && onContractorNotesChange(e.target.value)}
+                    rows={3}
+                    style={{ width: '100%', padding: '0.5rem', backgroundColor: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '0.5rem', color: 'white', outline: 'none', resize: 'vertical', fontFamily: 'inherit' }}
+                    placeholder="Add notes about this contractor assignment..."
+                  />
+                </div>
 
                 {/* Cost Summary */}
                 <div style={{

@@ -27,6 +27,7 @@ interface QuoteItem {
 interface QuoteServicesProps {
   services: QuoteItem[]
   onAddService: () => void
+  onSelectService: () => void
   onEditService: (item: QuoteItem) => void
   onDeleteService: (itemId: string) => void
   isEditable?: boolean
@@ -34,7 +35,8 @@ interface QuoteServicesProps {
 
 export default function QuoteServices({ 
   services, 
-  onAddService, 
+  onAddService,
+  onSelectService,
   onEditService,
   onDeleteService,
   isEditable = true
@@ -51,25 +53,27 @@ export default function QuoteServices({
       <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem'}}>
         <h2 style={{fontSize: '1.25rem', fontWeight: 'bold', color: 'white', margin: 0}}>Services</h2>
         {isEditable && (
-          <button
-            onClick={onAddService}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.25rem',
-              padding: '0.5rem 0.75rem',
-              background: 'rgba(255, 255, 255, 0.1)',
-              border: '1px solid rgba(255, 255, 255, 0.2)',
-              borderRadius: '0.25rem',
-              color: 'white',
-              cursor: 'pointer',
-              fontSize: '0.75rem',
-              fontWeight: '500'
-            }}
-          >
-            <Plus style={{height: '0.875rem', width: '0.875rem'}} />
-            Add Service
-          </button>
+          <div style={{display: 'flex', gap: '0.5rem'}}>
+            <button
+              onClick={onSelectService}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.25rem',
+                padding: '0.5rem 0.75rem',
+                background: 'rgba(59, 130, 246, 0.2)',
+                border: '1px solid rgba(59, 130, 246, 0.3)',
+                borderRadius: '0.25rem',
+                color: '#60a5fa',
+                cursor: 'pointer',
+                fontSize: '0.75rem',
+                fontWeight: '500'
+              }}
+            >
+              <Plus style={{height: '0.875rem', width: '0.875rem'}} />
+              Add Service
+            </button>
+          </div>
         )}
       </div>
       
@@ -98,9 +102,9 @@ export default function QuoteServices({
                   <p style={{fontSize: '0.875rem', color: '#cbd5e1', margin: '0.25rem 0 0 0'}}>{item.description}</p>
                 </div>
                 <div style={{textAlign: 'right'}}>
-                  <p style={{fontSize: '1rem', color: 'white', fontWeight: '500', margin: 0}}>${item.total.toFixed(2)}</p>
+                  <p style={{fontSize: '1rem', color: 'white', fontWeight: '500', margin: 0}}>${Number(item.total).toFixed(2)}</p>
                   <p style={{fontSize: '0.75rem', color: '#cbd5e1', margin: 0}}>
-                    {item.quantity} × ${item.unitPrice.toFixed(2)}
+                    {Number(item.quantity)} × ${Number(item.unitPrice).toFixed(2)}
                   </p>
                 </div>
               </div>

@@ -3,7 +3,7 @@ import { sendInvoiceEmail } from '@/lib/email'
 
 export async function POST(request: NextRequest) {
   try {
-    const { clientEmail, clientName, invoiceNumber, amount, dueDate, invoiceUrl } = await request.json()
+    const { clientEmail, clientName, invoiceNumber, amount, dueDate, invoiceUrl, terms, termsUrl, payments } = await request.json()
 
     if (!clientEmail || !clientName || !invoiceNumber || !amount || !dueDate) {
       return NextResponse.json(
@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    await sendInvoiceEmail(clientEmail, clientName, invoiceNumber, amount, dueDate, invoiceUrl)
+    await sendInvoiceEmail(clientEmail, clientName, invoiceNumber, amount, dueDate, invoiceUrl, terms, termsUrl, payments)
 
     return NextResponse.json({
       success: true,
